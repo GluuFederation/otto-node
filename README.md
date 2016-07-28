@@ -19,8 +19,8 @@ otto-node is implemented in node.js with swagger framework for apis which provid
 
 Currently this application is working on the port 5053, in case of changing the port you need to change at two places as following:
 ```
-1) app.js *var port = "5053";*
-2) /public/swagger/index.html *discoveryUrl: "http://localhost:5053/api-docs.json"*
+1) app.js var port = "5053";
+2) /public/swagger/index.html discoveryUrl: "http://localhost:5053/api-docs.json"
 ```
 # swagger
 ```
