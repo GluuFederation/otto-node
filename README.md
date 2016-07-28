@@ -16,16 +16,18 @@ ecosystems.
 
 otto-node is implemented in node.js with swagger framework for apis which provides tools for designing and building Swagger-compliant APIs entirely in Node.js.
 
-#### Configure port
+#### Configure the site
 
 Currently this application is working on the port 5053, in case of changing the port you need to change at two places as following:
+```
 1) app.js *var port = "5053";*
 2) /public/swagger/index.html *discoveryUrl: "http://localhost:5053/api-docs.json"*
-
+```
 # swagger
-
+```
 you can access all the apis details and testing environment with your {host}/swagger.
 Example : localhost:5053/swagger
+```
 
 Endpoints
 =================
@@ -43,8 +45,7 @@ Registration Authority supporting Discovery MUST make a JSON document available 
 
 *Non-normative example request*
 ```
-GET /.well-known/otto-configuration HTTP/1.1
-Host: ra.com
+GET /.well-known/otto-configuration 
 ```
 
 The response is a set of Claims about the RA's configuration, including all necessary endpoints and public key location information. A successful response MUST use the 200 OK HTTP status code and return a JSON object using the `application/json` content type that contains a set of Claims as its members that are a subset of the RA's Metadata values. Other Claims MAY also be returned. Claims that return multiple values are represented as JSON arrays. Claims with zero elements MUST be omitted from the response. An error response uses the applicable HTTP status code value.
