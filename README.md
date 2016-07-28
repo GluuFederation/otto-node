@@ -1,4 +1,4 @@
-# Open Trust Taxonomy for Federation Operators
+# [Open Trust Taxonomy for Federation Operators](https://github.com/KantaraInitiative/wg-otto/blob/master/README.md)
 
 ## Abstract
 
@@ -10,7 +10,6 @@ very high. By providing a framework for extension, in addition to a core set of
 functionality and schema, the OTTO standard provides a scalable technical
 infrastructure to solve organizational challenges in a number of different
 ecosystems.
-
 
 # otto-node
 
@@ -31,7 +30,7 @@ Example : localhost:5053/swagger
 
 Endpoints
 =================
-## [Discovery Endpoint](#endpoint-discovery)
+#Discovery Endpoint
 
 Registration Authority have metadata describing their configuration. These Registration Authority Metadata values are used by OTTO:
 
