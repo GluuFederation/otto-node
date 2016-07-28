@@ -62,9 +62,3 @@ Content-Type: application/json
    "schema_endpoint":"https://ra.com/otto/schema"
 }
 ```
-
-###  Questions
-
-* How are we going version federation metadata?
-* How are we going version entities ? E.g. UMA RP 1.0 vs UMA RP 1.0.1 implementation.
-* Do we want to support custom entities?
