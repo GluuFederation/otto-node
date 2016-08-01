@@ -1,5 +1,6 @@
 var http = require("http");
 var port = "5053"; // If you want to change the port change in /public/swagger/index.html - "  discoveryUrl: "http://localhost:5053/api-docs.json","for swagger UI
+global.baseURL = "http://localhost:5053";
 var express = require('express');
 var router = express.Router();
 var path = require('path');
@@ -16,7 +17,7 @@ app.set('view engine', 'ejs');
 app.use(swagger.init(app, {
   apiVersion: '1.0',
   swaggerVersion: '1.0.5',
-  basePath: 'http://localhost:5053',
+  basePath: baseURL,
   swaggerURL: '/swagger',
   swaggerJSON: '/api-docs.json',
   swaggerUI: './public/swagger/',

@@ -22,7 +22,15 @@ router.get('/', function (req, res) {
  *      nickname: DiscoveryEndpointAPI
  */
 router.get('/.well-known/otto-configuration', function (req, res) {
- res.render('index.ejs', { title: "Home", host: req.get('host') });
+  var discoveryList = {
+    "issuer": "issuer",
+    "federations_endpoint":  global.baseURL + "/federations",
+    "federation_entity_endpoint": global.baseURL + "/federation_entity",
+    "organizations_endpoint": global.baseURL + "/org",
+    "schema_endpoint":  global.baseURL +"/schema",
+  };
+
+ res.json(discoveryList);
 });
 
 
@@ -36,10 +44,11 @@ router.get('/.well-known/otto-configuration', function (req, res) {
  *      nickname: FederationsEndpointAPI
  */
 router.get('/federations', function (req, res) {
-      res.writeHead(200, {
-  			'Content-Type': 'text/plain'
-  		});
-  		res.end('Federations Endpoint : 200');
+  var result = {
+    "Status Code": "200",
+    "Api":  global.baseURL + "/federations",
+  };
+ res.json(result);
 });
 
 /**
@@ -52,10 +61,11 @@ router.get('/federations', function (req, res) {
  *      nickname: Federation_EntityAPI
  */
 router.get('/federation_entity', function (req, res) {
-      res.writeHead(200, {
-  			'Content-Type': 'text/plain'
-  		});
-  		res.end('Federation_Entity Endpoint : 200');
+  var result = {
+    "Status Code": "200",
+    "Api":  global.baseURL + "/federation_entity",
+  };
+ res.json(result);
 });
 
 /**
@@ -68,10 +78,11 @@ router.get('/federation_entity', function (req, res) {
  *      nickname: OrganizationEndpointAPI
  */
 router.get('/org', function (req, res) {
-      res.writeHead(200, {
-  			'Content-Type': 'text/plain'
-  		});
-  		res.end('Organization Endpoint : 200');
+  var result = {
+    "Status Code": "200",
+    "Api":  global.baseURL + "/org",
+  };
+ res.json(result);
 });
 
 /**
@@ -84,10 +95,11 @@ router.get('/org', function (req, res) {
  *      nickname: SchemaEndpointAPI
  */
 router.get('/schema', function (req, res) {
-      res.writeHead(200, {
-  			'Content-Type': 'text/plain'
-  		});
-  		res.end('Schema Endpoint : 200');
+  var result = {
+    "Status Code": "200",
+    "Api":  global.baseURL + "/schema",
+  };
+ res.json(result);
 
 });
 module.exports = router;
