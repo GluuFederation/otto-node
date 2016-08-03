@@ -1,31 +1,39 @@
 var http = require("http");
-var port = "5053"; // If you want to change the port change in /public/swagger/index.html - "  discoveryUrl: "http://localhost:5053/api-docs.json","for swagger UI
-global.baseURL = "http://localhost:5053";
 var express = require('express');
 var router = express.Router();
 var path = require('path');
 var swagger = require('swagger-express');
-var routes = require('./routes/index');
+var bodyParser = require('body-parser');
+var mysql  = require('mysql');
 var app = express();
 var server = require('http').Server(app);
+var settings = require("./settings");
 
-app.set('port', process.env.PORT || port);
+app.set('port', process.env.PORT || settings.port);
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
+
+//routes
+var routesIndex = require('./routes/index');
+var routesOrganization = require('./routes/organization');
 
 //Swagger Settings
 app.use(swagger.init(app, {
   apiVersion: '1.0',
   swaggerVersion: '1.0.5',
-  basePath: baseURL,
+  basePath: settings.baseURL,
   swaggerURL: '/swagger',
   swaggerJSON: '/api-docs.json',
   swaggerUI: './public/swagger/',
-  apis: ['./routes/index.js']
+  apis: [ './routes/organization.js','./routes/index.js']
 }));
 
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
+app.use(bodyParser.json());
 
 app.set('development', function(){
   app.use(express.errorHandler());
@@ -36,14 +44,9 @@ app.set('views', path.join (__dirname, 'views'));
 app.set('view engine', 'ejs');
 
 //All Routes
-app.use('/', routes);
+app.use('/', routesIndex);
+app.use('/', routesOrganization);
 
-
-/*http.createServer(app).listen(port, function(){
-  console.log("Express server listening on port " + port);
-});*/
-
-
-server.listen(port, function () {
-    console.log('Express server listening on port ' + server.address().port);
+server.listen(settings.port, function () {
+    console.log('Server started successfully!, Open this URL '+ settings.baseURL);
 });

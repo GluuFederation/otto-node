@@ -1,15 +1,17 @@
 var express = require('express');
 var router = express.Router();
 
-
+var settings = require("../settings");
+var baseURL = settings.baseURL;
+var organizationController = require("../controller/organizationController");
 /**
  * @swagger
  * resourcePath: /OTTO
  * description: Open Trust Taxonomy for Federation Operators
  */
 router.get('/', function (req, res) {
-      res.writeHead(200, {'Content-Type': 'text/plain'});
-  		res.end('Open Trust Taxonomy for Federation Operators : 200');
+  var result = {"Status Code": "200",    "Api":  "Open Trust Taxonomy for Federation Operators"};
+  res.json(result);
 });
 
 /**
@@ -21,83 +23,92 @@ router.get('/', function (req, res) {
  *      notes: Endpoint to return discovery metadata that are hosted by given server.
  *      nickname: DiscoveryEndpointAPI
  */
-router.get('/.well-known/otto-configuration', function (req, res) {
+router.get(settings.discoveryEndpoint, function (req, res) {
   var discoveryList = {
     "issuer": "issuer",
-    "federations_endpoint":  global.baseURL + "/federations",
-    "federation_entity_endpoint": global.baseURL + "/federation_entity",
-    "organizations_endpoint": global.baseURL + "/org",
-    "schema_endpoint":  global.baseURL +"/schema",
+    "federations_endpoint":  baseURL +  settings.federations,
+    "federation_entity_endpoint": baseURL + settings.entity,
+    "organizations_endpoint": baseURL + settings.organization,
+    "schema_endpoint":  baseURL + settings.discoveryEndpoint,
   };
-
  res.json(discoveryList);
 });
 
 
 /**
  * @swagger
- * path: /federations
+ * path: /otto/federations
  * operations:
  *   -  httpMethod: GET
  *      summary: Federations Endpoint
  *      notes: Endpoint to return federation metadata or federation IDs that are hosted by given server.
  *      nickname: FederationsEndpointAPI
  */
-router.get('/federations', function (req, res) {
+router.get(settings.federations, function (req, res) {
   var result = {
     "Status Code": "200",
-    "Api":  global.baseURL + "/federations",
+    "Api":  baseURL + settings.federations,
   };
  res.json(result);
 });
 
 /**
  * @swagger
- * path: /federation_entity
+ * path: /otto/entity
  * operations:
  *   -  httpMethod: GET
  *      summary: Federation_Entity Endpoint
  *      notes:  Endpoint to return federation_entity metadata  that are hosted by given server.
  *      nickname: Federation_EntityAPI
  */
-router.get('/federation_entity', function (req, res) {
+router.get(settings.entity, function (req, res) {
   var result = {
-    "Status Code": "200",
-    "Api":  global.baseURL + "/federation_entity",
+    "Status Code": "200",    "Api":  baseURL + settings.entity,
   };
  res.json(result);
 });
 
 /**
  * @swagger
- * path: /org
+ * path: /otto/organization
  * operations:
  *   -  httpMethod: GET
  *      summary: Organization Endpoint
  *      notes: Endpoint to return organization metadata  that are hosted by given server.
  *      nickname: OrganizationEndpointAPI
  */
-router.get('/org', function (req, res) {
-  var result = {
+router.get(settings.organization, function (req, res) {
+  /*var result = {
     "Status Code": "200",
-    "Api":  global.baseURL + "/org",
+    "Api":  baseURL + settings.organizations,
   };
- res.json(result);
+ res.json(result);*/
+ organizationController.getAllOrganization(function (err, data) {
+     if (err) {
+         res.json(500,{ status: '0', msg: 'There was an error reporting your issue.' });
+         return;
+     }
+     else{
+
+       res.json(200,{"organizations": data })
+       //res.json(200,{"id":`{baseURL}/{data[1][0].organizationId}`});
+     }
+   });
 });
 
 /**
  * @swagger
- * path: /schema
+ * path: /otto/schema
  * operations:
  *   -  httpMethod: GET
  *      summary: Schema Endpoint
  *      notes: Endpoint to return schema metadata  that are hosted by given server.
  *      nickname: SchemaEndpointAPI
  */
-router.get('/schema', function (req, res) {
+router.get(settings.schema, function (req, res) {
   var result = {
     "Status Code": "200",
-    "Api":  global.baseURL + "/schema",
+    "Api":  baseURL + settings.schema,
   };
  res.json(result);
 
