@@ -1,6 +1,5 @@
 var express = require('express');
 var router = express.Router();
-
 var settings = require("../settings");
 var baseURL = settings.baseURL;
 var organizationController = require("../controller/organizationController");
@@ -78,20 +77,13 @@ router.get(settings.entity, function (req, res) {
  *      nickname: OrganizationEndpointAPI
  */
 router.get(settings.organization, function (req, res) {
-  /*var result = {
-    "Status Code": "200",
-    "Api":  baseURL + settings.organizations,
-  };
- res.json(result);*/
  organizationController.getAllOrganization(function (err, data) {
      if (err) {
          res.json(500,{ status: '0', msg: 'There was an error reporting your issue.' });
          return;
      }
      else{
-
        res.json(200,{"organizations": data })
-       //res.json(200,{"id":`{baseURL}/{data[1][0].organizationId}`});
      }
    });
 });

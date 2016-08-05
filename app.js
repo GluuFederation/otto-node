@@ -9,13 +9,14 @@ var app = express();
 var server = require('http').Server(app);
 var settings = require("./settings");
 
+//routes
+var routesIndex = require('./routes/index');
+var routesOrganization = require('./routes/organization');
+
 app.set('port', process.env.PORT || settings.port);
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
 
-//routes
-var routesIndex = require('./routes/index');
-var routesOrganization = require('./routes/organization');
 
 //Swagger Settings
 app.use(swagger.init(app, {
@@ -48,5 +49,7 @@ app.use('/', routesIndex);
 app.use('/', routesOrganization);
 
 server.listen(settings.port, function () {
+    console.log('-------------------------------------------------------------------');
     console.log('Server started successfully!, Open this URL '+ settings.baseURL);
+    console.log('-------------------------------------------------------------------');
 });

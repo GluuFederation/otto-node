@@ -1,11 +1,10 @@
 // File : routes/organization.js -->
-
-
 var express = require('express');
 var router = express.Router();
 var organizationController = require("../controller/organizationController");
 var settings = require("../settings");
 var baseURL = settings.baseURL;
+var organizationEndPointPath = settings.organization;
 
 /**
  * @swagger
@@ -46,8 +45,7 @@ router.post('/organization', function (req, res) {
           return;
       }
       else{
-        res.json(200,{"id":baseURL+"/" + data[1][0].organizationId})
-        //res.json(200,{"id":`{baseURL}/{data[1][0].organizationId}`});
+        res.json(200,{"id":baseURL+organizationEndPointPath+"/" + data[1][0].organizationId})
       }
     });
 });
