@@ -83,7 +83,7 @@ router.get(settings.organization, function (req, res) {
          return;
      }
      else{
-       res.json(200,{"organizations": data })
+       res.json(200,{  "@context": settings.contextSchema + settings.contextOrganization, "organizations": data })
      }
    });
 });

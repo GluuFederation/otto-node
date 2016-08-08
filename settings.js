@@ -20,3 +20,7 @@
   exports.entity= "/otto/entity"
   exports.organization= "/otto/organization"
   exports.schema= "/otto/schema"
+
+  //@context URL
+  exports.contextSchema = "https://schema.org/"
+  exports.contextOrganization = "Organization"
