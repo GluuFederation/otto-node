@@ -13,7 +13,7 @@ var organizationEndPointPath = settings.organization;
  */
 
 
- /**
+/**
  * @swagger
  * path: /otto/organization
  * operations:
@@ -30,58 +30,86 @@ var organizationEndPointPath = settings.organization;
  *          required: true
  *          dataType: string
  */
-router.post(settings.organization, function (req, res) {
+router.post(settings.organization, function(req, res) {
+    var organizationName = req.param('name');
+    if (organizationName == "" || organizationName == undefined) {
+        var result = {
+            status: '0',
+            msg: 'Organization name is required.'
+        };
+        res.status(200).json(result);
+        return;
+    }
 
-  var organizationName= req.param('name');
-
-  if (organizationName == "" || organizationName == undefined) {
-      res.json({ status: '0', msg : 'Organization name is required.' });
-      return;
-  }
-
-  organizationController.createOrganization(organizationName, function (err, data) {
-      if (err) {
-          res.json(500,{ status: '0', msg: 'There was an error reporting your issue.' });
-          return;
-      }
-      else{
-        res.json(200,{"id":baseURL+organizationEndPointPath+"/" + data[1][0].organizationId})
-      }
+    organizationController.createOrganization(organizationName, function(err, data) {
+        if (err) {
+            var result = {
+                status: '0',
+                msg: 'There was an error reporting your issue.'
+            };
+            res.status(500).json(result);
+            return;
+        } else {
+            var result = {
+                "id": baseURL + organizationEndPointPath + "/" + data[1][0].organizationId
+            };
+            res.status(200).json(result);
+        }
     });
 });
 module.exports = router;
 
 
 /**
-* @swagger
-* path: /otto/organization/{id}
-* operations:
-*   -  httpMethod: GET
-*      summary: Get Organization
-*      notes: Returns Organization
-*      nickname: GetOrganization
-*      parameters:
-*        - name: id
-*          paramType: path
-*          description: Your Organization Id
-*          required: true
-*          dataType: string
-*/
-router.get('/otto/organization/:id', function (req, res) {
-  var organizationId= req.params.id;
- if (organizationId == "" || organizationId == undefined) {
-     res.json({ status: '0', msg : 'Organization id is required.' });
-     return;
- }
+ * @swagger
+ * path: /otto/organization/{id}
+ * operations:
+ *   -  httpMethod: GET
+ *      summary: Get Organization
+ *      notes: Returns Organization
+ *      nickname: GetOrganization
+ *      parameters:
+ *        - name: id
+ *          paramType: path
+ *          description: Your Organization Id
+ *          required: true
+ *          dataType: string
+ */
+router.get('/otto/organization/:id', function(req, res) {
+    var organizationId = req.params.id;
+    if (organizationId == "" || organizationId == undefined) {
+        var result = {
+            status: '0',
+            msg: 'Organization id is required.'
+        };
+        res.status(200).json(result);
+        return;
+    }
 
- organizationController.getOrganizationById(organizationId, function (err, data) {
-     if (err) {
-         res.json(500,{ status: '0', msg: 'There was an error reporting your issue.' });
-         return;
-     }
-     else{
-       res.json(200,{'@context': settings.contextSchema + settings.contextOrganization,'@id': data[0]['@id'] , 'name': data[0].organizationName})
-     }
-   });
+    organizationController.getOrganizationById(organizationId, function(err, data) {
+        if (err) {
+            var result = {
+                status: '0',
+                msg: err
+            };
+            res.status(500).json(result);
+            return;
+        } else {
+            if (data.length > 0) {
+                var result = {
+                    '@context': settings.contextSchema + settings.contextOrganization,
+                    '@id': data[0]['@id'],
+                    'name': data[0].organizationName
+                };
+                res.status(200).json(result);
+            } else {
+                var result = {
+                    status: '400',
+                    msg: 'Organization is not found.'
+                };
+                res.status(400).json(result);
+            }
+        }
+    });
 });
 module.exports = router;
