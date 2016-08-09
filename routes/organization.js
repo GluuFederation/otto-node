@@ -75,7 +75,7 @@ module.exports = router;
  *          required: true
  *          dataType: string
  */
-router.get('/otto/organization/:id', function(req, res) {
+router.get(settings.organization +'/:id', function(req, res) {
     var organizationId = req.params.id;
     if (organizationId == "" || organizationId == undefined) {
         var result = {
@@ -97,7 +97,8 @@ router.get('/otto/organization/:id', function(req, res) {
         } else {
             if (data.length > 0) {
                 var result = {
-                    '@context': settings.contextSchema + settings.contextOrganization,
+                    '@context': settings.contextSchema,
+                    '@type': settings.contextOrganization,
                     '@id': data[0]['@id'],
                     'name': data[0].organizationName
                 };
