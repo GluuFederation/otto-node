@@ -57,8 +57,6 @@ router.post(settings.organization, function(req, res) {
         }
     });
 });
-module.exports = router;
-
 
 /**
  * @swagger
@@ -75,7 +73,7 @@ module.exports = router;
  *          required: true
  *          dataType: string
  */
-router.get(settings.organization +'/:id', function(req, res) {
+router.get(settings.organization + '/:id', function(req, res) {
     var organizationId = req.params.id;
     if (organizationId == "" || organizationId == undefined) {
         var result = {
@@ -101,6 +99,63 @@ router.get(settings.organization +'/:id', function(req, res) {
                     '@type': settings.contextOrganization,
                     '@id': data[0]['@id'],
                     'name': data[0].organizationName
+                };
+                res.status(200).json(result);
+            } else {
+                var result = {
+                    status: '400',
+                    msg: 'Organization is not found.'
+                };
+                res.status(400).json(result);
+            }
+        }
+    });
+});
+
+
+/**
+ * @swagger
+ * path: /otto/organization
+ * operations:
+ *   -  httpMethod: Delete
+ *      summary: Delete Organization
+ *      notes: Returns deleted status
+ *      nickname: organization
+ *      consumes:
+ *        - text/html
+ *      parameters:
+ *        - name: id
+ *          description: Your Organization Id
+ *          paramType: query
+ *          required: true
+ *          dataType: string
+ */
+router.delete(settings.organization, function(req, res) {
+    var organizationId = req.param('id');
+
+    if (organizationId == "" || organizationId == undefined) {
+        var result = {
+            status: '0',
+            msg: 'Organization id is required.'
+        };
+        res.status(200).json(result);
+        return;
+    }
+
+    organizationController.deleteOrganization(organizationId, function(err, data) {
+        if (err) {
+            var result = {
+                status: '0',
+                msg: 'There was an error reporting your issue.'
+            };
+            res.status(500).json(result);
+            return;
+        } else {
+
+            if (data.affectedRows > 0) {
+                var result = {
+                    "status": "200",
+                    "msg": "ok"
                 };
                 res.status(200).json(result);
             } else {

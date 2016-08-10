@@ -91,7 +91,8 @@ router.get(settings.organization, function(req, res) {
         } else {
             res.status(200).json({
                 "@context": settings.contextSchema + settings.contextOrganization,
-                "organizations": data
+                "@type": settings.contextOrganization,
+                "organizations": [data[0].id]
             });
         }
     });
