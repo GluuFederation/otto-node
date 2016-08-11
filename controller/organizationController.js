@@ -23,7 +23,7 @@ METHOD NAME : Get all organizaion
 METHOD TYPE : GET
 ---------------------------------------------------*/
 exports.getAllOrganization = function(callback) {
-    var query = 'Select GROUP_CONCAT(CONCAT("' + baseURL + organizationEndPointPath + '/", organizationId)) as id FROM organization';
+    var query = 'Select CONCAT("' + baseURL + organizationEndPointPath + '/", organizationId) as id FROM organization';
     db.executeSql(query, function(err, data) {
         if (!err) {
             callback(null, data);

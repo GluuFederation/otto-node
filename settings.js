@@ -1,7 +1,7 @@
   exports.dbConfig = {
       host: 'localhost',
       user: 'root',
-      password: '',
+      password: 'root',
       database: 'otto',
       multipleStatements: true
   }

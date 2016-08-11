@@ -31,7 +31,7 @@ router.get(settings.discoveryEndpoint, function(req, res) {
         "federations_endpoint": baseURL + settings.federations,
         "federation_entity_endpoint": baseURL + settings.entity,
         "organizations_endpoint": baseURL + settings.organization,
-        "schema_endpoint": baseURL + settings.discoveryEndpoint,
+        "schema_endpoint": baseURL + settings.schema,
     };
     res.status(200).json(discoveryList);
 });
@@ -89,10 +89,17 @@ router.get(settings.organization, function(req, res) {
             };
             res.status(500).json(result);
         } else {
+
+            var jsonArray = [];
+
+            for (var i = 0; i < data.length; i++) {
+              jsonArray.push(data[i].id);
+            }
+
             res.status(200).json({
-                "@context": settings.contextSchema + settings.contextOrganization,
-                "@type": settings.contextOrganization,
-                "organizations": [data[0].id]
+                //"@context": settings.contextSchema + settings.contextOrganization,
+              //  "@type": settings.contextOrganization,
+                "organizations" : jsonArray
             });
         }
     });
