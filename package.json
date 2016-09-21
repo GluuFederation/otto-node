@@ -4,12 +4,14 @@
   "description": "otto-node",
   "main": "app.js",
   "dependencies": {
+    "ajv": "^4.7.2",
     "body-parser": "^1.15.2",
     "ejs": "^2.4.2",
     "express": "^4.14.0",
     "grunt-cli": "^1.2.0",
     "grunt-nodemon": "^0.4.2",
     "jsonld": "^0.4.11",
+    "mongoose": "^4.6.0",
     "mysql": "^2.11.1",
     "pm2": "^1.1.3",
     "swagger-express": "^1.0.5"
@@ -27,7 +29,7 @@
   "keywords": [
     "otto-node"
   ],
-  "author": "Meghana Joshi",
+  "author": "Meghna Joshi",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/GluuFederation/otto-node/issues"

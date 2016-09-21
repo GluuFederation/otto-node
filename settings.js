@@ -1,13 +1,11 @@
-  exports.dbConfig = {
+/*  exports.dbConfig = {
       host: 'localhost',
       user: 'root',
       password: 'root',
       database: 'otto',
       multipleStatements: true
-  }
-
-
-
+  }*/
+  exports.dbConfig="mongodb://localhost/otto"
 
 
   // If you want to change the port change in /public/swagger/index.html - "  discoveryUrl: "http://localhost:5053/api-docs.json","for swagger UI
@@ -17,7 +15,7 @@
   //Endpoint Declaration
   exports.discoveryEndpoint = "/.well-known/otto-configuration"
   exports.federations = "/otto/federations"
-  exports.entity = "/otto/entity"
+  exports.federation_entity = "/otto/federation_entity"
   exports.organization = "/otto/organization"
   exports.schema = "/otto/schema"
 

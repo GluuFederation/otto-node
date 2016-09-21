@@ -8,10 +8,12 @@ var mysql = require('mysql');
 var app = express();
 var server = require('http').Server(app);
 var settings = require("./settings");
+var db = require('./core/db');
 
 //routes
 var routesIndex = require('./routes/index');
-var routesOrganization = require('./routes/organization');
+var routesFederations = require('./routes/federation');
+var routesFederationsEntity = require('./routes/federation_entity');
 
 app.set('port', process.env.PORT || settings.port);
 app.set('views', __dirname + '/views');
@@ -26,7 +28,7 @@ app.use(swagger.init(app, {
     swaggerURL: '/swagger',
     swaggerJSON: '/api-docs.json',
     swaggerUI: './public/swagger/',
-    apis: ['./routes/organization.js', './routes/index.js']
+    apis: ['./routes/index.js','./routes/federation_entity.js' , './routes/federation.js']
 }));
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -46,7 +48,9 @@ app.set('view engine', 'ejs');
 
 //All Routes
 app.use('/', routesIndex);
-app.use('/', routesOrganization);
+app.use('/', routesFederations);
+app.use('/', routesFederationsEntity);
+
 
 server.listen(settings.port, function() {
     console.log('-------------------------------------------------------------------');
