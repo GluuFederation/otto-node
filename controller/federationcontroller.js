@@ -44,7 +44,7 @@ exports.addFederation = function(req, callback) {
     if (valid) {
         // console.log('Federation data is valid');
         var ObjFederation = new Federation(req.body);
-
+        
         ObjFederation.save(function(err, obj) {
             if (err) callback(err, null);
             //console.log(obj._id);
@@ -64,8 +64,6 @@ exports.addFederation = function(req, callback) {
 
 
 exports.findFederation = function(id, callback) {
-
-  
 
     Federation.findOne({_id: id}).select('-__v -_id').populate({path :'entites',select :'name @context @id -_id'}).exec(function (err, federation) {
          if (err) callback(err, null);
@@ -101,11 +99,8 @@ exports.deleteFederation = function(id, callback) {
 
             if (err) callback(err, null);
             callback(null);
-
         });
     });
-
-
 };
 
 
@@ -188,8 +183,7 @@ exports.leaveFederation = function(fid,eid,callback){
             callback('Entity doesn\'t exist in Federation',null)
         }
        // doc.entites.pull(eid);
-        
-
-    });
+ 
+   });
 
 }

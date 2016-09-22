@@ -14,6 +14,8 @@ var db = require('./core/db');
 var routesIndex = require('./routes/index');
 var routesFederations = require('./routes/federation');
 var routesFederationsEntity = require('./routes/federation_entity');
+var routesOrganization = require('./routes/organization');
+
 
 app.set('port', process.env.PORT || settings.port);
 app.set('views', __dirname + '/views');
@@ -28,7 +30,7 @@ app.use(swagger.init(app, {
     swaggerURL: '/swagger',
     swaggerJSON: '/api-docs.json',
     swaggerUI: './public/swagger/',
-    apis: ['./routes/index.js','./routes/federation_entity.js' , './routes/federation.js']
+    apis: ['./routes/index.js','./routes/federation_entity.js' , './routes/federation.js','./routes/organization.js']
 }));
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -50,7 +52,7 @@ app.set('view engine', 'ejs');
 app.use('/', routesIndex);
 app.use('/', routesFederations);
 app.use('/', routesFederationsEntity);
-
+app.use('/',routesOrganization);
 
 server.listen(settings.port, function() {
     console.log('-------------------------------------------------------------------');
