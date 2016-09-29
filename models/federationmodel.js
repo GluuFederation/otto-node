@@ -9,7 +9,8 @@ var FederationSchema = new Schema({
   '@context':String,
   '@id':String,
   name: String,
-  entites :[{type :Schema.ObjectId, ref: 'Federation_Entity'}]
+  entities :[{type :Schema.ObjectId, ref: 'Federation_Entity'}],
+  organizationId : {type :Schema.ObjectId,ref:'Organization'}
 
 });
 

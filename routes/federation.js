@@ -36,12 +36,9 @@ router.post(settings.federations, function(req, res) {
     federationcontroller.addFederation(req, function(err, data) {
         console.log(err);
         if (err) {
-            res.status(409).json({
-                "Errors": err
-            });
+           res.status(err.code).json({"Error(s)": err.error});
         } else {
-
-            res.status(200).json({
+            res.status(201).json({
                 "@id": baseURL + FederationURL + "/" + data
             });
         }
@@ -68,14 +65,10 @@ router.get(settings.federations + '/:id', function(req, res) {
 
     //   console.log(req.params.id);
 
-    federationcontroller.findFederation(req.params.id, function(err, data) {
+    federationcontroller.findFederation(req, function(err, data) {
         if (err) {
-
-            res.status(409).json({
-                "Errors": err
-            });
+            res.status(err.code).json({"Error(s)": err.error});
         } else {
-
             res.status(200).json(
                  data
             );
@@ -93,13 +86,20 @@ router.get(settings.federations + '/:id', function(req, res) {
  *      summary: Get Federations
  *      notes: Returns Federations
  *      nickname: GetFederations
- *
+ *      parameters:
+ *        - name: depth
+ *          description: depth[federation,federation.entities]
+ *          paramType: query
+ *          required: false
+ *          dataType: string
+ *      
  */
 router.get(settings.federations, function(req, res) {
     federationcontroller.getAllFederation(req, function(err, data) {
         if (err) {
+            
+             res.status(err.code).json({"Error(s)": err.error});
 
-            res.status(409).json(err);
         } else {
 
             res.status(200).json({
@@ -134,20 +134,13 @@ router.get(settings.federations, function(req, res) {
  */
 router.delete(settings.federations + '/:id', function(req, res) {
 
-    federationcontroller.deleteFederation(req.params.id, function(err) {
+    federationcontroller.deleteFederation(req, function(err) {
         if (err) {
-
-            res.status(409).json({
-                "Error": err
-            });
+           res.status(err.code).json({"Error(s)": err.error});
         } else {
-
             res.status(200).json();
         }
-
     });
-
-
 });
 
 
@@ -179,11 +172,8 @@ router.put(settings.federations + "/:id", function(req, res) {
     federationcontroller.updateFederation(req, function(err, data) {
         console.log(err);
         if (err) {
-            res.status(409).json({
-                "Errors": err
-            });
+           res.status(err.code).json({"Error(s)": err.error});
         } else {
-
             res.status(200).json();
         }
     });
@@ -216,9 +206,7 @@ router.put(settings.federations + "/:id", function(req, res) {
 router.delete(settings.federations + '/:fid/:eid' , function(req, res) {
   federationcontroller.leaveFederation(req.params.fid,req.params.eid,function(err,callback){
                    if (err) {
-                    res.status(409).json({
-                        "Errors": err
-                        }); 
+                      res.status(err.code).json({"Error(s)": err.error});
                    }
                    res.status(200).json(); 
             });
@@ -252,9 +240,7 @@ router.post(settings.federations + '/:fid/:eid' , function(req, res) {
 
        federationcontroller.joinFederation(req.params.fid,req.params.eid,function(err,callback){
                    if (err) {
-                    res.status(409).json({
-                        "Errors": err
-                        }); 
+                        res.status(err.code).json({"Error(s)": err.error});
                    }
                    res.status(200).json(); 
             });
@@ -289,28 +275,19 @@ router.post(settings.federations + '/:fid/' , function(req, res) {
     federationentitycontroller.addFederationEntity(req, function(err, data) {
         console.log(err);
         if (err) {
-            res.status(409).json({
-                "Errors": err
-            });
+           res.status(err.code).json({"Error(s)": err.error});
         } else {
-
-            console.log('Federation Entity Created --- ' + data );
             federationcontroller.joinFederation(req.params.fid,data,function(err,callback){
                    if (err) {
                     res.status(409).json({
-                        "Errors": err
+                        "Error(s)": err
                         }); 
                    }
                    res.status(200).json(); 
             });
-
         }
     });
 
 });
-
-
-
-
 
 module.exports = router;

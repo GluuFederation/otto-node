@@ -7,7 +7,10 @@ var Schema = mongoose.Schema;
 var OrganizationSchema = new Schema({
   '@context':String,
   '@id':String,
-  name: String
+  name: String,
+  entities :[{type :Schema.ObjectId, ref: 'Federation_Entity'}],
+  federations :[{type :Schema.ObjectId, ref: 'Federation'}],
+
   //category:String
   // entityType:String,
   // address : {
@@ -25,6 +28,7 @@ OrganizationSchema.pre("save",function(next,done){
   
   this['@id']=settings.baseURL + settings.organization+"/"+this._id;
   this['@context']=settings.baseURL + settings.federation_entity+"/organization.jsonld";
+  console.log(this);  
   next();
     
 });

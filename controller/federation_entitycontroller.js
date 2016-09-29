@@ -39,56 +39,56 @@ exports.addFederationEntity = function(req, callback) {
 
     var valid = ajv.validate(FederationEntityAJVSchema, req.body);
     if (valid) {
-        // console.log('Federation data is valid');
+    
         var ObjFederationEntity = new FederationEntity(req.body);
-
         ObjFederationEntity.save(function(err, obj) {
-            if (err) callback(err, null);
-            //console.log(obj._id);
+            if (err) throw(err);
             callback(null, obj._id);
-
         });
     } else {
-        //console.log('Federation data is INVALID!');
         var errorMsg = Array();
         ajv.errors.forEach(function(element) {
             errorMsg.push(element.message);
         });
-        callback(errorMsg), null;
+        callback({ "error" :errorMsg,"code" : 400}, null);
     }
 
 };
 
 
-exports.findFederationEntity = function(id, callback) {
+exports.findFederationEntity = function(req, callback) {
 
-     var query = FederationEntity.findOne({_id: id}).select( '-_id -__v');
+    if(!mongoose.Types.ObjectId.isValid(req.params.id))
+        callback({ "error" :["Invalid Federation Entity Id"],"code" : 400}, null);
+
+     var query = FederationEntity.findOne({_id: req.params.id}).select( '-_id -__v');
 
     query.exec( function(err, docs) {
         console.log(docs);
-        if (err) callback(err, null);
+        if (err) throw(err);
         callback(null, docs);
     });
 
 };
 
 
-exports.deleteFederationEntity = function(id, callback) {
-    console.log(id)
+exports.deleteFederationEntity = function(req, callback) {
 
+     if(!mongoose.Types.ObjectId.isValid(req.params.id))
+        callback({ "error" :["Invalid Federation Entity Id"],"code" : 400}, null);
 
     FederationEntity.find({
-        _id: id
+        _id: req.params.id
     }, "_id", function(err, docs) {
         console.log(docs);
         if (err) callback(err, null);
 
         if (docs.length == 0) {
-            callback("Federation doesn't exist", null);
+            callback({"error" :["Federation Entity doesn't exist"],"code" : 404}, null);
         }
 
         FederationEntity.findOneAndRemove({
-            _id: id
+            _id: req.params.id
         }, function(err) {
 
             if (err) callback(err, null);
@@ -103,26 +103,27 @@ exports.deleteFederationEntity = function(id, callback) {
 
 exports.updateFederationEntity = function(req, callback) {
 
+     if(!mongoose.Types.ObjectId.isValid(req.params.id))
+        callback({ "error" :["Invalid Federation Entity Id"],"code" : 400}, null);
+
 
     var valid = ajv.validate(FederationEntityAJVSchema, req.body);
     if (valid) {
-        // console.log('Federation data is valid');
         FederationEntity.findOneAndUpdate({
             _id: req.params.id
         }, req.body, function(err, data) {
-            if (err) callback(err, null);
+            if (err) throw(err);
             //console.log(obj._id);
             callback(null, data);
         });
 
 
     } else {
-        //console.log('Federation data is INVALID!');
         var errorMsg = Array();
         ajv.errors.forEach(function(element) {
             errorMsg.push(element.message);
         });
-        callback(errorMsg, null);
+      callback({ "error" :errorMsg,"code" : 400}, null);
     }
 
 };

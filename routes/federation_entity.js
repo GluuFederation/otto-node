@@ -34,12 +34,10 @@ router.post(FederationEntityURL, function(req, res) {
     federationentitycontroller.addFederationEntity(req, function(err, data) {
         console.log(err);
         if (err) {
-            res.status(409).json({
-                "Errors": err
-            });
+           res.status(err.code).json({"Error(s)": err.error});
         } else {
 
-            res.status(200).json({
+            res.status(201).json({
                 "@id": baseURL + FederationEntityURL + "/" + data
             });
         }
@@ -64,14 +62,10 @@ router.post(FederationEntityURL, function(req, res) {
  */
 router.get(FederationEntityURL + '/:id', function(req, res) {
 
-    //   console.log(req.params.id);
-
-    federationentitycontroller.findFederationEntity(req.params.id, function(err, data) {
+    federationentitycontroller.findFederationEntity(req, function(err, data) {
         if (err) {
 
-            res.status(409).json({
-                "Errors": err
-            });
+            res.status(err.code).json({"Error(s)": err.error});
         } else {
 
             res.status(200).json(data);
@@ -95,7 +89,7 @@ router.get(FederationEntityURL, function(req, res) {
     federationentitycontroller.getAllFederationEntity(req, function(err, data) {
         if (err) {
 
-            res.status(409).json(err);
+           res.status(err.code).json({"Error(s)": err.error});
         } else {
 
             res.status(200).json({
@@ -129,19 +123,13 @@ router.get(FederationEntityURL, function(req, res) {
  */
 router.delete(FederationEntityURL + '/:id', function(req, res) {
 
-    federationentitycontroller.deleteFederationEntity(req.params.id, function(err) {
+    federationentitycontroller.deleteFederationEntity(req, function(err) {
         if (err) {
-
-            res.status(409).json({
-                "Error": err
-            });
+           res.status(err.code).json({"Error(s)": err.error});
         } else {
-
             res.status(200).json();
         }
-
     });
-
 
 });
 
@@ -174,9 +162,7 @@ router.put(FederationEntityURL + "/:id", function(req, res) {
     federationentitycontroller.updateFederationEntity(req, function(err, data) {
         console.log(err);
         if (err) {
-            res.status(409).json({
-                "Errors": err
-            });
+           res.status(err.code).json({"Error(s)": err.error});
         } else {
 
             res.status(200).json();

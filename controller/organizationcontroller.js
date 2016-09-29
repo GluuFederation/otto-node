@@ -1,5 +1,6 @@
 var federationmodel = require("../models/organizationmodel");
 var mongoose = require('mongoose');
+var Transaction = require('mongoose-transaction')(mongoose);
 var Organization = mongoose.model('Organization');
 var Common = require('../helpers/common');
 var Ajv = require('ajv');
@@ -36,90 +37,155 @@ exports.addOrganization = function(req, callback) {
 
     var valid = ajv.validate(OrganizationAJVSchema, req.body);
     if (valid) {
-        // console.log('Federation data is valid');
         var ObjOrganization = new Organization(req.body);
 
         ObjOrganization.save(function(err, obj) {
-            if (err) callback(err, null);
-            //console.log(obj._id);
+            if (err) throw(err);
             callback(null, obj._id);
 
-        });
+   });
     } else {
-        //console.log('Federation data is INVALID!');
+
         var errorMsg = Array();
         ajv.errors.forEach(function(element) {
             errorMsg.push(element.message);
         });
-        callback(errorMsg), null;
+        callback({ "error" :errorMsg,"code" : 400}, null);
     }
 
 };
 
 
-exports.findOrganization = function(id, callback) {
+exports.findOrganization = function(req, callback) {
 
-     var query = Organization.findOne({_id: id}).select( '-_id -__v');
+     if(!mongoose.Types.ObjectId.isValid(req.params.id))
+        callback({ "error" :["Invalid Organization Id"],"code" : 400}, null);
 
-    query.exec( function(err, docs) {
-        console.log(docs);
-        if (err) callback(err, null);
-        callback(null, docs);
-    });
-
+     var query = Organization.findOne({_id: req.params.id}).select( '-_id -__v');//.populate({path:'federations',select:'@id name -_id'});
+     query.exec( function(err, docs) {
+     if (err) throw(err);
+     var data = JSON.parse(JSON.stringify(docs._doc));
+     for(var i=0;i<data.federations.length;i++)
+     {
+         data.federations[i] = settings.baseURL + settings.federations + "/" +  data.federations[i];
+     }
+     for(var i=0;i<data.entities.length;i++)
+     {
+         data.entities[i] = settings.baseURL + settings.federation_entity + "/" +  data.entities[i];
+     }
+     callback(null, data);
+   });
 };
 
 
-exports.deleteOrganization = function(id, callback) {
-    console.log(id)
+exports.deleteOrganization = function(req, callback) {
 
+    if(!mongoose.Types.ObjectId.isValid(req.params.id))
+        callback({ "error" :["Invalid Organization Id"],"code" : 400}, null);
 
-    Organization.find({
-        _id: id
-    }, "_id", function(err, docs) {
-        console.log(docs);
-        if (err) callback(err, null);
-
-        if (docs.length == 0) {
-            callback("Federation doesn't exist", null);
-        }
-
+    Organization.find({_id: req.params.id}, "_id", function(err, docs) {
+        
+        if (err) 
+            throw(err);
+        
+        if (docs.length == 0)
+           callback({ "error" :["Organization doesn't exists"],"code" : 404}, null);
+        
         Organization.findOneAndRemove({
-            _id: id
+            _id: req.params.id
         }, function(err) {
-
-            if (err) callback(err, null);
+            if (err)  throw(err);
             callback(null);
-
-    });
-        });
-
+       });
+  });
 
 };
 
 
 exports.updateOrganizattion = function(req, callback) {
 
+    if(!mongoose.Types.ObjectId.isValid(req.params.id))
+        callback({ "error" :["Invalid Organization Id"],"code" : 400}, null);
 
     var valid = ajv.validate(OrganizationAJVSchema, req.body);
     if (valid) {
-        // console.log('Federation data is valid');
-        Organization.findOneAndUpdate({
-            _id: req.params.id
-        }, req.body, function(err, data) {
-            if (err) callback(err, null);
-            //console.log(obj._id);
+        
+        Organization.findOneAndUpdate({_id: req.params.id}, req.body, function(err, data) {
+            if (err) 
+               throw(err);
             callback(null, data);
         });
 
 
     } else {
-        //console.log('Federation data is INVALID!');
         var errorMsg = Array();
         ajv.errors.forEach(function(element) {
             errorMsg.push(element.message);
         });
-        callback(errorMsg, null);
+        callback({ "error" :errorMsg,"code" : 400}, null);
     }
 
 }; 
+
+exports.joinFederationOrganization = function(req,callback){
+
+    if(!mongoose.Types.ObjectId.isValid(req.params.oid))
+        callback({ "error" :["Invalid Organization Id"],"code" : 400}, null);
+     if(!mongoose.Types.ObjectId.isValid(req.params.fid))
+         callback({ "error" :["Invalid Federation Id"],"code" : 400}, null);
+    
+     Organization.findOne({_id: req.params.oid}, function(err, doc) {
+        
+        if (err) 
+            callback(err, null);
+        if(doc==null)
+           callback({ "error" :["Organization doesn't exists"],"code" : 404}, null);
+       
+        // if(doc.federations.indexOf(req.params.fid) > -1)
+        //     callback({ "error" :["Federation already exist"],"code" : 404}, null);
+        
+       
+      //  doc.federations.push(req.params.fid);
+        var transaction = new Transaction();
+        transaction.update('Organization',doc);
+        transaction.update('Federation', req.params.fid, {organizationId:req.params.oid});
+        transaction.run(function(err, docs){
+            if(err)           
+                throw(err);
+            callback(null,doc);
+        });              
+    });
+
+};
+
+
+exports.joinEntityOrganization = function(req,callback){
+
+    if(!mongoose.Types.ObjectId.isValid(req.params.oid))
+        callback({ "error" :["Invalid Organization Id"],"code" : 400}, null);
+     if(!mongoose.Types.ObjectId.isValid(req.params.eid))
+         callback({ "error" :["Invalid Federation Entity Id"],"code" : 400}, null);
+    
+     Organization.findOne({_id: req.params.oid}, function(err, doc) {
+        
+        if (err) 
+            callback(err, null);
+        if(doc==null)
+           callback({ "error" :["Organization doesn't exists"],"code" : 404}, null);
+       
+        if(doc.entities.indexOf(req.params.eid) > -1)
+            callback({ "error" :["Federation Entity already exist"],"code" : 404}, null);
+           
+            
+        doc.entities.push(req.params.eid);
+        var transaction = new Transaction();
+        transaction.insert('Organization',doc);
+        transaction.update('Federation_Entity', req.params.eid, {organizationId:req.params.oid});
+        transaction.run(function(err, docs){
+            if(err)           
+                throw(err);
+            callback(null,doc);
+        });              
+    });
+
+};

@@ -8,7 +8,9 @@ var Federation_EntitySchema = new Schema({
   id:String,
   '@context':String,
   '@id':String,
-  name: String
+  name: String,
+  organizationId : {type :Schema.ObjectId,ref:'Organization'}
+
   //category:String
   // entityType:String,
   // address : {
