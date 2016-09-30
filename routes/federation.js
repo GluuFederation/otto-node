@@ -113,8 +113,6 @@ router.get(settings.federations, function(req, res) {
 
 });
 
-
-
 /**
  * @swagger
  * path: /otto/federations/{id}
@@ -204,7 +202,7 @@ router.put(settings.federations + "/:id", function(req, res) {
  *          dataType: string
  */
 router.delete(settings.federations + '/:fid/:eid' , function(req, res) {
-  federationcontroller.leaveFederation(req.params.fid,req.params.eid,function(err,callback){
+  federationcontroller.leaveFederation(req,function(err,callback){
                    if (err) {
                       res.status(err.code).json({"Error(s)": err.error});
                    }
@@ -238,7 +236,7 @@ router.delete(settings.federations + '/:fid/:eid' , function(req, res) {
  */
 router.post(settings.federations + '/:fid/:eid' , function(req, res) {
 
-       federationcontroller.joinFederation(req.params.fid,req.params.eid,function(err,callback){
+       federationcontroller.joinFederation(req,function(err,callback){
                    if (err) {
                         res.status(err.code).json({"Error(s)": err.error});
                    }
@@ -277,7 +275,8 @@ router.post(settings.federations + '/:fid/' , function(req, res) {
         if (err) {
            res.status(err.code).json({"Error(s)": err.error});
         } else {
-            federationcontroller.joinFederation(req.params.fid,data,function(err,callback){
+            req.params.eid =data.toString();
+            federationcontroller.joinFederation(req,function(err,callback){
                    if (err) {
                     res.status(409).json({
                         "Error(s)": err

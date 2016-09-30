@@ -218,7 +218,7 @@ router.post(OrganizationURL + "/:oid/federation/:fid", function(req, res) {
  *      consumes:
  *        - text/html
  *      parameters:
- *        - name: id
+ *        - name: oid
  *          description: Your Organization Id
  *          paramType: path
  *          required: true

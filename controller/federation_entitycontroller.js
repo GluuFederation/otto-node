@@ -116,8 +116,6 @@ exports.updateFederationEntity = function(req, callback) {
             //console.log(obj._id);
             callback(null, data);
         });
-
-
     } else {
         var errorMsg = Array();
         ajv.errors.forEach(function(element) {

@@ -23,7 +23,5 @@ FederationSchema.pre("save",function(next,done){
     
 });
 
-
-
 var Federation = mongoose.model('Federation', FederationSchema);
 module.exports = Federation;

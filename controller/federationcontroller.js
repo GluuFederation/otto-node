@@ -1,6 +1,9 @@
 var federationmodel = require("../models/federationmodel");
+var federationentitymodel = require("../models/federation_entitymodel");
+
 var mongoose = require('mongoose');
 var Federation = mongoose.model('Federation');
+var FederationEntity = mongoose.model('Federation_Entity');
 var Common = require('../helpers/common');
 var Ajv = require('ajv');
 var ajv = Ajv({
@@ -123,7 +126,6 @@ exports.addFederation = function(req, callback) {
 
 };
 
-
 exports.findFederation = function(req, callback) {
 
     if(!mongoose.Types.ObjectId.isValid(req.params.id))
@@ -131,11 +133,14 @@ exports.findFederation = function(req, callback) {
    
     Federation.findOne({_id: req.params.id}).select('-__v -_id').populate({path :'entities',select :'name @context @id -_id'}).populate({path:'organizationId',select:'name @context @id -_id'}).exec(function (err, federation) {
          if (err) throw(err);
+         if(federation == undefined || federation == null)
+         {
+               callback({ "error" :["Federation doesn't exist"],"code" : 404}, null);
+         }
          callback(null, federation);
     });
 
 };
-
 
 exports.deleteFederation = function(req, callback) {
      if(!mongoose.Types.ObjectId.isValid(req.params.id))
@@ -153,7 +158,6 @@ exports.deleteFederation = function(req, callback) {
     });
 };
 
-
 exports.updateFederation = function(req, callback) {
 
  if(!mongoose.Types.ObjectId.isValid(req.params.id))
@@ -162,15 +166,27 @@ exports.updateFederation = function(req, callback) {
     var valid = ajv.validate(FederationAJVSchema, req.body);
     if (valid) {
         
-        Federation.findOneAndUpdate({
-            _id: req.params.id
-        }, req.body, function(err, data) {
-            if (err)throw(err);
+        Federation.findOne({_id: req.params.id}).exec(function(err,doc){
+
+        if(err)
+        {
+            throw (err);
+        }
+        else if(doc == null || doc == undefined)
+        {
+             callback({ "error" :["Federation doesn't exist"],"code" : 404}, null);
+        }
+        else{    
+            Federation.findOneAndUpdate({
+                _id: req.params.id
+            }, req.body, function(err, data) {
+                if (err)throw(err);
+            
+                callback(null, data);
+            });
         
-            callback(null, data);
+        }
         });
-
-
     } else {
         
         var errorMsg = Array();
@@ -182,44 +198,54 @@ exports.updateFederation = function(req, callback) {
 
 };
 
-exports.joinFederation = function(fid,eid,callback){
+exports.joinFederation = function(req,callback){
    
-    if(!mongoose.Types.ObjectId.isValid(fid))
+    if(!mongoose.Types.ObjectId.isValid(req.params.fid))
         callback({ "error" :["Invalid Federation Id"],"code" : 400}, null);
-     if(!mongoose.Types.ObjectId.isValid(eid))
+     if(!mongoose.Types.ObjectId.isValid(req.params.eid))
          callback({ "error" :["Invalid Federation Entity Id"],"code" : 400}, null);
-     Federation.findOne({_id: fid}, function(err, doc) {
+     Federation.findOne({_id: req.params.fid}, function(err, doc) {
         if (err) 
            throw(err);
         if(doc==null)
              callback("Federation doesn't exist", null);
 
-          if(doc.entities.indexOf(eid) > -1)
-            callback({ "error" :["Federation Entity already exist"],"code" : 404}, null);     
+          if(doc.entities.indexOf(req.params.eid) > -1)
+            callback({ "error" :["Federation Entity already exist"],"code" : 400}, null);     
+        var query = FederationEntity.findOne({_id: req.params.eid}).select( '-_id -__v');
 
-        doc.entities.push(eid);
+    query.exec( function(err, docs) {
+       if (err) throw(err);
+       if(docs == null || docs== undefined)
+          callback({ "error" :["Federation Entity doesn't exist"],"code" : 404}, null);
+       else{
+    doc.entities.push(req.params.eid);
         doc.save();     
         callback(null,doc);
+       }        
+      
+    });   
+
 
     });
 
-}
+};
 
-exports.leaveFederation = function(fid,eid,callback){
+exports.leaveFederation = function(req,callback){
      
-     if(!mongoose.Types.ObjectId.isValid(fid))
+     if(!mongoose.Types.ObjectId.isValid(req.params.fid))
         callback('Invalid Federation Id');
-     if(!mongoose.Types.ObjectId.isValid(eid))
+     if(!mongoose.Types.ObjectId.isValid(req.params.eid))
         callback('Invalid Federation Entity Id');  
 
-     Federation.findOne({_id: fid}, function(err, doc) {
+     Federation.findOne({_id: req.params.fid}, function(err, doc) {
 
         if (err) 
             callback(err, null);
         if(doc==null)
             callback({"error" :["Federation doesn't exist"],"code" : 404}, null);
         
-        var index = doc.entities.indexOf(eid);
+        var index = doc.entities.indexOf(req.params.eid);
         if (index > -1) {
             doc.entities.splice(index, 1);
             doc.save();     
@@ -229,4 +255,5 @@ exports.leaveFederation = function(fid,eid,callback){
            callback({"error" :['Entity doesn\'t exist in Federation'],"code" : 404}, null);
         }
    });
-}
+};
+
