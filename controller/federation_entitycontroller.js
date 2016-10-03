@@ -24,6 +24,7 @@ var FederationEntityAJVSchema = {
 
 exports.getAllFederationEntity = function(req, callback) {
   
+  if(req.query.depth==null){
     FederationEntity.find({}, "_id", function(err, docs) {
         //console.log(docs);
         var federationEntityArr = Array();
@@ -32,6 +33,36 @@ exports.getAllFederationEntity = function(req, callback) {
         });
         callback(null, federationEntityArr);
     });
+  }
+  else if (req.query.depth=="entities"){
+        FederationEntity.find({}).select('-__v -_id').lean().exec( function(err, docs) {
+            
+            if(err) throw err;    
+            for(var i =0 ;i<docs.length;i++)
+            {
+                if(docs[i].organizationId !=null || docs[i].organizationId !=undefined)
+                    docs[i]["Organization"] = settings.baseURL + settings.organization+"/"+docs[i].organizationId;
+                delete docs[i].organizationId;
+            }
+            callback(null, docs);
+        });
+  }
+
+  else if(req.query.depth=="entities.organization")
+  {
+      FederationEntity.find({}).select('-__v -_id').populate({path :'organizationId',select :'-_id -__v -federations -entities'}).lean().exec( function(err, docs) {
+            //var finalFedArr = [];    
+            for(var i =0 ;i<docs.length;i++)
+            {
+                if(docs[i]["organizationId"]!=null ||docs[i]["organizationId"]!=undefined )
+                        docs[i]["Organization"] =docs[i]["organizationId"];
+                    delete docs[i].organizationId;
+                            
+            }
+            callback(null, docs);
+           
+        });
+  }
 
 };
 

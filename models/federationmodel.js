@@ -2,7 +2,7 @@
 var mongoose = require('mongoose');
 var settings = require("../settings");
 var Schema = mongoose.Schema;
-
+var deepPopulate = require('mongoose-deep-populate')(mongoose);
 
 var FederationSchema = new Schema({
   
@@ -14,7 +14,19 @@ var FederationSchema = new Schema({
 
 });
 
-
+FederationSchema.plugin(deepPopulate,{ whitelist: [
+    'entities',
+    'organizationId',
+    'entities.organizationId' 
+  ], populate: {
+    'entities.organizationId': {
+      select: 'name @id -_id'
+          },
+     'entities' :{
+       select : '-_id -__v'
+     }     
+  }
+});
 FederationSchema.pre("save",function(next,done){
   
   this['@id']=settings.baseURL + settings.federations+"/"+this._id;

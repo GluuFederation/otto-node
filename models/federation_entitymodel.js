@@ -3,6 +3,8 @@ var mongoose = require('mongoose');
 var settings = require("../settings");
 var Schema = mongoose.Schema;
 
+var deepPopulate = require('mongoose-deep-populate')(mongoose);
+
 
 var Federation_EntitySchema = new Schema({
   id:String,
@@ -30,6 +32,12 @@ Federation_EntitySchema.pre("save",function(next,done){
   this['@context']=settings.baseURL + settings.federation_entity+"/entity.jsonld";
   next();
     
+});
+
+Federation_EntitySchema.plugin(deepPopulate, {
+  whitelist: [
+    'organizationId'
+   ]
 });
 
 var Federation_Entity = mongoose.model('Federation_Entity', Federation_EntitySchema);

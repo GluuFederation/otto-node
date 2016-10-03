@@ -38,68 +38,88 @@ exports.getAllFederation = function(req, callback) {
     }
     else if(req.query.depth=='federation'){
         //Federation.find({}).select('-__v -_id').populate({path :'entities',select :'@id -_id'}).populate({path:'organizationId'}).exec( function(err, docs) {
-            Federation.find({}).select('-__v -_id').exec( function(err, docs) {
-            var finalFedArr = [];    
+            Federation.find({}).select('-__v -_id').lean().exec( function(err, docs) {
+            //var finalFedArr = [];
+            if(err) throw err;    
             for(var i =0 ;i<docs.length;i++)
             {
-                var data = docs[i]._doc;
-                data["Organization"] = settings.baseURL + settings.organization+"/"+data.organizationId;
-                delete data.organizationId;
-                for(var j=0;j<data.entities.length;j++)
+                //var data = docs[i]._doc;
+                docs[i]["Organization"] = settings.baseURL + settings.organization+"/"+docs[i].organizationId;
+                delete docs[i].organizationId;
+                for(var j=0;j<docs[i].entities.length;j++)
                 {
-                    data.entities[j] =  settings.baseURL + settings.federation_entity+"/"+data.entities[j];
+                    docs[i].entities[j] =  settings.baseURL + settings.federation_entity+"/"+docs[i].entities[j];
                 }
-                finalFedArr.push(data);
+               // finalFedArr.push(docs[i]);
             }
-            callback(null, finalFedArr);
+            callback(null, docs);
         });
     }
     else if(req.query.depth=='federation.entities'){
-        Federation.find({}).select('-__v -_id').populate({path :'entities',select :'-_id -__v'}).exec( function(err, docs) {
-            var finalFedArr = [];    
+        Federation.find({}).select('-__v -_id').populate({path :'entities',select :'-_id -__v'}).lean().exec( function(err, docs) {
+            //var finalFedArr = [];    
             for(var i =0 ;i<docs.length;i++)
             {
-                var data = docs[i]._doc;
-                data["Organization"] = settings.baseURL + settings.organization+"/"+data.organizationId;
-                delete data.organizationId;
-               // data.entities = data.entities._doc;
-                var entitiesArr = [];
-                for(var j=0;j<data.entities.length;j++)
+              //  var data = docs[i]._doc;
+                if(docs[i].hasOwnProperty("organizationId"))
                 {
-                    var entitydata = data.entities[j]._doc;
-                    entitydata["Organization"] =  settings.baseURL + settings.organization+"/"+entitydata.organizationId;
-                    delete entitydata.organizationId;
-                    entitiesArr.push(entitydata);
+                    docs[i]["Organization"] = settings.baseURL + settings.organization+"/"+docs[i].organizationId;
+                    delete docs[i].organizationId;
                 }
-                data.entities = entitiesArr;
-                finalFedArr.push(data);
+               // data.entities = data.entities._doc;
+                //var entitiesArr = [];
+                for(var j=0;j<docs[i].entities.length;j++)
+                {
+                   // var entitydata = docs[i].entities[j]._doc;
+                   if(docs[i].entities[j].hasOwnProperty("organizationId"))
+                   {
+                        docs[i].entities[j]["Organization"] =  settings.baseURL + settings.organization+"/"+docs[i].entities[j].organizationId;
+                        delete docs[i].entities[j].organizationId;
+                   }
+                  //  entitiesArr.push(entitydata);
+                }
+               // data.entities = entitiesArr;
+                //finalFedArr.push(data);
             }
-            callback(null, finalFedArr);
+            callback(null, docs);
+           
+        });
+    }
+    else if(req.query.depth=='federation.entities.organization'){
+        Federation.find({}).select('-__v -_id').populate({path :'organizationId',select :'name @id -_id'}).lean().exec( function(err, docs) {
+            //var finalFedArr = [];    
+
+            Federation.deepPopulate(docs, 'entities.organizationId', function (err, _posts) {
+            
+            callback(null, _posts);
+                
+            });
+        
            
         });
     }
     else if(req.query.depth == 'federation.organization')
     {
         Federation.find({}).select('-__v -_id').populate({path :'organizationId',select :'name @id -_id'}).exec( function(err, docs) {
-         var finalFedArr = [];    
+        // var finalFedArr = [];    
             for(var i =0 ;i<docs.length;i++)
             {
-                var data = docs[i]._doc;
+               // var data = docs[i]._doc;
                // data["Organization"] = settings.baseURL + settings.organization+"/"+data.organizationId;
              //  
                // data.entities = data.entities._doc;
-                var entitiesArr = [];
-                if(data.organizationId!=undefined){
-                    data["Organization"] = data.organizationId._doc;
-                    delete data.organizationId;
+              //  var entitiesArr = [];
+                if(docs[i].organizationId!=undefined){
+                    docs[i]["Organization"] = docs[i].organizationId;
+                    delete docs[i].organizationId;
                 }
-                for(var j=0;j<data.entities.length;j++)
+                for(var j=0;j<docs[i].entities.length;j++)
                 {
-                    data.entities[j] =  settings.baseURL + settings.federation_entity+"/"+data.entities[j];
+                    docs[i].entities[j] =  settings.baseURL + settings.federation_entity+"/"+docs[i].entities[j];
                 }
-                finalFedArr.push(data);
+               // finalFedArr.push(data);
             }
-            callback(null, finalFedArr);    
+            callback(null, docs);    
         });
     }
     else {
@@ -131,12 +151,15 @@ exports.findFederation = function(req, callback) {
     if(!mongoose.Types.ObjectId.isValid(req.params.id))
         callback({ "error" :["Invalid Federation Id"],"code" : 400}, null);
    
-    Federation.findOne({_id: req.params.id}).select('-__v -_id').populate({path :'entities',select :'name @context @id -_id'}).populate({path:'organizationId',select:'name @context @id -_id'}).exec(function (err, federation) {
+    Federation.findOne({_id: req.params.id}).select('-__v -_id').populate({path :'entities',select :'name @context @id -_id'}).populate({path:'organizationId',select:'name @context @id -_id'}).lean().exec(function (err, federation) {
          if (err) throw(err);
          if(federation == undefined || federation == null)
          {
                callback({ "error" :["Federation doesn't exist"],"code" : 404}, null);
          }
+        federation["organization"] = federation["organizationId"];
+        delete federation.organizationId;
+        
          callback(null, federation);
     });
 
@@ -145,7 +168,7 @@ exports.findFederation = function(req, callback) {
 exports.deleteFederation = function(req, callback) {
      if(!mongoose.Types.ObjectId.isValid(req.params.id))
         callback({ "error" :["Invalid Federation Id"],"code" : 400}, null);
-     Federation.find({_id: req.params.id}, "_id", function(err, docs) {
+      Federation.find({_id: req.params.id}, "_id", function(err, docs) {
         if (err) throw(err);
 
         if (docs.length == 0) {
@@ -181,8 +204,7 @@ exports.updateFederation = function(req, callback) {
                 _id: req.params.id
             }, req.body, function(err, data) {
                 if (err)throw(err);
-            
-                callback(null, data);
+                  callback(null, data);
             });
         
         }
@@ -225,9 +247,7 @@ exports.joinFederation = function(req,callback){
        }        
       
     });   
-
-
-    });
+});
 
 };
 

@@ -12,6 +12,7 @@
     "grunt-nodemon": "^0.4.2",
     "jsonld": "^0.4.11",
     "mongoose": "^4.6.0",
+    "mongoose-deep-populate": "^3.0.0",
     "mongoose-transaction": "0.0.3",
     "mysql": "^2.11.1",
     "pm2": "^1.1.3",

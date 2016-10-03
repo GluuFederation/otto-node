@@ -5,6 +5,7 @@ var settings = require("../settings");
 var baseURL = settings.baseURL;
 var FederationEntityURL = settings.federation_entity;
 var federationentitycontroller = require("../controller/federation_entitycontroller");
+
 /**
  * @swagger
  * resourcePath: /FederationsEntity
@@ -83,6 +84,13 @@ router.get(FederationEntityURL + '/:id', function(req, res) {
  *      summary: Get Federations Entity
  *      notes: Returns Federations Entity
  *      nickname: GetFederationsEntity
+ *      parameters:
+ *       - name: depth
+ *         description: depth[entities,entities.organization]
+ *         paramType: query
+ *         required: false
+ *         dataType: string
+ *      
  *
  */
 router.get(FederationEntityURL, function(req, res) {
@@ -97,7 +105,6 @@ router.get(FederationEntityURL, function(req, res) {
         }
     });
 });
-
 
 
 /**
