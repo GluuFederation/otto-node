@@ -3,7 +3,7 @@ var express = require('express');
 var router = express.Router();
 var settings = require("../settings");
 var baseURL = settings.baseURL;
-var FederationURL = settings.federations;
+var federationURL = settings.federations;
 var federationcontroller = require("../controller/federationcontroller");
 var federationentitycontroller = require("../controller/federation_entitycontroller");
 
@@ -39,7 +39,7 @@ router.post(settings.federations, function(req, res) {
            res.status(err.code).json({"Error(s)": err.error});
         } else {
             res.status(201).json({
-                "@id": baseURL + FederationURL + "/" + data
+                "@id": baseURL + federationURL + "/" + data
             });
         }
     });
@@ -60,12 +60,21 @@ router.post(settings.federations, function(req, res) {
  *          description: Your Federation Id
  *          required: true
  *          dataType: string
+ *        - name: depth
+ *          description: depth[entities.organization]
+ *          paramType: query
+ *          required: false
+ *          dataType: string
+ *        - name: filter
+ *          description: jspath filter syntax
+ *          paramType: query
+ *          required: false
+ *          dataType: string
+ * 
  */
 router.get(settings.federations + '/:id', function(req, res) {
 
-    //   console.log(req.params.id);
-
-    federationcontroller.findFederation(req, function(err, data) {
+   federationcontroller.findFederation(req, function(err, data) {
         if (err) {
             res.status(err.code).json({"Error(s)": err.error});
         } else {
@@ -74,7 +83,6 @@ router.get(settings.federations + '/:id', function(req, res) {
             );
         }
     });
-
 });
 
 
@@ -88,7 +96,7 @@ router.get(settings.federations + '/:id', function(req, res) {
  *      nickname: GetFederations
  *      parameters:
  *        - name: depth
- *          description: depth[federation,federation.entities]
+ *          description: depth[federations,federations.entities,federations.organization,federations.entities.organization]
  *          paramType: query
  *          required: false
  *          dataType: string
@@ -104,7 +112,7 @@ router.get(settings.federations, function(req, res) {
 
             res.status(200).json({
                 '@context' : baseURL + '/otto/federation_list',
-                Federations: data
+                federations: data
             });
         }
 
@@ -129,6 +137,7 @@ router.get(settings.federations, function(req, res) {
  *          paramType: path
  *          required: true
  *          dataType: string
+ *       
  */
 router.delete(settings.federations + '/:id', function(req, res) {
 

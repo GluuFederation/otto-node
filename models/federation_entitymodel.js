@@ -11,6 +11,8 @@ var Federation_EntitySchema = new Schema({
   '@context':String,
   '@id':String,
   name: String,
+  type : String,
+  category : String,
   organizationId : {type :Schema.ObjectId,ref:'Organization'}
 
   //category:String

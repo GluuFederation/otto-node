@@ -3,7 +3,7 @@ var express = require('express');
 var router = express.Router();
 var settings = require("../settings");
 var baseURL = settings.baseURL;
-var OrganizationURL = settings.organization;
+var organizationURL = settings.organization;
 var organizationcontroller = require("../controller/organizationcontroller");
 /**
  * @swagger
@@ -29,7 +29,7 @@ var organizationcontroller = require("../controller/organizationcontroller");
  *          required: true
  *          dataType: string
  */
-router.post(OrganizationURL, function(req, res) {
+router.post(organizationURL, function(req, res) {
 
     organizationcontroller.addOrganization(req, function(err, data) {
         console.log(err);
@@ -38,7 +38,7 @@ router.post(OrganizationURL, function(req, res) {
         } else {
 
             res.status(200).json({
-                "@id": baseURL + OrganizationURL + "/" + data
+                "@id": baseURL + organizationURL + "/" + data
             });
         }
     });
@@ -59,10 +59,18 @@ router.post(OrganizationURL, function(req, res) {
  *          description: Your organization  Id
  *          required: true
  *          dataType: string
+ *        - name: depth
+ *          description: depth
+ *          paramType: query
+ *          required: false
+ *          dataType: string
+ *        - name: filter
+ *          description: jspath filter syntax
+ *          paramType: query
+ *          required: false
+ *          dataType: string
  */
-router.get(OrganizationURL + '/:id', function(req, res) {
-
-    //   console.log(req.params.id);
+router.get(organizationURL + '/:id', function(req, res) {
 
     organizationcontroller.findOrganization(req, function(err, data) {
         if (err) {
@@ -84,23 +92,24 @@ router.get(OrganizationURL + '/:id', function(req, res) {
  *      summary: Get Organization 
  *      notes: Returns Organization 
  *      nickname: GetOrganization
+ *      parameters:
+ *        - name: depth
+ *          description: depth
+ *          paramType: query
+ *          required: false
+ *          dataType: string
  *
  */
-router.get(OrganizationURL, function(req, res) {
+router.get(organizationURL, function(req, res) {
     organizationcontroller.getAllOrganization(req, function(err, data) {
         if (err) {
-
            res.status(err.code).json({"Error(s)": err.error});
         } else {
-
             res.status(200).json({
-                Organization: data
+                organization: data
             });
         }
-
     });
-
-
 });
 
 
@@ -121,8 +130,9 @@ router.get(OrganizationURL, function(req, res) {
  *          paramType: path
  *          required: true
  *          dataType: string
+ * 
  */
-router.delete(OrganizationURL + '/:id', function(req, res) {
+router.delete(organizationURL + '/:id', function(req, res) {
 
     organizationcontroller.deleteOrganization(req, function(err) {
         if (err) {
@@ -160,7 +170,7 @@ router.delete(OrganizationURL + '/:id', function(req, res) {
  *          dataType: string
  *            
  */
-router.put(OrganizationURL + "/:id", function(req, res) {
+router.put(organizationURL + "/:id", function(req, res) {
 
     organizationcontroller.updateOrganizattion(req, function(err, data) {
         console.log(err);
@@ -197,7 +207,7 @@ router.put(OrganizationURL + "/:id", function(req, res) {
  *          dataType: string
  *            
  */
-router.post(OrganizationURL + "/:oid/federation/:fid", function(req, res) {
+router.post(organizationURL + "/:oid/federation/:fid", function(req, res) {
 
     organizationcontroller.joinFederationOrganization(req,function(err,docs){
          if (err) 
@@ -230,21 +240,14 @@ router.post(OrganizationURL + "/:oid/federation/:fid", function(req, res) {
  *          dataType: string
  *            
  */
-router.post(OrganizationURL + "/:oid/federation_entity/:eid", function(req, res) {
+router.post(organizationURL + "/:oid/federation_entity/:eid", function(req, res) {
 
     organizationcontroller.joinEntityOrganization(req,function(err,docs){
          if (err) {
-                    res.status(err.code).json({"Error(s)": err.error});
+             res.status(err.code).json({"Error(s)": err.error});
          }
          res.status(200).json(); 
-
     });
-
-
 });
-
-
-
-
 
 module.exports = router;

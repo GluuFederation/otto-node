@@ -30,7 +30,7 @@ app.use(swagger.init(app, {
     swaggerURL: '/swagger',
     swaggerJSON: '/api-docs.json',
     swaggerUI: './public/swagger/',
-    apis: ['./routes/index.js','./routes/federation_entity.js' , './routes/federation.js','./routes/organization.js']
+    apis: ['./routes/index.js' , './routes/federation.js','./routes/federation_entity.js','./routes/organization.js']
 }));
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -43,8 +43,6 @@ app.use(bodyParser.json());
 app.set('development', function() {
     app.use(express.errorHandler());
 });
-
-
 
 //View Engine
 app.set('views', path.join(__dirname, 'views'));

@@ -13,6 +13,7 @@ var settings = require("../settings");
 var baseURL = settings.baseURL;
 var FederationURL = settings.federations;
 var ObjectId = require('mongoose').ObjectId;
+var JSPath = require('jspath');
 
 var FederationAJVSchema = {
     "properties": {
@@ -36,88 +37,88 @@ exports.getAllFederation = function(req, callback) {
             callback(null, federationsArr);
         });
     }
-    else if(req.query.depth=='federation'){
-        //Federation.find({}).select('-__v -_id').populate({path :'entities',select :'@id -_id'}).populate({path:'organizationId'}).exec( function(err, docs) {
+    else if(req.query.depth=='federations'){
             Federation.find({}).select('-__v -_id').lean().exec( function(err, docs) {
-            //var finalFedArr = [];
+
             if(err) throw err;    
             for(var i =0 ;i<docs.length;i++)
             {
-                //var data = docs[i]._doc;
-                docs[i]["Organization"] = settings.baseURL + settings.organization+"/"+docs[i].organizationId;
-                delete docs[i].organizationId;
-                for(var j=0;j<docs[i].entities.length;j++)
-                {
-                    docs[i].entities[j] =  settings.baseURL + settings.federation_entity+"/"+docs[i].entities[j];
-                }
-               // finalFedArr.push(docs[i]);
-            }
-            callback(null, docs);
-        });
-    }
-    else if(req.query.depth=='federation.entities'){
-        Federation.find({}).select('-__v -_id').populate({path :'entities',select :'-_id -__v'}).lean().exec( function(err, docs) {
-            //var finalFedArr = [];    
-            for(var i =0 ;i<docs.length;i++)
-            {
-              //  var data = docs[i]._doc;
+
                 if(docs[i].hasOwnProperty("organizationId"))
                 {
-                    docs[i]["Organization"] = settings.baseURL + settings.organization+"/"+docs[i].organizationId;
-                    delete docs[i].organizationId;
+                     docs[i]["organization"] = settings.baseURL + settings.organization+"/"+docs[i].organizationId;
+                     delete docs[i].organizationId;
                 }
-               // data.entities = data.entities._doc;
-                //var entitiesArr = [];
+               
                 for(var j=0;j<docs[i].entities.length;j++)
                 {
-                   // var entitydata = docs[i].entities[j]._doc;
+                    docs[i].entities[j] =  settings.baseURL + settings.federation_entity+"/"+docs[i].entities[j];
+                }
+
+            }
+            callback(null, docs);
+        });
+    }
+    else if(req.query.depth=='federations.entities'){
+        Federation.find({}).select('-__v -_id').populate({path :'entities',select :'-_id -__v',match:{}}).lean().exec( function(err, docs) {
+            for(var i =0 ;i<docs.length;i++)
+            {
+
+                if(docs[i].hasOwnProperty("organizationId"))
+                {
+                    docs[i]["organization"] = settings.baseURL + settings.organization+"/"+docs[i].organizationId;
+                    delete docs[i].organizationId;
+                }
+
+                for(var j=0;j<docs[i].entities.length;j++)
+                {
+
                    if(docs[i].entities[j].hasOwnProperty("organizationId"))
                    {
-                        docs[i].entities[j]["Organization"] =  settings.baseURL + settings.organization+"/"+docs[i].entities[j].organizationId;
+                        docs[i].entities[j]["organization"] =  settings.baseURL + settings.organization+"/"+docs[i].entities[j].organizationId;
                         delete docs[i].entities[j].organizationId;
                    }
-                  //  entitiesArr.push(entitydata);
+
                 }
-               // data.entities = entitiesArr;
-                //finalFedArr.push(data);
             }
             callback(null, docs);
            
         });
     }
-    else if(req.query.depth=='federation.entities.organization'){
-        Federation.find({}).select('-__v -_id').populate({path :'organizationId',select :'name @id -_id'}).lean().exec( function(err, docs) {
-            //var finalFedArr = [];    
-
-            Federation.deepPopulate(docs, 'entities.organizationId', function (err, _posts) {
-            
-            callback(null, _posts);
+    else if(req.query.depth=='federations.entities.organization'){
+        Federation.find({}).select('-__v -_id').lean().exec( function(err, docs) {
+           Federation.deepPopulate(docs, 'entities.organizationId', function (err, doc) {
+               var data = JSON.parse(JSON.stringify(doc));
+               data.forEach(function(element) {
+                    element.entities.forEach(function(ele) {
+                        ele["organization"] = ele.organizationId;
+                        delete ele.organizationId;  
+                    });
+                    if(element.hasOwnProperty("organizationId"))
+                    {
+                        element["organization"] =  settings.baseURL + settings.organization+"/"+element.organizationId;
+                        delete element.organizationId;
+                   }
+                });
+            callback(null, data);
                 
             });
-        
-           
-        });
+       });
     }
-    else if(req.query.depth == 'federation.organization')
+     else if(req.query.depth == 'federations.organization')
     {
-        Federation.find({}).select('-__v -_id').populate({path :'organizationId',select :'name @id -_id'}).exec( function(err, docs) {
-        // var finalFedArr = [];    
+        Federation.find({}).select('-__v -_id').populate({path :'organizationId',select :'name @id -_id'}).lean().exec( function(err, docs) {
             for(var i =0 ;i<docs.length;i++)
             {
-               // var data = docs[i]._doc;
-               // data["Organization"] = settings.baseURL + settings.organization+"/"+data.organizationId;
-             //  
-               // data.entities = data.entities._doc;
-              //  var entitiesArr = [];
+
                 if(docs[i].organizationId!=undefined){
-                    docs[i]["Organization"] = docs[i].organizationId;
+                    docs[i]["organization"] = docs[i].organizationId;
                     delete docs[i].organizationId;
                 }
                 for(var j=0;j<docs[i].entities.length;j++)
                 {
                     docs[i].entities[j] =  settings.baseURL + settings.federation_entity+"/"+docs[i].entities[j];
                 }
-               // finalFedArr.push(data);
             }
             callback(null, docs);    
         });
@@ -143,25 +144,70 @@ exports.addFederation = function(req, callback) {
         });
         callback({ "error" :errorMsg,"code" : 400}, null);
     }
-
 };
 
 exports.findFederation = function(req, callback) {
 
     if(!mongoose.Types.ObjectId.isValid(req.params.id))
         callback({ "error" :["Invalid Federation Id"],"code" : 400}, null);
-   
-    Federation.findOne({_id: req.params.id}).select('-__v -_id').populate({path :'entities',select :'name @context @id -_id'}).populate({path:'organizationId',select:'name @context @id -_id'}).lean().exec(function (err, federation) {
-         if (err) throw(err);
-         if(federation == undefined || federation == null)
-         {
-               callback({ "error" :["Federation doesn't exist"],"code" : 404}, null);
-         }
-        federation["organization"] = federation["organizationId"];
-        delete federation.organizationId;
+
+    
+    if(req.query.depth == null)
+    {
+        Federation.findOne({_id: req.params.id}).select('-__v -_id').populate({path :'entities',select :'-__v -_id'}).populate({path:'organizationId',select:'name @context @id -_id'}).lean().exec(function (err, federation) {
+            if (err) throw(err);
+            if(federation == undefined || federation == null)
+            {
+                callback({ "error" :["Federation doesn't exist"],"code" : 404}, null);
+            }
+            for(var j=0;j < federation.entities.length;j++)
+            {
+                 if(federation.entities[j].hasOwnProperty("organizationId"))
+                 {
+                        federation.entities[j]["organization"] =  settings.baseURL + settings.organization+"/"+federation.entities[j].organizationId;
+                        delete federation.entities[j].organizationId;
+                 }
+            }
+
+            federation["organization"] = federation["organizationId"];
+            delete federation.organizationId;
+            if(req.query.filter ==null)
+                callback(null, federation);
+            else{
+                // Apply jsPath filter here.
+                var filterdata = JSPath.apply(req.query.filter, federation);
+                callback(null, filterdata);
+            }
         
-         callback(null, federation);
-    });
+        });
+    }
+    else if(req.query.depth == "entities.organization"){
+        Federation.find({_id: req.params.id}).select('-__v -_id').populate({path :'organizationId',select :'name @id -_id'}).lean().exec( function(err, docs) {
+           Federation.deepPopulate(docs, 'entities.organizationId', function (err, doc) {
+               var data = JSON.parse(JSON.stringify(doc));
+               data.forEach(function(element) {
+                    element.entities.forEach(function(ele) {
+                        ele["organization"] = ele.organizationId;
+                        delete ele.organizationId;  
+                    });
+                });
+
+            if(req.query.filter ==null)
+                callback(null, data);
+            else{
+                // Apply jsPath filter here.
+                var filterdata = JSPath.apply(req.query.filter, data);
+                callback(null, filterdata);
+            }
+             
+                
+            });
+       });
+    }
+     else {
+        callback({"error" :['unknown value for depth parameter'],"code" : 400 },null);
+    }
+
 
 };
 
@@ -234,6 +280,7 @@ exports.joinFederation = function(req,callback){
 
           if(doc.entities.indexOf(req.params.eid) > -1)
             callback({ "error" :["Federation Entity already exist"],"code" : 400}, null);     
+          else{  
         var query = FederationEntity.findOne({_id: req.params.eid}).select( '-_id -__v');
 
     query.exec( function(err, docs) {
@@ -242,11 +289,13 @@ exports.joinFederation = function(req,callback){
           callback({ "error" :["Federation Entity doesn't exist"],"code" : 404}, null);
        else{
     doc.entities.push(req.params.eid);
-        doc.save();     
+        doc.save();     0
         callback(null,doc);
        }        
+    
       
-    });   
+    });
+          }   
 });
 
 };

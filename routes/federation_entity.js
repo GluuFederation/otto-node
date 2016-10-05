@@ -3,7 +3,7 @@ var express = require('express');
 var router = express.Router();
 var settings = require("../settings");
 var baseURL = settings.baseURL;
-var FederationEntityURL = settings.federation_entity;
+var federationEntityURL = settings.federation_entity;
 var federationentitycontroller = require("../controller/federation_entitycontroller");
 
 /**
@@ -30,7 +30,7 @@ var federationentitycontroller = require("../controller/federation_entitycontrol
  *          required: true
  *          dataType: string
  */
-router.post(FederationEntityURL, function(req, res) {
+router.post(federationEntityURL, function(req, res) {
 
     federationentitycontroller.addFederationEntity(req, function(err, data) {
         console.log(err);
@@ -39,7 +39,7 @@ router.post(FederationEntityURL, function(req, res) {
         } else {
 
             res.status(201).json({
-                "@id": baseURL + FederationEntityURL + "/" + data
+                "@id": baseURL + federationEntityURL + "/" + data
             });
         }
     });
@@ -60,15 +60,24 @@ router.post(FederationEntityURL, function(req, res) {
  *          description: Your Federation Entity Id
  *          required: true
  *          dataType: string
+ *        - name: depth
+ *          description: depth[entities.organization]
+ *          paramType: query
+ *          required: false
+ *          dataType: string
+ *        - name: filter
+ *          description: jspath filter syntax
+ *          paramType: query
+ *          required: false
+ *          dataType: string  
+ * 
  */
-router.get(FederationEntityURL + '/:id', function(req, res) {
+router.get(federationEntityURL + '/:id', function(req, res) {
 
     federationentitycontroller.findFederationEntity(req, function(err, data) {
         if (err) {
-
             res.status(err.code).json({"Error(s)": err.error});
         } else {
-
             res.status(200).json(data);
         }
     });
@@ -86,21 +95,21 @@ router.get(FederationEntityURL + '/:id', function(req, res) {
  *      nickname: GetFederationsEntity
  *      parameters:
  *       - name: depth
- *         description: depth[entities,entities.organization]
+ *         description: depth[federation_entity,federation_entity.organization]
  *         paramType: query
  *         required: false
  *         dataType: string
  *      
  *
  */
-router.get(FederationEntityURL, function(req, res) {
+router.get(federationEntityURL, function(req, res) {
     federationentitycontroller.getAllFederationEntity(req, function(err, data) {
         if (err) {
 
            res.status(err.code).json({"Error(s)": err.error});
         } else {
                 res.status(200).json({
-                Federation_Entity: data
+                federation_entity: data
             });
         }
     });
@@ -124,7 +133,7 @@ router.get(FederationEntityURL, function(req, res) {
  *          required: true
  *          dataType: string
  */
-router.delete(FederationEntityURL + '/:id', function(req, res) {
+router.delete(federationEntityURL + '/:id', function(req, res) {
 
     federationentitycontroller.deleteFederationEntity(req, function(err) {
         if (err) {
@@ -160,7 +169,7 @@ router.delete(FederationEntityURL + '/:id', function(req, res) {
  *          dataType: string
  *            
  */
-router.put(FederationEntityURL + "/:id", function(req, res) {
+router.put(federationEntityURL + "/:id", function(req, res) {
 
     federationentitycontroller.updateFederationEntity(req, function(err, data) {
         console.log(err);
