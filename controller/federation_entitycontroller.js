@@ -10,7 +10,7 @@ var settings = require("../settings");
 var baseURL = settings.baseURL;
 var federationEntityURL = settings.federation_entity;
 var JSPath = require('jspath');
-
+var possibleDepthArr = ['federation_entity','federation_entity.organization'];
 
 var federationEntityAJVSchema = {
     "properties": {
@@ -36,7 +36,6 @@ exports.getAllFederationEntity = function(req, callback) {
         });
     } else if (req.query.depth == "federation_entity") {
         federationEntity.find({}).select('-__v -_id').lean().exec(function(err, docs) {
-
             if (err) throw err;
             for (var i = 0; i < docs.length; i++) {
                 if (docs[i].organizationId != null || docs[i].organizationId != undefined)
@@ -53,22 +52,66 @@ exports.getAllFederationEntity = function(req, callback) {
             //var finalFedArr = [];    
             for (var i = 0; i < docs.length; i++) {
                 if (docs[i]["organizationId"] != null || docs[i]["organizationId"] != undefined)
-                    docs[i]["organization"] = docs[i]["organizationId"];
+                    docs[i]["organization"] =  docs[i]["organizationId"];
                 delete docs[i].organizationId;
-
             }
             callback(null, docs);
-
         });
     } else {
-
         callback({
             "error": ['unknown value for depth parameter'],
             "code": 400
         }, null);
     }
-
 };
+
+
+exports.getAllFederationEntity = function(req, callback) {
+
+    if (req.query.depth == null) {
+        federationEntity.find({}, "_id", function(err, docs) {
+            var federationEntityArr = Array();
+            docs.forEach(function(element) {
+                federationEntityArr.push(baseURL + federationEntityURL + "/" + element._id);
+            });
+            callback(null, federationEntityArr);
+        });
+    } else {
+        var depthArr =Array();
+        depthArr = depthArr.concat(req.query.depth);
+
+        for(var i=0;i<depthArr.length;i++)
+        {
+            if(!(possibleDepthArr.indexOf(depthArr[i]) >-1))
+            {
+                callback({ "error" :["Invalid value ("+depthArr[i]+") for depth param"],"code" : 400},null);
+            }
+        }
+
+        federationEntity.find({}).select('-__v -_id').populate({
+            path: 'organizationId',
+            select: '-_id -__v -federations -entities'
+        }).lean().exec(function(err, docs) {
+            //var finalFedArr = [];    
+
+            for (var i = 0; i < docs.length; i++) {
+                if (docs[i]["organizationId"] != null || docs[i]["organizationId"] != undefined)
+                    docs[i]["organization"] =  docs[i]["organizationId"];
+                delete docs[i].organizationId;
+            }
+             if(!(possibleDepthArr.indexOf('federation_entity.organization') >-1))
+             {
+                 docs[i]["organization"] =  docs[i]["organization"];
+             }
+  
+            callback(null, docs);
+        });
+
+
+    }
+};
+
+
 
 exports.addFederationEntity = function(req, callback) {
 
@@ -105,7 +148,7 @@ exports.findFederationEntity = function(req, callback) {
             if (docs != null) {
                 if (err) throw (err);
                 if (docs["organizationId"] != null || docs["organizationId"] != undefined)
-                    docs["organization"] = docs["organizationId"];
+                    docs["organization"] = settings.baseURL + settings.organization + "/"+ docs["organizationId"];
                 delete docs.organizationId;
 
                 if (req.query.filter == null)
@@ -136,7 +179,7 @@ exports.findFederationEntity = function(req, callback) {
 
             if (docs != null) {
                 if (docs["organizationId"] != null || docs["organizationId"] != undefined)
-                    docs["organization"] = docs["organizationId"];
+                    docs["organization"] = settings.baseURL + settings.organization + "/"+ docs["organizationId"];
                 delete docs.organizationId;
 
                 if (req.query.filter == null)

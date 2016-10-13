@@ -11,6 +11,7 @@ var settings = require("../settings");
 var baseURL = settings.baseURL;
 var organizationURL = settings.organization;
 var JSPath = require('jspath');
+var possibleDepthArr = ['organization.federations','organization','organization.entities'];
 
 var organizationAJVSchema = {
     "properties": {
@@ -41,17 +42,12 @@ exports.getAllOrganization = function(req, callback) {
                     for (var j = 0; j < docs[i].entities.length; j++) {
                         docs[i].entities[j] = settings.baseURL + settings.federation_entity + "/" + docs[i].entities[j];
                     }
-
                     for (var j = 0; j < docs[i].federations.length; j++) {
                         docs[i].federations[j] = settings.baseURL + settings.federations + "/" + docs[i].federations[j];
                     }
-
                 }
                 callback(null, docs);
-
             }, this);
-
-
         });
 
     } else if (req.query.depth == 'organization.federations') {
@@ -59,17 +55,12 @@ exports.getAllOrganization = function(req, callback) {
             path: 'federations',
             select: '-_id -__v -organizationId -entities'
         }).lean().exec(function(err, docs) {
-
             for (var i = 0; i < docs.length; i++) {
-
                 for (var j = 0; j < docs[i].entities.length; j++) {
                     docs[i].entities[j] = settings.baseURL + settings.federation_entity + "/" + docs[i].entities[j];
                 }
-
-
-            }
-
-            callback(null, docs);
+         }
+         callback(null, docs);
         });
 
     } else if (req.query.depth == 'organization.entities') {
@@ -78,17 +69,14 @@ exports.getAllOrganization = function(req, callback) {
             path: 'entities',
             select: '-_id -__v -organizationId -entities'
         }).lean().exec(function(err, docs) {
+            
             for (var i = 0; i < docs.length; i++) {
-
                 for (var j = 0; j < docs[i].federations.length; j++) {
                     docs[i].federations[j] = settings.baseURL + settings.federations + "/" + docs[i].federations[j];
                 }
-
             }
-
+      
             callback(null, docs);
-
-
         });
     } else {
 
@@ -100,19 +88,60 @@ exports.getAllOrganization = function(req, callback) {
 
 };
 
+exports.getAllOrganizationWithDepth = function(req,callback){
+
+if (req.query.depth == null) {
+        organization.find({}, "_id", function(err, docs) {
+            var organizationArr = Array();
+            docs.forEach(function(element) {
+                organizationArr.push(baseURL + organizationURL + "/" + element._id);
+            });
+            callback(null, organizationArr);
+        });
+    }
+    else{
+        
+        for(var i=0;i<depthArr.length;i++)
+        {
+            if(!(possibleDepthArr.indexOf(depthArr[i]) >-1))
+            {
+                callback({"error" :['unknown value for depth parameter'],"code" : 400 },null);
+            }
+        }
+        
+        organization.find({}).select('-__v -_id').populate({
+            path: 'federations',
+            select: '-_id -__v -organizationId -entities'
+        }).populate({
+             path: 'entities',
+             select: '-_id -__v -organizationId -entities'
+        }).lean().exec(function(err, docs) {
+
+            for (var i = 0; i < docs.length; i++) {
+                
+                for (var j = 0; j < docs[i].entities.length; j++) {
+                    docs[i].entities[j] = settings.baseURL + settings.federation_entity + "/" + docs[i].entities[j];
+                }
+
+                
+         }
+         callback(null, docs);
+        });
+            
+
+    } 
+}
+
 exports.addOrganization = function(req, callback) {
 
     var valid = ajv.validate(organizationAJVSchema, req.body);
     if (valid) {
         var ObjOrganization = new organization(req.body);
-
         ObjOrganization.save(function(err, obj) {
             if (err) throw (err);
             callback(null, obj._id);
-
         });
     } else {
-
         var errorMsg = Array();
         ajv.errors.forEach(function(element) {
             errorMsg.push(element.message);
@@ -122,7 +151,6 @@ exports.addOrganization = function(req, callback) {
             "code": 400
         }, null);
     }
-
 };
 
 
@@ -177,7 +205,6 @@ exports.findOrganization = function(req, callback) {
                     var filterdata = JSPath.apply(req.query.filter, docs);
                     callback(null, filterdata);
                 }
-
             
         });
 
@@ -310,7 +337,6 @@ exports.joinFederationOrganization = function(req, callback) {
                 "error": ["Federation already exist"],
                 "code": 404
             }, null);
-
 
         doc.federations.push(req.params.fid);
         var transaction = new Transaction();

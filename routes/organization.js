@@ -44,7 +44,7 @@ router.post(organizationURL, function(req, res) {
     });
 
 });
-
+    
 /**
  * @swagger
  * path: /otto/organization/{id}
@@ -101,7 +101,7 @@ router.get(organizationURL + '/:id', function(req, res) {
  *
  */
 router.get(organizationURL, function(req, res) {
-    organizationcontroller.getAllOrganization(req, function(err, data) {
+    organizationcontroller.getAllOrganizationWithDepth(req, function(err, data) {
         if (err) {
            res.status(err.code).json({"Error(s)": err.error});
         } else {

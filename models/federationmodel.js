@@ -9,10 +9,13 @@ var FederationSchema = new Schema({
   '@context':String,
   '@id':String,
   name: String,
+  privatekey: String,
+  publickey: String,
+  keyguid:String,
   entities :[{type :Schema.ObjectId, ref: 'Federation_Entity'}],
   organizationId : {type :Schema.ObjectId,ref:'Organization'}
-
-});
+ 
+},{strict:false});
 
 FederationSchema.plugin(deepPopulate,{ whitelist: [
     'entities',

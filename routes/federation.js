@@ -6,6 +6,12 @@ var baseURL = settings.baseURL;
 var federationURL = settings.federations;
 var federationcontroller = require("../controller/federationcontroller");
 var federationentitycontroller = require("../controller/federation_entitycontroller");
+var jws = require('jws');
+var fs = require('fs');
+var keypair = require('keypair');
+var pem2jwk = require('pem-jwk').pem2jwk
+
+
 
 /**
  * @swagger
@@ -30,6 +36,10 @@ var federationentitycontroller = require("../controller/federation_entitycontrol
  *          paramType: body
  *          required: true
  *          dataType: string
+ *        - name: autogeneratesignkeys
+ *          description: True if you want to generate signing keys for your federations 
+ *          paramType: query
+ *          dataType: string
  */
 router.post(settings.federations, function(req, res) {
 
@@ -38,6 +48,7 @@ router.post(settings.federations, function(req, res) {
         if (err) {
            res.status(err.code).json({"Error(s)": err.error});
         } else {
+            
             res.status(201).json({
                 "@id": baseURL + federationURL + "/" + data
             });
@@ -78,13 +89,83 @@ router.get(settings.federations + '/:id', function(req, res) {
         if (err) {
             res.status(err.code).json({"Error(s)": err.error});
         } else {
-            res.status(200).json(
-                 data
-            );
+            
+          
+            if(req.query.sign!=null && req.query.sign!=undefined )
+            {
+                if(req.query.sign=='true'){
+                  var privatekey = data.privatekey;
+                  if(data.hasOwnProperty("privatekey"))
+                  {
+                    delete data.privatekey;
+                    if(data.hasOwnProperty("privatekey"))
+                        delete data.publickey;  
+
+                    try{
+                            jws.createSign({
+                                header: { alg: 'RS256' },
+                                privateKey: privatekey,
+                                payload: data,
+                            }).on('done', function(signature) {
+                                res.status(200).json({SignData :signature});
+        
+                            });
+                    }catch(e)
+                    {
+                        res.status(500).json({"Error":['Error occur while signing the data.']});     
+                    }
+
+                  }
+                  else
+                  {
+                      res.status(400).json({"Error":['Cannot sign federation data. Key not available']});
+                  }
+
+                }
+                else{
+                    res.status(400).json({"Error":['Invalid value for the sign parameter.']});
+                }     
+                    
+            }
+            else{
+                if(data.hasOwnProperty("privatekey"))
+                    delete data.privatekey;
+                if(data.hasOwnProperty("publickey"))
+                    delete data.publickey;  
+                res.status(200).json(data)
+            }
+            
         }
     });
 });
 
+/**
+ * @swagger
+ * path: /otto/federations/{id}/jwks
+ * operations:
+ *   -  httpMethod: GET
+ *      summary: Get Federation jwks
+ *      notes: Returns Federations jwks
+ *      nickname: GetFederationsJWKs
+ *      parameters:
+ *        - name: id
+ *          paramType: path
+ *          description: Your Federation Id
+ *          required: true
+ *          dataType: string
+ */
+router.get(settings.federations + '/:id/jwks', function(req, res) {
+    federationcontroller.getJWKsForFederation(req,function(err,data){
+          if (err) {
+            
+             res.status(err.code).json({"Error(s)": err.error});
+
+        } else {
+
+            res.status(200).json(data);
+        }
+    });
+});
 
 /**
  * @swagger
@@ -103,7 +184,7 @@ router.get(settings.federations + '/:id', function(req, res) {
  *      
  */
 router.get(settings.federations, function(req, res) {
-    federationcontroller.getAllFederation(req, function(err, data) {
+    federationcontroller.getAllFederationWithDepth(req, function(err, data) {
         if (err) {
             
              res.status(err.code).json({"Error(s)": err.error});
@@ -217,7 +298,6 @@ router.delete(settings.federations + '/:fid/:eid' , function(req, res) {
                    }
                    res.status(200).json(); 
             });
-    
 
 });
 

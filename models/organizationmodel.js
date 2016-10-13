@@ -22,7 +22,7 @@ var OrganizationSchema = new Schema({
   //   state : String,
   //   country:String
   // }
-});
+},{strict:false});
 
 OrganizationSchema.pre("save",function(next,done){
   

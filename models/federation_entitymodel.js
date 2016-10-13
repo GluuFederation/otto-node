@@ -26,7 +26,7 @@ var Federation_EntitySchema = new Schema({
   //   state : String,
   //   country:String
   // }
-});
+},{strict:false});
 
 Federation_EntitySchema.pre("save",function(next,done){
   
