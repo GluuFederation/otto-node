@@ -36,13 +36,11 @@ router.post(organizationURL, function(req, res) {
         if (err) {
            res.status(err.code).json({"Error(s)": err.error});
         } else {
-
             res.status(200).json({
                 "@id": baseURL + organizationURL + "/" + data
             });
         }
     });
-
 });
     
 /**

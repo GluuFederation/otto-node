@@ -143,9 +143,8 @@ exports.getAllFederationWithDepth = function(req, callback) {
         var depthArr = Array();
         depthArr = depthArr.concat(req.query.depth);
 
-        for (var i = 0; i < depthArr.length; i++)
 
-            Federation.find({}).select('-__v -_id').populate({
+            Federation.find({}).select('-__v -_id -keyguid -privatekey -publickey').populate({
             path: 'organizationId',
             select: 'name @id -_id'
         }).lean().exec(function(err, docs) {
@@ -157,19 +156,18 @@ exports.getAllFederationWithDepth = function(req, callback) {
                     isFedEntOrg = false;
 
 
-                if (depthArr.indexOf("federation.organization") > -1)
+                if (depthArr.indexOf("federations.organization") > -1)
                     isFedOrgDepth = true;
 
-                if (depthArr.indexOf("federation.entities") > -1)
+                if (depthArr.indexOf("federations.entities") > -1)
                     isFedEntityDepth = true;
 
-                if (depthArr.indexOf("federation.entities.organization") > -1) {
+                if (depthArr.indexOf("federations.entities.organization") > -1) {
                     isFedEntOrg = true;
                     isFedEntityDepth = true;
                 }
 
                 data.forEach(function(ele) {
-
                     if (ele.hasOwnProperty("organizationId")) {
                         ele["organization"] = ele.organizationId;
                         delete ele.organizationId;
@@ -178,9 +176,12 @@ exports.getAllFederationWithDepth = function(req, callback) {
                         }
                     }
                     if (!isFedEntityDepth) {
+                        var temp = Array();
                         ele.entities.forEach(function(eleEnt) {
-                            eleEnt = eleEnt["@id"];
+                            //eleEnt = eleEnt["@id"];
+                            temp.push(eleEnt["@id"]);
                         });
+                        ele["entities"]=temp;
                     } else {
                         ele.entities.forEach(function(eleEnt) {
                             eleEnt["organization"] = eleEnt.organizationId;
@@ -268,7 +269,7 @@ exports.findFederation = function(req, callback) {
     if (req.query.depth == null) {
         Federation.findOne({
             _id: req.params.id
-        }).select('-__v -_id').populate({
+        }).select('-__v -_id -keyguid').populate({
             path: 'entities',
             select: '-__v -_id'
         }).populate({
@@ -301,20 +302,20 @@ exports.findFederation = function(req, callback) {
 
         });
     } else if (req.query.depth == "entities.organization") {
-        Federation.find({
+        Federation.findOne({
             _id: req.params.id
-        }).select('-__v -_id').populate({
+        }).select('-__v -_id -keyguid').populate({
             path: 'organizationId',
             select: 'name @id -_id'
         }).lean().exec(function(err, docs) {
             Federation.deepPopulate(docs, 'entities.organizationId', function(err, doc) {
                 var data = JSON.parse(JSON.stringify(doc));
-                data.forEach(function(element) {
-                    element.entities.forEach(function(ele) {
+              //  data.forEach(function(element) {
+                    data.entities.forEach(function(ele) {
                         ele["organization"] = ele.organizationId;
                         delete ele.organizationId;
                     });
-                });
+             //   });
 
                 if (req.query.filter == null)
                     callback(null, data);

@@ -36,10 +36,6 @@ var pem2jwk = require('pem-jwk').pem2jwk
  *          paramType: body
  *          required: true
  *          dataType: string
- *        - name: autogeneratesignkeys
- *          description: True if you want to generate signing keys for your federations 
- *          paramType: query
- *          dataType: string
  */
 router.post(settings.federations, function(req, res) {
 

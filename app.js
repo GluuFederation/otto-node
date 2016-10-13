@@ -65,10 +65,11 @@ app.use(function (req, res, next) {
 // development error handler
 // will print stacktrace
 if (app.get('env') === 'development') {
+    console.log(app.get('env'));
     app.use(function (err, req, res, next) {
         res.status(err.status || 500);
   		err.stack = JSON.stringify(err.stack);
-        res.json({status:err.status,message:err.message,stack:err.stack});
+        res.json({"Error" : [err.message]});
     });
 }
 
