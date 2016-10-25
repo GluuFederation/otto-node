@@ -66,16 +66,37 @@ exports.getAllFederationEntity = function(req, callback) {
 };
 
 
-exports.getAllFederationEntity = function(req, callback) {
+exports.getAllFederationEntityWithDepth = function(req, callback) {
+
+    var pageno = +req.query.pageno;
+    var pageLength = +req.query.pagelength;
 
     if (req.query.depth == null) {
-        federationEntity.find({}, "_id", function(err, docs) {
-            var federationEntityArr = Array();
-            docs.forEach(function(element) {
-                federationEntityArr.push(baseURL + federationEntityURL + "/" + element._id);
+        if(pageno == undefined)
+        {
+            federationEntity.find({}, "_id", function(err, docs) {
+                if(err)
+                    callback(err,null);
+                var federationEntityArr = Array();
+                docs.forEach(function(element) {
+                    federationEntityArr.push(baseURL + federationEntityURL + "/" + element._id);
+                });
+                callback(null, federationEntityArr);
             });
-            callback(null, federationEntityArr);
-        });
+        }
+        else{
+
+             federationEntity.find({}).select("_id").skip(pageno*pageLength).limit(pageLength).exec(function(err, docs) {
+                if(err)
+                    callback(err,null);
+                var federationEntityArr = Array();
+                docs.forEach(function(element) {
+                    federationEntityArr.push(baseURL + federationEntityURL + "/" + element._id);
+                });
+                callback(null, federationEntityArr);
+            });
+
+        }
     } else {
         var depthArr =Array();
         depthArr = depthArr.concat(req.query.depth);
@@ -87,26 +108,49 @@ exports.getAllFederationEntity = function(req, callback) {
                 callback({ "error" :["Invalid value ("+depthArr[i]+") for depth param"],"code" : 400},null);
             }
         }
+        if(pageno==undefined)
+        {
+            federationEntity.find({}).select('-__v -_id').populate({
+                path: 'organizationId',
+                select: '-_id -__v -federations -entities'
+            }).lean().exec(function(err, docs) {
+                //var finalFedArr = [];    
 
-        federationEntity.find({}).select('-__v -_id').populate({
-            path: 'organizationId',
-            select: '-_id -__v -federations -entities'
-        }).lean().exec(function(err, docs) {
-            //var finalFedArr = [];    
+                for (var i = 0; i < docs.length; i++) {
+                    if (docs[i]["organizationId"] != null || docs[i]["organizationId"] != undefined)
+                        docs[i]["organization"] =  docs[i]["organizationId"];
+                    delete docs[i].organizationId;
+                }
+                if(!(possibleDepthArr.indexOf('federation_entity.organization') >-1))
+                {
+                    docs[i]["organization"] =  docs[i]["organization"];
+                }
+    
+                callback(null, docs);
+            });
+        }
+        else{
 
-            for (var i = 0; i < docs.length; i++) {
-                if (docs[i]["organizationId"] != null || docs[i]["organizationId"] != undefined)
-                    docs[i]["organization"] =  docs[i]["organizationId"];
-                delete docs[i].organizationId;
-            }
-             if(!(possibleDepthArr.indexOf('federation_entity.organization') >-1))
-             {
-                 docs[i]["organization"] =  docs[i]["organization"];
-             }
-  
-            callback(null, docs);
-        });
+            federationEntity.find({}).select('-__v -_id').skip(pageno*pageLength).limit(pageLength).populate({
+                path: 'organizationId',
+                select: '-_id -__v -federations -entities'
+            }).lean().exec(function(err, docs) {
+                //var finalFedArr = [];    
 
+                for (var i = 0; i < docs.length; i++) {
+                    if (docs[i]["organizationId"] != null || docs[i]["organizationId"] != undefined)
+                        docs[i]["organization"] =  docs[i]["organizationId"];
+                    delete docs[i].organizationId;
+                }
+                if(!(possibleDepthArr.indexOf('federation_entity.organization') >-1))
+                {
+                    docs[i]["organization"] =  docs[i]["organization"];
+                }
+    
+                callback(null, docs);
+            });
+
+        }
 
     }
 };

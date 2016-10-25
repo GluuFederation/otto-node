@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var settings = require("../settings");
 var baseURL = settings.baseURL;
+
 /**
  * @swagger
  * resourcePath: /OTTO
@@ -32,6 +33,7 @@ router.get(settings.discoveryEndpoint, function(req, res) {
         "organizations_endpoint": baseURL + settings.organization,
         "schema_endpoint": baseURL + settings.schema,
     };
+
     res.status(200).json(discoveryList);
 
 });

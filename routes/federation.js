@@ -10,7 +10,7 @@ var jws = require('jws');
 var fs = require('fs');
 var keypair = require('keypair');
 var pem2jwk = require('pem-jwk').pem2jwk
-
+var algArr = ['RS256','RS384','RS512'];
 
 
 /**
@@ -77,6 +77,16 @@ router.post(settings.federations, function(req, res) {
  *          paramType: query
  *          required: false
  *          dataType: string
+ *        - name: sign
+ *          description: Pass true to return the sign data
+ *          paramType: query
+ *          required: false
+ *          dataType: string
+ *        - name: alg
+ *          description: Algorithm used for signing [RS256,RS384,RS512]
+ *          paramType: query
+ *          required: false
+ *          dataType: string
  * 
  */
 router.get(settings.federations + '/:id', function(req, res) {
@@ -90,17 +100,32 @@ router.get(settings.federations + '/:id', function(req, res) {
             if(req.query.sign!=null && req.query.sign!=undefined )
             {
                 if(req.query.sign=='true'){
-                  var privatekey = data.privatekey;
-                  if(data.hasOwnProperty("privatekey"))
+                  var alg = "";
+                  if(req.query.alg == undefined)
                   {
-                    delete data.privatekey;
-                    if(data.hasOwnProperty("privatekey"))
-                        delete data.publickey;  
-
+                      alg='RS512';
+                  }
+                  else{
+                      var str = req.query.alg;
+                      if(algArr.indexOf(str.trim())> -1)
+                      {
+                          alg = str.trim();
+                            if(data.hasOwnProperty("keys")){   
+                    var keys = data.keys;
+                                
+                    delete data.keys;
+                        var i=0
+                      for(i=0;i<keys.length;i++){
+                          if(alg==keys[i].alg){
+                              break;
+                          }
+                      }  
+                      console.log(i);
+                      console.log(keys[i]);
                     try{
                             jws.createSign({
-                                header: { alg: 'RS256' },
-                                privateKey: privatekey,
+                                header: { "alg": alg },
+                                privateKey: keys[i].privatekey,
                                 payload: data,
                             }).on('done', function(signature) {
                                 res.status(200).json({SignData :signature});
@@ -116,6 +141,14 @@ router.get(settings.federations + '/:id', function(req, res) {
                   {
                       res.status(400).json({"Error":['Cannot sign federation data. Key not available']});
                   }
+                      }
+                      else{
+                           res.status(400).json({"Error":['Cannot sign federation data. Algorithm not suported']});
+                      }
+                  }
+
+
+               
 
                 }
                 else{
@@ -177,9 +210,20 @@ router.get(settings.federations + '/:id/jwks', function(req, res) {
  *          paramType: query
  *          required: false
  *          dataType: string
+ *        - name: pageno
+ *          description: page no (Starts from 0)
+ *          paramType: query
+ *          required: false
+ *          dataType: string
+ *        - name: pagelength
+ *          description: page length
+ *          paramType: query
+ *          required: false
+ *          dataType: string
  *      
  */
 router.get(settings.federations, function(req, res) {
+    try{
     federationcontroller.getAllFederationWithDepth(req, function(err, data) {
         if (err) {
             
@@ -194,7 +238,9 @@ router.get(settings.federations, function(req, res) {
         }
 
     });
-
+    }catch(e){
+        res.status(500).json();
+    }
 
 });
 
@@ -218,6 +264,7 @@ router.get(settings.federations, function(req, res) {
  */
 router.delete(settings.federations + '/:id', function(req, res) {
 
+    try{
     federationcontroller.deleteFederation(req, function(err) {
         if (err) {
            res.status(err.code).json({"Error(s)": err.error});
@@ -225,6 +272,9 @@ router.delete(settings.federations + '/:id', function(req, res) {
             res.status(200).json();
         }
     });
+    }catch(e){
+        res.status(500).json();
+    }
 });
 
 
@@ -252,7 +302,7 @@ router.delete(settings.federations + '/:id', function(req, res) {
  *            
  */
 router.put(settings.federations + "/:id", function(req, res) {
-
+    try{
     federationcontroller.updateFederation(req, function(err, data) {
         console.log(err);
         if (err) {
@@ -261,7 +311,9 @@ router.put(settings.federations + "/:id", function(req, res) {
             res.status(200).json();
         }
     });
-
+}catch(e){
+        res.status(500).json();
+    }
 });
 
 
@@ -288,13 +340,16 @@ router.put(settings.federations + "/:id", function(req, res) {
  *          dataType: string
  */
 router.delete(settings.federations + '/:fid/:eid' , function(req, res) {
+    try{
   federationcontroller.leaveFederation(req,function(err,callback){
                    if (err) {
                       res.status(err.code).json({"Error(s)": err.error});
                    }
                    res.status(200).json(); 
             });
-
+    }catch(e){
+        res.status(500).json();
+    }
 });
 
 /**
@@ -320,14 +375,16 @@ router.delete(settings.federations + '/:fid/:eid' , function(req, res) {
  *          dataType: string
  */
 router.post(settings.federations + '/:fid/:eid' , function(req, res) {
-
+try{
        federationcontroller.joinFederation(req,function(err,callback){
                    if (err) {
                         res.status(err.code).json({"Error(s)": err.error});
                    }
                    res.status(200).json(); 
             });
-
+}catch(e){
+        res.status(500).json();
+    }
 });
 
 
@@ -355,13 +412,15 @@ router.post(settings.federations + '/:fid/:eid' , function(req, res) {
  */
 router.post(settings.federations + '/:fid/' , function(req, res) {
 
+    try{
+
     federationentitycontroller.addFederationEntity(req, function(err, data) {
         console.log(err);
         if (err) {
            res.status(err.code).json({"Error(s)": err.error});
         } else {
             req.params.eid =data.toString();
-            federationcontroller.joinFederation(req,function(err,callback){
+            federationcontroller.joinFederation(req,function(err,callback) {
                    if (err) {
                     res.status(409).json({
                         "Error(s)": err
@@ -371,6 +430,9 @@ router.post(settings.federations + '/:fid/' , function(req, res) {
             });
         }
     });
+    }catch(e){
+        res.status(500).json();
+    }
 
 });
 

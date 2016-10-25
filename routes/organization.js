@@ -31,6 +31,7 @@ var organizationcontroller = require("../controller/organizationcontroller");
  */
 router.post(organizationURL, function(req, res) {
 
+    try{
     organizationcontroller.addOrganization(req, function(err, data) {
         console.log(err);
         if (err) {
@@ -41,6 +42,9 @@ router.post(organizationURL, function(req, res) {
             });
         }
     });
+    }catch(e){
+        res.status(500).json();
+    }
 });
     
 /**
@@ -70,6 +74,7 @@ router.post(organizationURL, function(req, res) {
  */
 router.get(organizationURL + '/:id', function(req, res) {
 
+    try{
     organizationcontroller.findOrganization(req, function(err, data) {
         if (err) {
             res.status(err.code).json({"Error(s)": err.error});
@@ -78,6 +83,9 @@ router.get(organizationURL + '/:id', function(req, res) {
             res.status(200).json(data);
         }
     });
+    }catch(e){
+        res.status(500).json();
+    }
 
 });
 
@@ -96,9 +104,20 @@ router.get(organizationURL + '/:id', function(req, res) {
  *          paramType: query
  *          required: false
  *          dataType: string
+ *        - name: pageno
+ *          description: page no (Starts from 0)
+ *          paramType: query
+ *          required: false
+ *          dataType: string
+ *        - name: pagelength
+ *          description: page length
+ *          paramType: query
+ *          required: false
+ *          dataType: string
  *
  */
 router.get(organizationURL, function(req, res) {
+    try{
     organizationcontroller.getAllOrganizationWithDepth(req, function(err, data) {
         if (err) {
            res.status(err.code).json({"Error(s)": err.error});
@@ -108,6 +127,9 @@ router.get(organizationURL, function(req, res) {
             });
         }
     });
+    }catch(e){
+        res.status(500).json();
+    }
 });
 
 
@@ -129,9 +151,11 @@ router.get(organizationURL, function(req, res) {
  *          required: true
  *          dataType: string
  * 
+ * 
  */
 router.delete(organizationURL + '/:id', function(req, res) {
 
+    try{
     organizationcontroller.deleteOrganization(req, function(err) {
         if (err) {
             res.status(err.code).json({"Error(s)": err.error});
@@ -140,7 +164,9 @@ router.delete(organizationURL + '/:id', function(req, res) {
         }
 
     });
-
+}catch(e){
+        res.status(500).json();
+    }
 
 });
 
@@ -169,7 +195,7 @@ router.delete(organizationURL + '/:id', function(req, res) {
  *            
  */
 router.put(organizationURL + "/:id", function(req, res) {
-
+    try{
     organizationcontroller.updateOrganizattion(req, function(err, data) {
         console.log(err);
         if (err) {
@@ -179,7 +205,9 @@ router.put(organizationURL + "/:id", function(req, res) {
             res.status(200).json();
         }
     });
-
+}catch(e){
+        res.status(500).json();
+    }
 });
 
 /**
@@ -206,13 +234,15 @@ router.put(organizationURL + "/:id", function(req, res) {
  *            
  */
 router.post(organizationURL + "/:oid/federation/:fid", function(req, res) {
-
+try{
     organizationcontroller.joinFederationOrganization(req,function(err,docs){
          if (err) 
             res.status(err.code).json({"Error(s)": err.error});
          res.status(200).json(); 
     });
-
+}catch(e){
+        res.status(500).json();
+    }
 });
 
 /**
@@ -239,13 +269,16 @@ router.post(organizationURL + "/:oid/federation/:fid", function(req, res) {
  *            
  */
 router.post(organizationURL + "/:oid/federation_entity/:eid", function(req, res) {
-
+try{
     organizationcontroller.joinEntityOrganization(req,function(err,docs){
          if (err) {
              res.status(err.code).json({"Error(s)": err.error});
          }
          res.status(200).json(); 
     });
+    }catch(e){
+        res.status(500).json();
+    }
 });
 
 module.exports = router;

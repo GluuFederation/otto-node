@@ -9,9 +9,12 @@ var FederationSchema = new Schema({
   '@context':String,
   '@id':String,
   name: String,
-  privatekey: String,
-  publickey: String,
-  keyguid:String,
+  keys: [{ 
+      privatekey: String,
+      publickey: String,
+      keyguid:String,
+      alg:String
+  }],
   entities :[{type :Schema.ObjectId, ref: 'Federation_Entity'}],
   organizationId : {type :Schema.ObjectId,ref:'Organization'}
  

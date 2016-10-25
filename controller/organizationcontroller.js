@@ -90,17 +90,32 @@ exports.getAllOrganization = function(req, callback) {
 
 exports.getAllOrganizationWithDepth = function(req,callback){
 
+var pageno = +req.query.pageno;
+var pageLength = +req.query.pagelength;
+
 if (req.query.depth == null) {
-        organization.find({}, "_id", function(err, docs) {
-            var organizationArr = Array();
-            docs.forEach(function(element) {
-                organizationArr.push(baseURL + organizationURL + "/" + element._id);
+        if(pageno == undefined)
+        {
+            organization.find({}, "_id", function(err, docs) {
+                var organizationArr = Array();
+                docs.forEach(function(element) {
+                    organizationArr.push(baseURL + organizationURL + "/" + element._id);
+                });
+                callback(null, organizationArr);
             });
-            callback(null, organizationArr);
-        });
+        }
+        else{
+            organization.find({}).select("_id").skip(pageno*pageLength).limit(pageLength).exec(function(err, docs) {
+                var organizationArr = Array();
+                docs.forEach(function(element) {
+                    organizationArr.push(baseURL + organizationURL + "/" + element._id);
+                });
+                callback(null, organizationArr);
+            });
+        }
     }
     else{
-        
+          
         for(var i=0;i<depthArr.length;i++)
         {
             if(!(possibleDepthArr.indexOf(depthArr[i]) >-1))
@@ -108,29 +123,49 @@ if (req.query.depth == null) {
                 callback({"error" :['unknown value for depth parameter'],"code" : 400 },null);
             }
         }
-        
-        organization.find({}).select('-__v -_id').populate({
-            path: 'federations',
-            select: '-_id -__v -organizationId -entities'
-        }).populate({
-             path: 'entities',
-             select: '-_id -__v -organizationId -entities'
-        }).lean().exec(function(err, docs) {
+       if(pageno == undefined){
+            organization.find({}).select('-__v -_id').populate({
+                path: 'federations',
+                select: '-_id -__v -organizationId -entities'
+            }).populate({
+                path: 'entities',
+                select: '-_id -__v -organizationId'
+            }).lean().exec(function(err, docs) {
 
-            for (var i = 0; i < docs.length; i++) {
+                for (var i = 0; i < docs.length; i++) {
                 
-                for (var j = 0; j < docs[i].entities.length; j++) {
-                    docs[i].entities[j] = settings.baseURL + settings.federation_entity + "/" + docs[i].entities[j];
-                }
+                    for (var j = 0; j < docs[i].entities.length; j++) {
+                        docs[i].entities[j] = settings.baseURL + settings.federation_entity + "/" + docs[i].entities[j];
+                    }
+    
+            }
+            callback(null, docs);
+            });
+       }
+       else{
 
+              organization.find({}).select('-__v -_id').populate({
+                path: 'federations',
+                select: '-_id -__v -organizationId -entities'
+            }).populate({
+                path: 'entities',
+                select: '-_id -__v -organizationId'
+            }).skip(pageno*pageLength).limit(pageLength).lean().exec(function(err, docs) {
+
+                for (var i = 0; i < docs.length; i++) {
                 
-         }
-         callback(null, docs);
-        });
-            
+                    for (var j = 0; j < docs[i].entities.length; j++) {
+                        docs[i].entities[j] = settings.baseURL + settings.federation_entity + "/" + docs[i].entities[j];
+                    }
+    
+            }
+            callback(null, docs);
+            });
+       }
 
-    } 
-}
+       } 
+      } 
+
 
 exports.addOrganization = function(req, callback) {
 

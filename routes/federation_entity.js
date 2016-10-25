@@ -32,6 +32,7 @@ var federationentitycontroller = require("../controller/federation_entitycontrol
  */
 router.post(federationEntityURL, function(req, res) {
 
+    try{
     federationentitycontroller.addFederationEntity(req, function(err, data) {
         console.log(err);
         if (err) {
@@ -43,7 +44,9 @@ router.post(federationEntityURL, function(req, res) {
             });
         }
     });
-
+    }catch(e){
+        res.status(500).json();
+    }
 });
 
 /**
@@ -74,6 +77,7 @@ router.post(federationEntityURL, function(req, res) {
  */
 router.get(federationEntityURL + '/:id', function(req, res) {
 
+    try{
     federationentitycontroller.findFederationEntity(req, function(err, data) {
         if (err) {
             res.status(err.code).json({"Error(s)": err.error});
@@ -81,7 +85,9 @@ router.get(federationEntityURL + '/:id', function(req, res) {
             res.status(200).json(data);
         }
     });
-
+    }catch(e){
+        res.status(500).json();
+    }
 });
 
 
@@ -99,11 +105,22 @@ router.get(federationEntityURL + '/:id', function(req, res) {
  *         paramType: query
  *         required: false
  *         dataType: string
+ *       - name: pageno
+ *         description: pageno (Starts from 0)
+ *         paramType: query
+ *         required: false
+ *         dataType: string
+ *       - name: pagelength
+ *         description: page length
+ *         paramType: query
+ *         required: false
+ *         dataType: string
  *      
  *
  */
 router.get(federationEntityURL, function(req, res) {
-    federationentitycontroller.getAllFederationEntity(req, function(err, data) {
+    try{
+    federationentitycontroller.getAllFederationEntityWithDepth(req, function(err, data) {
         if (err) {
 
            res.status(err.code).json({"Error(s)": err.error});
@@ -113,6 +130,9 @@ router.get(federationEntityURL, function(req, res) {
             });
         }
     });
+    }catch(e){
+        res.status(500).json();
+    }
 });
 
 
@@ -134,7 +154,7 @@ router.get(federationEntityURL, function(req, res) {
  *          dataType: string
  */
 router.delete(federationEntityURL + '/:id', function(req, res) {
-
+    try{
     federationentitycontroller.deleteFederationEntity(req, function(err) {
         if (err) {
            res.status(err.code).json({"Error(s)": err.error});
@@ -142,7 +162,10 @@ router.delete(federationEntityURL + '/:id', function(req, res) {
             res.status(200).json();
         }
     });
-
+    }
+    catch(e){
+        res.status(500).json();
+    }
 });
 
 
@@ -170,7 +193,7 @@ router.delete(federationEntityURL + '/:id', function(req, res) {
  *            
  */
 router.put(federationEntityURL + "/:id", function(req, res) {
-
+    try{
     federationentitycontroller.updateFederationEntity(req, function(err, data) {
         console.log(err);
         if (err) {
@@ -180,7 +203,9 @@ router.put(federationEntityURL + "/:id", function(req, res) {
             res.status(200).json();
         }
     });
-
+}catch(e){
+        res.status(500).json();
+    }
 });
 
 
