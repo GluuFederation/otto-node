@@ -30,8 +30,8 @@ router.get(settings.discoveryEndpoint, function(req, res) {
         "issuer": baseURL,
         "federations_endpoint": baseURL + settings.federations,
         "federation_entity_endpoint": baseURL + settings.federation_entity,
-        "organizations_endpoint": baseURL + settings.organization,
-        "schema_endpoint": baseURL + settings.schema,
+        "organizations_endpoint": baseURL + settings.organization
+       
     };
 
     res.status(200).json(discoveryList);

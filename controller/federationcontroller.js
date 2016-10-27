@@ -163,6 +163,14 @@ exports.getAllFederationWithDepth = function(req, callback) {
         var depthArr = Array();
         depthArr = depthArr.concat(req.query.depth);
 
+         for(var i=0;i<depthArr.length;i++)
+         {
+            if(!(possibleDepthArr.indexOf(depthArr[i]) >-1))
+            {
+                callback({ "error" :["Invalid value ("+depthArr[i]+") for depth param"],"code" : 400},null);
+            }
+         }
+
         function callbackgetFederaions(err,docs,depthArr){
             Federation.deepPopulate(docs, 'entities.organizationId', function(err, doc) {
                 var data = JSON.parse(JSON.stringify(doc));
@@ -187,15 +195,20 @@ exports.getAllFederationWithDepth = function(req, callback) {
                         ele["organization"] = ele.organizationId;
                         delete ele.organizationId;
                         if (!isFedOrgDepth) {
-                            ele["organization"] = ele["organization"]["@id"];
+                            if(ele["organization"]!=undefined)
+                                ele["organization"] = ele["organization"]["@id"];
                         }
                     }
                     if (!isFedEntityDepth) {
                         var temp = Array();
-                        ele.entities.forEach(function(eleEnt) {
-                            //eleEnt = eleEnt["@id"];
-                            temp.push(eleEnt);
-                        });
+                        for(var i=0;i<ele.entities.length;i++)
+                        {
+                                temp.push(ele.entities[i]["@id"]);
+                        }
+                        // ele.entities.forEach(function(eleEnt) {
+                        //     //eleEnt = eleEnt["@id"];
+                            
+                        // });
                         ele["entities"]=temp;
                     } else {
                         ele.entities.forEach(function(eleEnt) {
@@ -326,7 +339,7 @@ exports.findFederation = function(req, callback) {
     if (req.query.depth == null) {
         Federation.findOne({
             _id: req.params.id
-        }).select('-__v -_id -keys').populate({
+        }).select('-__v -_id -keyguid').populate({
             path: 'entities',
             select: '-__v -_id'
         }).populate({
