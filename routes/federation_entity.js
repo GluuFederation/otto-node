@@ -24,7 +24,7 @@ var federationentitycontroller = require("../controller/federation_entitycontrol
  *      consumes:
  *        - text/html
  *      parameters:
- *        - body: name
+ *        - name: FederationEntity Json
  *          description: Your Federation Entity JSON
  *          paramType: body
  *          required: true

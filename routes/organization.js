@@ -23,7 +23,7 @@ var organizationcontroller = require("../controller/organizationcontroller");
  *      consumes:
  *        - text/html
  *      parameters:
- *        - body: name
+ *        - name: Organization JSON
  *          description: Your organization  JSON
  *          paramType: body
  *          required: true
