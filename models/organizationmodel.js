@@ -27,7 +27,7 @@ var OrganizationSchema = new Schema({
  OrganizationSchema.pre("save",function(next,done){
   
    this['@id']=settings.baseURL + settings.organization+"/"+this._id;
-   this['@context']=settings.baseURL + settings.federation_entity+"/organization.jsonld";
+   this['@context']=settings.baseURL + settings.organization+"/organization.jsonld";
    //console.log(this);  
    next();
     

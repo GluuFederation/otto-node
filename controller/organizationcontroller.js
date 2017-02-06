@@ -199,15 +199,15 @@ exports.findOrganization = function(req, callback) {
     if(req.query.depth == null){    
         var query = organization.findOne({
             _id: req.params.id
+        }).populate({
+            path: 'entities',
+            select: '-__v -_id -id -organizationId -@context -name -category -organizationId'
         }).select('-_id -__v'); //.populate({path:'federations',select:'@id name -_id'});
         query.exec(function(err, docs) {
             if (err) throw (err);
             var data = JSON.parse(JSON.stringify(docs._doc));
             for (var i = 0; i < data.federations.length; i++) {
                 data.federations[i] = settings.baseURL + settings.federations + "/" + data.federations[i];
-            }
-            for (var i = 0; i < data.entities.length; i++) {
-                data.entities[i] = settings.baseURL + settings.federation_entity + "/" + data.entities[i];
             }
 
              if (req.query.filter == null)
@@ -345,12 +345,12 @@ exports.updateOrganizattion = function(req, callback) {
 exports.joinFederationOrganization = function(req, callback) {
 
     if (!mongoose.Types.ObjectId.isValid(req.params.oid))
-        callback({
+        return callback({
             "error": ["Invalid Organization Id"],
             "code": 400
         }, null);
     if (!mongoose.Types.ObjectId.isValid(req.params.fid))
-        callback({
+        return callback({
             "error": ["Invalid Federation Id"],
             "code": 400
         }, null);
@@ -360,15 +360,15 @@ exports.joinFederationOrganization = function(req, callback) {
     }, function(err, doc) {
 
         if (err)
-            callback(err, null);
+            return callback(err, null);
         if (doc == null)
-            callback({
+            return callback({
                 "error": ["Organization doesn't exists"],
                 "code": 404
             }, null);
 
         if (doc.federations.indexOf(req.params.fid) > -1)
-            callback({
+            return callback({
                 "error": ["Federation already exist"],
                 "code": 404
             }, null);
@@ -382,7 +382,7 @@ exports.joinFederationOrganization = function(req, callback) {
         transaction.run(function(err, docs) {
             if (err)
                 throw (err);
-            callback(null, doc);
+            return callback(null, doc);
         });
     });
 
