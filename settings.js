@@ -5,7 +5,7 @@
       database: 'otto',
       multipleStatements: true
   }*/
-  exports.dbConfig="mongodb://localhost/otto"
+  exports.dbConfig="mongodb://localhost:27017/otto"
 
 
   // If you want to change the port change in /public/swagger/index.html - "  discoveryUrl: "http://localhost:5053/api-docs.json","for swagger UI

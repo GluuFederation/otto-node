@@ -459,4 +459,39 @@ router.post(settings.federations + '/:fid/', function(req, res) {
 
 });
 
+/**
+ * @swagger
+ * path: /otto/federation/{fid}/organization/{oid}
+ * operations:
+ *   -  httpMethod: POST
+ *      summary: Add Organization as Participant in Federation
+ *      notes: Returns Status
+ *      nickname: AddParticipant
+ *      consumes:
+ *        - text/html
+ *      parameters:
+ *        - name: fid
+ *          description: Your Federation Id
+ *          paramType: path
+ *          required: true
+ *          dataType: string
+ *        - name: oid
+ *          description: Your Organization  Id
+ *          paramType: path
+ *          required: true
+ *          dataType: string
+ *
+ */
+router.post(federationURL + "/:fid/organization/:oid", function(req, res) {
+    try{
+        federationcontroller.addParticipant(req,function(err,docs){
+            if (err)
+                return res.status(err.code).json({"Error(s)": err.error});
+            return res.status(200).json();
+        });
+    }catch(e){
+        res.status(500).json();
+    }
+});
+
 module.exports = router;

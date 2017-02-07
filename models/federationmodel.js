@@ -1,11 +1,9 @@
-
 var mongoose = require('mongoose');
 var settings = require("../settings");
 var Schema = mongoose.Schema;
 var deepPopulate = require('mongoose-deep-populate')(mongoose);
 
 var FederationSchema = new Schema({
-  
   '@context':String,
   '@id':String,
   name: String,
@@ -16,14 +14,15 @@ var FederationSchema = new Schema({
       alg:String
   }],
   entities :[{type :Schema.ObjectId, ref: 'Federation_Entity'}],
-  organizationId : {type :Schema.ObjectId,ref:'Organization'}
- 
+  organizationId : {type :Schema.ObjectId,ref:'Organization'},
+  participants :[{type :Schema.ObjectId, ref: 'Organization'}] // organizations as participants
 },{strict:false});
 
 FederationSchema.plugin(deepPopulate,{ whitelist: [
     'entities',
     'organizationId',
-    'entities.organizationId' 
+    'entities.organizationId',
+    'participants'
   ], populate: {
     'entities.organizationId': {
       select: 'name @id -_id'

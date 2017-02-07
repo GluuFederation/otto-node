@@ -2,6 +2,7 @@ var federationmodel = require("../models/federationmodel");
 var federationentitymodel = require("../models/federation_entitymodel");
 var Guid = require('guid');
 var mongoose = require('mongoose');
+var Transaction = require('mongoose-transaction')(mongoose);
 var Federation = mongoose.model('Federation');
 var FederationEntity = mongoose.model('Federation_Entity');
 var Common = require('../helpers/common');
@@ -341,7 +342,7 @@ exports.findFederation = function(req, callback) {
             _id: req.params.id
         }).select('-__v -_id -keyguid').populate({
             path: 'entities',
-            select: '-__v -_id'
+            select: '-__v -_id -id -organizationId -@context -name -category -organizationId'
         }).populate({
             path: 'organizationId',
             select: 'name @context @id -_id'
@@ -359,6 +360,10 @@ exports.findFederation = function(req, callback) {
                     delete federation.entities[j].organizationId;
                 }
             }
+
+            federation.participants = federation.participants.map(function (item, index) {
+                return settings.baseURL + settings.organization + "/" + item;
+            });
 
             federation["organization"] = federation["organizationId"];
             delete federation.organizationId;
@@ -593,5 +598,53 @@ exports.leaveFederation = function(req, callback) {
                 "code": 404
             }, null);
         }
+    });
+};
+
+exports.addParticipant = function(req, callback) {
+    if (!mongoose.Types.ObjectId.isValid(req.params.fid)) {
+        return callback({
+            error: ["Invalid Organization Id"],
+            code: 400
+        }, null);
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(req.params.oid)) {
+        return callback({
+            error: ["Invalid Federation Id"],
+            code: 400
+        }, null);
+    }
+
+    Federation.findOne({
+        _id: req.params.fid
+    }, function(err, doc) {
+
+        if (err) {
+            return callback(err, null);
+        }
+
+        if (doc == null) {
+            return callback({
+                error: ["Federation doesn't exists"],
+                code: 404
+            }, null);
+        }
+
+        if (doc.participants.indexOf(req.params.oid) > -1) {
+            return callback({
+                error: ["Federation already exist"],
+                code: 404
+            }, null);
+        }
+
+        doc.participants.push(req.params.oid);
+        var transaction = new Transaction();
+        transaction.update('Federation', req.params.fid, doc);
+        transaction.run(function(err, docs) {
+            if (err)
+                throw (err);
+            return callback(null, doc);
+        });
     });
 };
