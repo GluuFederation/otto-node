@@ -31,7 +31,7 @@ var Federation_EntitySchema = new Schema({
 Federation_EntitySchema.pre("save",function(next,done){
   
   this['@id']=settings.baseURL + settings.federation_entity+"/"+this._id;
-  this['@context']=settings.baseURL + settings.federation_entity+"/entity.jsonld";
+  this['@context']=settings.contextSchema + settings.contextOpenIdProvider;;
   next();
     
 });
