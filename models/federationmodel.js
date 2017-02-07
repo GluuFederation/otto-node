@@ -35,7 +35,7 @@ FederationSchema.plugin(deepPopulate,{ whitelist: [
 FederationSchema.pre("save",function(next,done){
   
   this['@id']=settings.baseURL + settings.federations+"/"+this._id;
-  this['@context']=settings.baseURL + settings.federations+"/federation.jsonld";
+  this['@context']=settings.contextSchema + settings.contextFederation;
   next();
     
 });
