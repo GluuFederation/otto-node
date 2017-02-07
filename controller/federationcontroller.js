@@ -342,7 +342,7 @@ exports.findFederation = function(req, callback) {
             _id: req.params.id
         }).select('-__v -_id -keyguid').populate({
             path: 'entities',
-            select: '-__v -_id'
+            select: '-__v -_id -id -organizationId -@context -name -category -organizationId'
         }).populate({
             path: 'organizationId',
             select: 'name @context @id -_id'

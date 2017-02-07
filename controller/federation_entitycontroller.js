@@ -187,7 +187,7 @@ exports.findFederationEntity = function(req, callback) {
     if (req.query.depth == null) {
         var query = federationEntity.findOne({
             _id: req.params.id
-        }).select('-_id -__v').lean();
+        }).select('-_id -__v -id').lean();
         query.exec(function(err, docs) {
             if (docs != null) {
                 if (err) throw (err);
