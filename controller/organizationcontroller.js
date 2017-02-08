@@ -201,7 +201,7 @@ exports.findOrganization = function(req, callback) {
             _id: req.params.id
         }).populate({
             path: 'entities',
-            select: '-__v -_id -id -organizationId -@context -name -category -organizationId'
+            select: {"@id": 1, type: 1, _id:0}
         }).select('-_id -__v'); //.populate({path:'federations',select:'@id name -_id'});
         query.exec(function(err, docs) {
             if (err) throw (err);
