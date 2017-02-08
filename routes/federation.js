@@ -464,7 +464,7 @@ router.post(settings.federations + '/:fid/', function(req, res) {
  * path: /otto/federations/{fid}/organization/{oid}
  * operations:
  *   -  httpMethod: POST
- *      summary: Add Organization as Participant in Federation
+ *      summary: Link Organization as Participant in Federation
  *      notes: Returns Status
  *      nickname: AddParticipant
  *      consumes:
