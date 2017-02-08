@@ -20,8 +20,8 @@
   exports.schema = "/otto/schema"
 
   //@context URL
-  exports.contextSchema = "https://github.com/KantaraInitiative/wg-otto/tree/master/schema/"
-  exports.contextOrganization = "organization.jsonld"
-  exports.contextFederation = "federation.jsonld"
-  exports.contextOpenIdProvider = "op.jsonld"
+  exports.contextSchema = "https://raw.githubusercontent.com/KantaraInitiative/wg-otto/master/schema/"
+  exports.contextOrganization = "otto/organization.jsonld"
+  exports.contextFederation = "otto/federation.jsonld"
+  exports.contextOpenIdProvider = "openid/op.jsonld"
 
