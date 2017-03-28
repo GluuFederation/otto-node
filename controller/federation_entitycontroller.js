@@ -1,6 +1,6 @@
 var federationModel = require("../models/federation_entitymodel");
 var mongoose = require('mongoose');
-var federationEntity = mongoose.model('Federation_Entity');
+var federationEntity = mongoose.model('Provider');
 var common = require('../helpers/common');
 var Ajv = require('ajv');
 var ajv = Ajv({
@@ -38,22 +38,22 @@ exports.getAllFederationEntity = function(req, callback) {
         federationEntity.find({}).select('-__v -_id').lean().exec(function(err, docs) {
             if (err) throw err;
             for (var i = 0; i < docs.length; i++) {
-                if (docs[i].organizationId != null || docs[i].organizationId != undefined)
-                    docs[i]["organization"] = settings.baseURL + settings.organization + "/" + docs[i].organizationId;
-                delete docs[i].organizationId;
+                if (docs[i].organization != null || docs[i].organization != undefined)
+                    docs[i]["organization"] = settings.baseURL + settings.organization + "/" + docs[i].organization;
+                delete docs[i].organization;
             }
             callback(null, docs);
         });
     } else if (req.query.depth == "federation_entity.organization") {
         federationEntity.find({}).select('-__v -_id').populate({
-            path: 'organizationId',
+            path: 'organization',
             select: '-_id -__v -federations -entities'
         }).lean().exec(function(err, docs) {
             //var finalFedArr = [];    
             for (var i = 0; i < docs.length; i++) {
-                if (docs[i]["organizationId"] != null || docs[i]["organizationId"] != undefined)
-                    docs[i]["organization"] =  docs[i]["organizationId"];
-                delete docs[i].organizationId;
+                if (docs[i]["organization"] != null || docs[i]["organization"] != undefined)
+                    docs[i]["organization"] =  docs[i]["organization"];
+                delete docs[i].organization;
             }
             callback(null, docs);
         });
@@ -111,15 +111,15 @@ exports.getAllFederationEntityWithDepth = function(req, callback) {
         if(pageno==undefined)
         {
             federationEntity.find({}).select('-__v -_id').populate({
-                path: 'organizationId',
+                path: 'organization',
                 select: '-_id -__v -federations -entities'
             }).lean().exec(function(err, docs) {
                 //var finalFedArr = [];    
 
                 for (var i = 0; i < docs.length; i++) {
-                    if (docs[i]["organizationId"] != null || docs[i]["organizationId"] != undefined)
-                        docs[i]["organization"] =  docs[i]["organizationId"];
-                    delete docs[i].organizationId;
+                    if (docs[i]["organization"] != null || docs[i]["organization"] != undefined)
+                        docs[i]["organization"] =  docs[i]["organization"];
+                    delete docs[i].organization;
                 }
                 if(!(possibleDepthArr.indexOf('federation_entity.organization') >-1))
                 {
@@ -132,15 +132,15 @@ exports.getAllFederationEntityWithDepth = function(req, callback) {
         else{
 
             federationEntity.find({}).select('-__v -_id').skip(pageno*pageLength).limit(pageLength).populate({
-                path: 'organizationId',
+                path: 'organization',
                 select: '-_id -__v -federations -entities'
             }).lean().exec(function(err, docs) {
                 //var finalFedArr = [];    
 
                 for (var i = 0; i < docs.length; i++) {
-                    if (docs[i]["organizationId"] != null || docs[i]["organizationId"] != undefined)
-                        docs[i]["organization"] =  docs[i]["organizationId"];
-                    delete docs[i].organizationId;
+                    if (docs[i]["organization"] != null || docs[i]["organization"] != undefined)
+                        docs[i]["organization"] =  docs[i]["organization"];
+                    delete docs[i].organization;
                 }
                 if(!(possibleDepthArr.indexOf('federation_entity.organization') >-1))
                 {
@@ -187,13 +187,13 @@ exports.findFederationEntity = function(req, callback) {
     if (req.query.depth == null) {
         var query = federationEntity.findOne({
             _id: req.params.id
-        }).select('-_id -__v -id').lean();
+        }).select({_id: 0, name: 1, "@context": 1, "@id": 1, signedJwksUri:1, metadataStatementUris:1, metadataStatements:1}).lean();
         query.exec(function(err, docs) {
             if (docs != null) {
                 if (err) throw (err);
-                if (docs["organizationId"] != null || docs["organizationId"] != undefined)
-                    docs["organization"] = settings.baseURL + settings.organization + "/"+ docs["organizationId"];
-                delete docs.organizationId;
+                if (docs["organization"] != null || docs["organization"] != undefined)
+                    docs["organization"] = settings.baseURL + settings.organization + "/"+ docs["organization"];
+                delete docs.organization;
 
                 if (req.query.filter == null)
                     callback(null, docs);
@@ -216,15 +216,15 @@ exports.findFederationEntity = function(req, callback) {
         federationEntity.findOne({
             _id: req.params.id
         }).select('-__v -_id').populate({
-            path: 'organizationId',
+            path: 'organization',
             select: '-_id -__v -federations -entities'
         }).lean().exec(function(err, docs) {
             //var finalFedArr = [];    
 
             if (docs != null) {
-                if (docs["organizationId"] != null || docs["organizationId"] != undefined)
-                    docs["organization"] = settings.baseURL + settings.organization + "/"+ docs["organizationId"];
-                delete docs.organizationId;
+                if (docs["organization"] != null || docs["organization"] != undefined)
+                    docs["organization"] = settings.baseURL + settings.organization + "/"+ docs["organization"];
+                delete docs.organization;
 
                 if (req.query.filter == null)
                     callback(null, docs);

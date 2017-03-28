@@ -1,36 +1,79 @@
-
 var mongoose = require('mongoose');
 var settings = require("../settings");
 var Schema = mongoose.Schema;
 
 
-var OrganizationSchema = new Schema({
-  '@context':String,
-  '@id':String,
-  name: String,
-   entities :[{type :Schema.ObjectId, ref: 'Federation_Entity'}],
-   federations :[{type :Schema.ObjectId, ref: 'Federation'}]
+// define the schema for our organization
+const OrganizationSchema = mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  phoneNo: {
+    type: String
+  },
+  address: {
+    type: String
+  },
+  zipcode: {
+    type: String
+  },
+  state: {
+    type: String
+  },
+  city: {
+    type: String
+  },
+  type: {
+    type: String
+  },
+  description: {
+    type: String
+  },
+  federation: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Federation'
+  },
+  isApproved: {
+    type: Boolean,
+    default: false
+  },
+  isActive: {
+    type: Boolean,
+    default: false
+  },
+  trustMarkFile: {
+    type: String
+  },
+  '@context': {
+    type: String
+  },
+  '@id': {
+    type: String
+  },
+  entities: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Provider'
+  }],
+  federations: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Federation'
+  }],
+  trustMark: String
+}, {
+  timestamps: true
+}, {
+  strict: false
+});
 
-  //category:String
-  // entityType:String,
-  // address : {
-  //   addressLine1 :String,
-  //   addressLine2 : String,
-  //   streetName : String,
-  //   zipCode : String,
-  //   city : String,
-  //   state : String,
-  //   country:String
-  // }
-},{strict:false});
+OrganizationSchema.pre("save", function (next, done) {
 
- OrganizationSchema.pre("save",function(next,done){
-  
-   this['@id']=settings.baseURL + settings.organization+"/"+this._id;
-   this['@context']=settings.contextSchema + settings.contextOrganization;
-   //console.log(this);  
-   next();
-    
+  this['@id'] = settings.baseURL + settings.organization + "/" + this._id;
+  this['@context'] = settings.contextSchema + settings.contextOrganization;
+  //console.log(this);
+  next();
+
 });
 
 var Organization = mongoose.model('Organization', OrganizationSchema);
