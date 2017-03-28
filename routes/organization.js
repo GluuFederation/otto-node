@@ -46,14 +46,14 @@ router.post(organizationURL, function(req, res) {
         res.status(500).json();
     }
 });
-    
+
 /**
  * @swagger
  * path: /otto/organization/{id}
  * operations:
  *   -  httpMethod: GET
  *      summary: Get organization  By Id
- *      notes: Returns organization 
+ *      notes: Returns organization
  *      nickname: GetorganizationById
  *      parameters:
  *        - name: id
@@ -95,8 +95,8 @@ router.get(organizationURL + '/:id', function(req, res) {
  * path: /otto/organization
  * operations:
  *   -  httpMethod: GET
- *      summary: Get Organization 
- *      notes: Returns Organization 
+ *      summary: Get Organization
+ *      notes: Returns Organization
  *      nickname: GetOrganization
  *      parameters:
  *        - name: depth
@@ -139,7 +139,7 @@ router.get(organizationURL, function(req, res) {
  * path: /otto/organization/{id}
  * operations:
  *   -  httpMethod: Delete
- *      summary: Delete organization 
+ *      summary: Delete organization
  *      notes: Returns organization  status
  *      nickname: Deleteorganization
  *      consumes:
@@ -150,11 +150,10 @@ router.get(organizationURL, function(req, res) {
  *          paramType: path
  *          required: true
  *          dataType: string
- * 
- * 
+ *
+ *
  */
 router.delete(organizationURL + '/:id', function(req, res) {
-
     try{
     organizationcontroller.deleteOrganization(req, function(err) {
         if (err) {
@@ -162,7 +161,6 @@ router.delete(organizationURL + '/:id', function(req, res) {
         } else {
             res.status(200).json();
         }
-
     });
 }catch(e){
         res.status(500).json();
@@ -192,7 +190,7 @@ router.delete(organizationURL + '/:id', function(req, res) {
  *          paramType: body
  *          required: true
  *          dataType: string
- *            
+ *
  */
 router.put(organizationURL + "/:id", function(req, res) {
     try{
@@ -231,14 +229,14 @@ router.put(organizationURL + "/:id", function(req, res) {
  *          paramType: path
  *          required: true
  *          dataType: string
- *            
+ *
  */
 router.post(organizationURL + "/:oid/federation/:fid", function(req, res) {
 try{
     organizationcontroller.joinFederationOrganization(req,function(err,docs){
-         if (err) 
+         if (err)
             res.status(err.code).json({"Error(s)": err.error});
-         res.status(200).json(); 
+         res.status(200).json();
     });
 }catch(e){
         res.status(500).json();
@@ -266,7 +264,7 @@ try{
  *          paramType: path
  *          required: true
  *          dataType: string
- *            
+ *
  */
 router.post(organizationURL + "/:oid/federation_entity/:eid", function(req, res) {
 try{
@@ -274,7 +272,7 @@ try{
          if (err) {
              res.status(err.code).json({"Error(s)": err.error});
          }
-         res.status(200).json(); 
+         res.status(200).json();
     });
     }catch(e){
         res.status(500).json();

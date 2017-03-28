@@ -392,12 +392,12 @@ exports.joinFederationOrganization = function(req, callback) {
 exports.joinEntityOrganization = function(req, callback) {
 
     if (!mongoose.Types.ObjectId.isValid(req.params.oid))
-        callback({
+        return callback({
             "error": ["Invalid Organization Id"],
             "code": 400
         }, null);
     if (!mongoose.Types.ObjectId.isValid(req.params.eid))
-        callback({
+        return callback({
             "error": ["Invalid Federation Entity Id"],
             "code": 400
         }, null);
@@ -415,17 +415,16 @@ exports.joinEntityOrganization = function(req, callback) {
             }, null);
 
         if (doc.entities.indexOf(req.params.eid) > -1)
-            callback({
+            return callback({
                 "error": ["Federation Entity already exist"],
                 "code": 404
             }, null);
 
-
         doc.entities.push(req.params.eid);
         var transaction = new Transaction();
         transaction.update('Organization', req.params.oid, doc);
-        transaction.update('Federation_Entity', req.params.eid, {
-            organizationId: req.params.oid
+        transaction.update('Provider', req.params.eid, {
+            organization: req.params.oid
         });
         transaction.run(function(err, docs) {
             if (err)

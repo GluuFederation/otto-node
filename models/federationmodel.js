@@ -3,28 +3,53 @@ var settings = require("../settings");
 var Schema = mongoose.Schema;
 var deepPopulate = require('mongoose-deep-populate')(mongoose);
 
-var FederationSchema = new Schema({
-  '@context':String,
-  '@id':String,
-  name: String,
-  keys: [{ 
-      privatekey: String,
-      publickey: String,
-      keyguid:String,
-      alg:String
+const FederationSchema = mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  isActive: {
+    type: Boolean,
+    default: false
+  },
+  keys: [{
+    privatekey: String,
+    publickey: String,
+    keyguid: String,
+    alg: String
   }],
-  entities :[{type :Schema.ObjectId, ref: 'Federation_Entity'}],
-  organizationId : {type :Schema.ObjectId,ref:'Organization'},
-  participants :[{type :Schema.ObjectId, ref: 'Organization'}] // organizations as participants
-},{strict:false});
+  '@context': {
+    type: String
+  },
+  '@id': {
+    type: String
+  },
+  entities: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Provider'
+  }],
+  organization: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Organization'
+  },
+  participants: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Organization'
+  }]
+}, {
+  timestamps: true
+}, {
+  strict:false
+});
 
 FederationSchema.plugin(deepPopulate,{ whitelist: [
     'entities',
-    'organizationId',
-    'entities.organizationId',
+    'organization',
+    'entities.organization',
     'participants'
   ], populate: {
-    'entities.organizationId': {
+    'entities.organization': {
       select: 'name @id -_id'
           },
      'entities' :{
