@@ -377,7 +377,7 @@ exports.joinFederationOrganization = function(req, callback) {
         var transaction = new Transaction();
         transaction.update('Organization', req.params.oid, doc);
         transaction.update('Federation', req.params.fid, {
-            organizationId: req.params.oid
+            organization: req.params.oid
         });
         transaction.run(function(err, docs) {
             if (err)
