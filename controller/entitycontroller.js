@@ -1,6 +1,6 @@
-var federationModel = require("../models/federation_entitymodel");
+var federationModel = require("../models/entitymodel");
 var mongoose = require('mongoose');
-var federationEntity = mongoose.model('Provider');
+var federationEntity = mongoose.model('Entity');
 var common = require('../helpers/common');
 var Ajv = require('ajv');
 var ajv = Ajv({
@@ -8,7 +8,7 @@ var ajv = Ajv({
 });
 var settings = require("../settings");
 var baseURL = settings.baseURL;
-var federationEntityURL = settings.federation_entity;
+var federationEntityURL = settings.entity;
 var JSPath = require('jspath');
 var possibleDepthArr = ['federation_entity','federation_entity.organization'];
 

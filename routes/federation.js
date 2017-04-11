@@ -5,20 +5,18 @@ var settings = require("../settings");
 var baseURL = settings.baseURL;
 var federationURL = settings.federations;
 var federationcontroller = require("../controller/federationcontroller");
-var federationentitycontroller = require("../controller/federation_entitycontroller");
+var entitycontroller = require("../controller/entitycontroller");
 var jws = require('jws');
 var fs = require('fs');
 var keypair = require('keypair');
-var pem2jwk = require('pem-jwk').pem2jwk
+var pem2jwk = require('pem-jwk').pem2jwk;
 var algArr = ['RS256', 'RS384', 'RS512'];
-
 
 /**
  * @swagger
  * resourcePath: /Federations
  * description: Open Trust Taxonomy for Federation Operators
  */
-
 
 /**
  * @swagger
@@ -37,21 +35,21 @@ var algArr = ['RS256', 'RS384', 'RS512'];
  *          required: true
  *          dataType: string
  */
-router.post(settings.federations, function(req, res) {
+router.post(settings.federations, function (req, res) {
 
-    federationcontroller.addFederation(req, function(err, data) {
-        console.log(err);
-        if (err) {
-            res.status(err.code).json({
-                "Error(s)": err.error
-            });
-        } else {
+  federationcontroller.addFederation(req, function (err, data) {
+    console.log(err);
+    if (err) {
+      res.status(err.code).json({
+        "Error(s)": err.error
+      });
+    } else {
 
-            res.status(201).json({
-                "@id": baseURL + federationURL + "/" + data
-            });
-        }
-    });
+      res.status(201).json({
+        "@id": baseURL + federationURL + "/" + data
+      });
+    }
+  });
 
 });
 
@@ -89,92 +87,83 @@ router.post(settings.federations, function(req, res) {
  *          paramType: query
  *          required: false
  *          dataType: string
- * 
+ *
  */
-router.get(settings.federations + '/:id', function(req, res) {
+router.get(settings.federations + '/:id', function (req, res) {
 
-    federationcontroller.findFederation(req, function(err, data) {
-        if (err) {
-            res.status(err.code).json({
-                "Error(s)": err.error
-            });
-        } else {
-
-
-            if (req.query.sign != null && req.query.sign != undefined) {
-                if (req.query.sign == 'true') {
-                    var alg = "";
-                    if (req.query.alg == undefined) {
-                        alg = 'RS512';
-                    } else {
-                        var str = req.query.alg;
-                        if (algArr.indexOf(str.trim()) > -1) {
-                            alg = str.trim();
-                        } else {
-                            res.status(400).json({
-                                "Error": ['Cannot sign federation data. Algorithm not suported']
-                            });
-                        }
-                    }
-
-                        if (data.hasOwnProperty("keys")) {
-                            var keys = data.keys;
-
-                            delete data.keys;
-                            var i = 0
-                            for (i = 0; i < keys.length; i++) {
-                                if (alg == keys[i].alg) {
-                                    break;
-                                }
-                            }
-                            console.log(i);
-                            console.log(keys[i]);
-                            try {
-                                jws.createSign({
-                                    header: {
-                                        "alg": alg
-                                    },
-                                    privateKey: keys[i].privatekey,
-                                    payload: data,
-                                }).on('done', function(signature) {
-                                    res.status(200).json({
-                                        SignData: signature
-                                    });
-
-                                });
-                            } catch (e) {
-                                res.status(500).json({
-                                    "Error": ['Error occur while signing the data.']
-                                });
-                            }
-
-                        } else {
-                            res.status(400).json({
-                                "Error": ['Cannot sign federation data. Key not available']
-                            });
-                        }
-                  //  }
-                    //  }
-                    //}
-
-
-
-
-                } else {
-                    res.status(400).json({
-                        "Error": ['Invalid value for the sign parameter.']
-                    });
-                }
-
+  federationcontroller.findFederation(req, function (err, data) {
+    if (err) {
+      res.status(err.code).json({
+        "Error(s)": err.error
+      });
+    } else {
+      if (req.query.sign != null && req.query.sign != undefined) {
+        if (req.query.sign == 'true') {
+          var alg = "";
+          if (req.query.alg == undefined) {
+            alg = 'RS512';
+          } else {
+            var str = req.query.alg;
+            if (algArr.indexOf(str.trim()) > -1) {
+              alg = str.trim();
             } else {
-                if (data.hasOwnProperty("keys"))
-                    delete data.keys;
+              res.status(400).json({
+                Error: ['Cannot sign federation data. Algorithm not suported']
+              });
+            }
+          }
 
-                res.status(200).json(data)
+          if (data.hasOwnProperty("keys")) {
+            var keys = data.keys;
+
+            delete data.keys;
+            var i = 0
+            for (i = 0; i < keys.length; i++) {
+              if (alg == keys[i].alg) {
+                break;
+              }
+            }
+            console.log(i);
+            console.log(keys[i]);
+            try {
+              jws.createSign({
+                header: {
+                  alg: alg
+                },
+                privateKey: keys[i].privatekey,
+                payload: data,
+              }).on('done', function (signature) {
+                res.status(200).json({
+                  SignData: signature
+                });
+
+              });
+            } catch (e) {
+              res.status(500).json({
+                Error: ['Error occur while signing the data.']
+              });
             }
 
+          } else {
+            res.status(400).json({
+              Error: ['Cannot sign federation data. Key not available']
+            });
+          }
+        } else {
+          res.status(400).json({
+            Error: ['Invalid value for the sign parameter.']
+          });
         }
-    });
+
+      } else {
+        if (data.hasOwnProperty("keys"))
+          delete data.keys;
+
+        res.status(200).json(data)
+      }
+
+    }
+  });
 });
 
 /**
@@ -192,19 +181,19 @@ router.get(settings.federations + '/:id', function(req, res) {
  *          required: true
  *          dataType: string
  */
-router.get(settings.federations + '/:id/jwks', function(req, res) {
-    federationcontroller.getJWKsForFederation(req, function(err, data) {
-        if (err) {
+router.get(settings.federations + '/:id/jwks', function (req, res) {
+  federationcontroller.getJWKsForFederation(req, function (err, data) {
+    if (err) {
 
-            res.status(err.code).json({
-                "Error(s)": err.error
-            });
+      res.status(err.code).json({
+        "Error(s)": err.error
+      });
 
-        } else {
+    } else {
 
-            res.status(200).json(data);
-        }
-    });
+      res.status(200).json(data);
+    }
+  });
 });
 
 /**
@@ -231,30 +220,25 @@ router.get(settings.federations + '/:id/jwks', function(req, res) {
  *          paramType: query
  *          required: false
  *          dataType: string
- *      
+ *
  */
-router.get(settings.federations, function(req, res) {
-    try {
-        federationcontroller.getAllFederationWithDepth(req, function(err, data) {
-            if (err) {
-
-                res.status(err.code).json({
-                    "Error(s)": err.error
-                });
-
-            } else {
-
-                res.status(200).json({
-                    '@context': baseURL + '/otto/federation_list',
-                    federations: data
-                });
-            }
-
+router.get(settings.federations, function (req, res) {
+  try {
+    federationcontroller.getAllFederationWithDepth(req, function (err, data) {
+      if (err) {
+        res.status(err.code).json({
+          "Error(s)": err.error
         });
-    } catch (e) {
-        res.status(500).json();
-    }
-
+      } else {
+        res.status(200).json({
+          '@context': baseURL + '/otto/federation_list',
+          federations: data
+        });
+      }
+    });
+  } catch (e) {
+    res.status(500).json();
+  }
 });
 
 /**
@@ -273,23 +257,23 @@ router.get(settings.federations, function(req, res) {
  *          paramType: path
  *          required: true
  *          dataType: string
- *       
+ *
  */
-router.delete(settings.federations + '/:id', function(req, res) {
+router.delete(settings.federations + '/:id', function (req, res) {
 
-    try {
-        federationcontroller.deleteFederation(req, function(err) {
-            if (err) {
-                res.status(err.code).json({
-                    "Error(s)": err.error
-                });
-            } else {
-                res.status(200).json();
-            }
+  try {
+    federationcontroller.deleteFederation(req, function (err) {
+      if (err) {
+        res.status(err.code).json({
+          "Error(s)": err.error
         });
-    } catch (e) {
-        res.status(500).json();
-    }
+      } else {
+        res.status(200).json();
+      }
+    });
+  } catch (e) {
+    res.status(500).json();
+  }
 });
 
 
@@ -314,23 +298,23 @@ router.delete(settings.federations + '/:id', function(req, res) {
  *          paramType: body
  *          required: true
  *          dataType: string
- *            
+ *
  */
-router.put(settings.federations + "/:id", function(req, res) {
-    try {
-        federationcontroller.updateFederation(req, function(err, data) {
-            console.log(err);
-            if (err) {
-                res.status(err.code).json({
-                    "Error(s)": err.error
-                });
-            } else {
-                res.status(200).json();
-            }
+router.put(settings.federations + "/:id", function (req, res) {
+  try {
+    federationcontroller.updateFederation(req, function (err, data) {
+      console.log(err);
+      if (err) {
+        res.status(err.code).json({
+          "Error(s)": err.error
         });
-    } catch (e) {
-        res.status(500).json();
-    }
+      } else {
+        res.status(200).json();
+      }
+    });
+  } catch (e) {
+    res.status(500).json();
+  }
 });
 
 
@@ -356,19 +340,19 @@ router.put(settings.federations + "/:id", function(req, res) {
  *          required: true
  *          dataType: string
  */
-router.delete(settings.federations + '/:fid/:eid', function(req, res) {
-    try {
-        federationcontroller.leaveFederation(req, function(err, callback) {
-            if (err) {
-                res.status(err.code).json({
-                    "Error(s)": err.error
-                });
-            }
-            res.status(200).json();
+router.delete(settings.federations + '/:fid/:eid', function (req, res) {
+  try {
+    federationcontroller.leaveFederation(req, function (err, callback) {
+      if (err) {
+        res.status(err.code).json({
+          "Error(s)": err.error
         });
-    } catch (e) {
-        res.status(500).json();
-    }
+      }
+      res.status(200).json();
+    });
+  } catch (e) {
+    res.status(500).json();
+  }
 });
 
 /**
@@ -393,19 +377,19 @@ router.delete(settings.federations + '/:fid/:eid', function(req, res) {
  *          required: true
  *          dataType: string
  */
-router.post(settings.federations + '/:fid/:eid', function(req, res) {
-    try {
-        federationcontroller.joinFederation(req, function(err, callback) {
-            if (err) {
-                res.status(err.code).json({
-                    "Error(s)": err.error
-                });
-            }
-            res.status(200).json();
+router.post(settings.federations + '/:fid/:eid', function (req, res) {
+  try {
+    federationcontroller.joinFederation(req, function (err, callback) {
+      if (err) {
+        res.status(err.code).json({
+          "Error(s)": err.error
         });
-    } catch (e) {
-        res.status(500).json();
-    }
+      }
+      res.status(200).json();
+    });
+  } catch (e) {
+    res.status(500).json();
+  }
 });
 
 
@@ -429,33 +413,33 @@ router.post(settings.federations + '/:fid/:eid', function(req, res) {
  *          description: Entity Data
  *          paramType: body
  *          required: true
- *          dataType: string  
+ *          dataType: string
  */
-router.post(settings.federations + '/:fid/', function(req, res) {
+router.post(settings.federations + '/:fid/', function (req, res) {
 
-    try {
+  try {
 
-        federationentitycontroller.addFederationEntity(req, function(err, data) {
-            console.log(err);
-            if (err) {
-                res.status(err.code).json({
-                    "Error(s)": err.error
-                });
-            } else {
-                req.params.eid = data.toString();
-                federationcontroller.joinFederation(req, function(err, callback) {
-                    if (err) {
-                        res.status(409).json({
-                            "Error(s)": err
-                        });
-                    }
-                    res.status(200).json();
-                });
-            }
+    federationentitycontroller.addFederationEntity(req, function (err, data) {
+      console.log(err);
+      if (err) {
+        res.status(err.code).json({
+          "Error(s)": err.error
         });
-    } catch (e) {
-        res.status(500).json();
-    }
+      } else {
+        req.params.eid = data.toString();
+        federationcontroller.joinFederation(req, function (err, callback) {
+          if (err) {
+            res.status(409).json({
+              "Error(s)": err
+            });
+          }
+          res.status(200).json();
+        });
+      }
+    });
+  } catch (e) {
+    res.status(500).json();
+  }
 
 });
 
@@ -482,16 +466,16 @@ router.post(settings.federations + '/:fid/', function(req, res) {
  *          dataType: string
  *
  */
-router.post(federationURL + "/:fid/organization/:oid", function(req, res) {
-    try{
-        federationcontroller.addParticipant(req,function(err,docs){
-            if (err)
-                return res.status(err.code).json({"Error(s)": err.error});
-            return res.status(200).json();
-        });
-    }catch(e){
-        res.status(500).json();
-    }
+router.post(federationURL + "/:fid/organization/:oid", function (req, res) {
+  try {
+    federationcontroller.addParticipant(req, function (err, docs) {
+      if (err)
+        return res.status(err.code).json({"Error(s)": err.error});
+      return res.status(200).json();
+    });
+  } catch (e) {
+    res.status(500).json();
+  }
 });
 
 module.exports = router;

@@ -133,7 +133,6 @@ router.get(organizationURL, function(req, res) {
 });
 
 
-
 /**
  * @swagger
  * path: /otto/organization/{id}

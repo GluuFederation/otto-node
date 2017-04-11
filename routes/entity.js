@@ -3,8 +3,8 @@ var express = require('express');
 var router = express.Router();
 var settings = require("../settings");
 var baseURL = settings.baseURL;
-var federationEntityURL = settings.federation_entity;
-var federationentitycontroller = require("../controller/federation_entitycontroller");
+var federationEntityURL = settings.entity;
+var federationentitycontroller = require("../controller/entitycontroller");
 
 /**
  * @swagger
@@ -193,7 +193,7 @@ router.delete(federationEntityURL + '/:id', function(req, res) {
  *            
  */
 router.put(federationEntityURL + "/:id", function(req, res) {
-    try{
+    try {
     federationentitycontroller.updateFederationEntity(req, function(err, data) {
         console.log(err);
         if (err) {
