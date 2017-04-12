@@ -27,16 +27,14 @@ router.get('/', function(req, res) {
  */
 router.get(settings.discoveryEndpoint, function(req, res) {
     var discoveryList = {
-        "issuer": baseURL,
-        "federations_endpoint": baseURL + settings.federations,
-        "federation_entity_endpoint": baseURL + settings.federation_entity,
-        "organizations_endpoint": baseURL + settings.organization,
-       "federation_signing_alg_values_supported" : [
-        "RS256",
-        "RS384",
-        "RS512"
-       
-       ]
+        "@id": baseURL,
+        "name": settings.RA_NAME,
+        "url": baseURL,
+        "description": "OTTO Registration Authority",
+        "federation_endpoint": baseURL + settings.federations,
+        "participant_endpoint": baseURL + settings.organization,
+        "entity_endpoint": baseURL + settings.entity,
+        "registers": []
     };
 
     res.status(200).json(discoveryList);
