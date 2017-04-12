@@ -1,12 +1,9 @@
 var mongoose = require('mongoose');
-var settings = require("../settings");
-var Schema = mongoose.Schema;
-
+var settings = require('../settings');
 var deepPopulate = require('mongoose-deep-populate')(mongoose);
 
-
 // define the schema for openid connect provider
-const EntitySchema = mongoose.Schema({
+const entitySchema = mongoose.Schema({
   name: {
     type: String,
     required: true
@@ -46,22 +43,19 @@ const EntitySchema = mongoose.Schema({
 }, {
   timestamps: true
 }, {
-  strict:false
+  strict: false
 });
 
-EntitySchema.pre('save',function(next,done) {
-  this['@id']=settings.baseURL + settings.entity+'/'+this._id;
-  this['@context']=settings.contextSchema + settings.contextOpenIdProvider;
+entitySchema.pre('save', function (next, done) {
+  this['@id'] = settings.baseURL + settings.entity + '/' + this._id;
+  this['@context'] = settings.contextSchema + settings.contextOpenIdProvider;
   next();
 });
 
-EntitySchema.plugin(deepPopulate, {
+entitySchema.plugin(deepPopulate, {
   whitelist: [
     'organization'
-   ]
+  ]
 });
 
-var Entity = mongoose.model('Entity', EntitySchema);
-module.exports = Entity;
-
-
+module.exports = mongoose.model('Entity', entitySchema);

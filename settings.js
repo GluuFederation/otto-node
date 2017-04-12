@@ -16,7 +16,7 @@
   exports.discoveryEndpoint = "/.well-known/otto-configuration"
   exports.federations = "/otto/federations"
   exports.entity = "/otto/entity"
-  exports.organization = "/otto/participant"
+  exports.participant = "/otto/participant"
   exports.schema = "/otto/schema"
 
   exports.contextSchema = "https://raw.githubusercontent.com/KantaraInitiative/wg-otto/master/schema/"

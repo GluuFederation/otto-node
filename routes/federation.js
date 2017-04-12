@@ -4,8 +4,8 @@ var router = express.Router();
 var settings = require("../settings");
 var baseURL = settings.baseURL;
 var federationURL = settings.federations;
-var federationcontroller = require("../controller/federationcontroller");
-var entitycontroller = require("../controller/entitycontroller");
+var federationController = require("../controller/federationcontroller");
+var entityController = require("../controller/entitycontroller");
 var jws = require('jws');
 var fs = require('fs');
 var keypair = require('keypair');
@@ -36,21 +36,18 @@ var algArr = ['RS256', 'RS384', 'RS512'];
  *          dataType: string
  */
 router.post(settings.federations, function (req, res) {
-
-  federationcontroller.addFederation(req, function (err, data) {
+  federationController.addFederation(req, function (err, data) {
     console.log(err);
     if (err) {
       res.status(err.code).json({
         "Error(s)": err.error
       });
     } else {
-
       res.status(201).json({
         "@id": baseURL + federationURL + "/" + data
       });
     }
   });
-
 });
 
 /**
@@ -68,7 +65,7 @@ router.post(settings.federations, function (req, res) {
  *          required: true
  *          dataType: string
  *        - name: depth
- *          description: depth[entities.organization]
+ *          description: depth[federates, members]
  *          paramType: query
  *          required: false
  *          dataType: string
@@ -91,7 +88,7 @@ router.post(settings.federations, function (req, res) {
  */
 router.get(settings.federations + '/:id', function (req, res) {
 
-  federationcontroller.findFederation(req, function (err, data) {
+  federationController.findFederation(req, function (err, data) {
     if (err) {
       res.status(err.code).json({
         "Error(s)": err.error
@@ -182,15 +179,12 @@ router.get(settings.federations + '/:id', function (req, res) {
  *          dataType: string
  */
 router.get(settings.federations + '/:id/jwks', function (req, res) {
-  federationcontroller.getJWKsForFederation(req, function (err, data) {
+  federationController.getJWKsForFederation(req, function (err, data) {
     if (err) {
-
       res.status(err.code).json({
         "Error(s)": err.error
       });
-
     } else {
-
       res.status(200).json(data);
     }
   });
@@ -224,7 +218,7 @@ router.get(settings.federations + '/:id/jwks', function (req, res) {
  */
 router.get(settings.federations, function (req, res) {
   try {
-    federationcontroller.getAllFederationWithDepth(req, function (err, data) {
+    federationController.getAllFederationWithDepth(req, function (err, data) {
       if (err) {
         res.status(err.code).json({
           "Error(s)": err.error
@@ -260,9 +254,8 @@ router.get(settings.federations, function (req, res) {
  *
  */
 router.delete(settings.federations + '/:id', function (req, res) {
-
   try {
-    federationcontroller.deleteFederation(req, function (err) {
+    federationController.deleteFederation(req, function (err) {
       if (err) {
         res.status(err.code).json({
           "Error(s)": err.error
@@ -275,7 +268,6 @@ router.delete(settings.federations + '/:id', function (req, res) {
     res.status(500).json();
   }
 });
-
 
 /**
  * @swagger
@@ -302,7 +294,7 @@ router.delete(settings.federations + '/:id', function (req, res) {
  */
 router.put(settings.federations + "/:id", function (req, res) {
   try {
-    federationcontroller.updateFederation(req, function (err, data) {
+    federationController.updateFederation(req, function (err, data) {
       console.log(err);
       if (err) {
         res.status(err.code).json({
@@ -316,7 +308,6 @@ router.put(settings.federations + "/:id", function (req, res) {
     res.status(500).json();
   }
 });
-
 
 /**
  * @swagger
@@ -342,7 +333,7 @@ router.put(settings.federations + "/:id", function (req, res) {
  */
 router.delete(settings.federations + '/:fid/:eid', function (req, res) {
   try {
-    federationcontroller.leaveFederation(req, function (err, callback) {
+    federationController.leaveFederation(req, function (err, callback) {
       if (err) {
         res.status(err.code).json({
           "Error(s)": err.error
@@ -379,7 +370,7 @@ router.delete(settings.federations + '/:fid/:eid', function (req, res) {
  */
 router.post(settings.federations + '/:fid/:eid', function (req, res) {
   try {
-    federationcontroller.joinFederation(req, function (err, callback) {
+    federationController.joinFederation(req, function (err, callback) {
       if (err) {
         res.status(err.code).json({
           "Error(s)": err.error
@@ -391,7 +382,6 @@ router.post(settings.federations + '/:fid/:eid', function (req, res) {
     res.status(500).json();
   }
 });
-
 
 /**
  * @swagger
@@ -416,10 +406,8 @@ router.post(settings.federations + '/:fid/:eid', function (req, res) {
  *          dataType: string
  */
 router.post(settings.federations + '/:fid/', function (req, res) {
-
   try {
-
-    federationentitycontroller.addFederationEntity(req, function (err, data) {
+    entityController.addFederationEntity(req, function (err, data) {
       console.log(err);
       if (err) {
         res.status(err.code).json({
@@ -427,7 +415,7 @@ router.post(settings.federations + '/:fid/', function (req, res) {
         });
       } else {
         req.params.eid = data.toString();
-        federationcontroller.joinFederation(req, function (err, callback) {
+        federationController.joinFederation(req, function (err, callback) {
           if (err) {
             res.status(409).json({
               "Error(s)": err
@@ -468,7 +456,7 @@ router.post(settings.federations + '/:fid/', function (req, res) {
  */
 router.post(federationURL + "/:fid/organization/:oid", function (req, res) {
   try {
-    federationcontroller.addParticipant(req, function (err, docs) {
+    federationController.addParticipant(req, function (err, docs) {
       if (err)
         return res.status(err.code).json({"Error(s)": err.error});
       return res.status(200).json();

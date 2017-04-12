@@ -1,64 +1,62 @@
-// File : routes/organization.js -->
+// File : routes/participant.js -->
 var express = require('express');
 var router = express.Router();
 var settings = require("../settings");
 var baseURL = settings.baseURL;
-var organizationURL = settings.organization;
-var organizationcontroller = require("../controller/organizationcontroller");
+var participantURL = settings.participant;
+var participantController = require("../controller/participantcontroller");
 /**
  * @swagger
- * resourcePath: /Organization
+ * resourcePath: /Participant
  * description: Open Trust Taxonomy for Federation Operators
  */
 
-
 /**
  * @swagger
- * path: /otto/organization
+ * path: /otto/participant
  * operations:
  *   -  httpMethod: POST
- *      summary: Create Organization
- *      notes: Returns created Organization Id
- *      nickname: Organization
+ *      summary: Create participant
+ *      notes: Returns created participant Id
+ *      nickname: Participant
  *      consumes:
  *        - text/html
  *      parameters:
- *        - name: Organization JSON
- *          description: Your organization  JSON
+ *        - name: Participant JSON
+ *          description: Your participant JSON
  *          paramType: body
  *          required: true
  *          dataType: string
  */
-router.post(organizationURL, function(req, res) {
-
-    try{
-    organizationcontroller.addOrganization(req, function(err, data) {
-        console.log(err);
-        if (err) {
-           res.status(err.code).json({"Error(s)": err.error});
-        } else {
-            res.status(200).json({
-                "@id": baseURL + organizationURL + "/" + data
-            });
-        }
+router.post(participantURL, function (req, res) {
+  try {
+    participantController.addParticipant(req, function (err, data) {
+      console.log(err);
+      if (err) {
+        res.status(err.code).json({"Error(s)": err.error});
+      } else {
+        res.status(200).json({
+          '@id': baseURL + participantURL + '/' + data
+        });
+      }
     });
-    }catch(e){
-        res.status(500).json();
-    }
+  } catch (e) {
+    res.status(500).json();
+  }
 });
 
 /**
  * @swagger
- * path: /otto/organization/{id}
+ * path: /otto/participant/{id}
  * operations:
  *   -  httpMethod: GET
- *      summary: Get organization  By Id
- *      notes: Returns organization
- *      nickname: GetorganizationById
+ *      summary: Get participant  By Id
+ *      notes: Returns participant
+ *      nickname: GetparticipantById
  *      parameters:
  *        - name: id
  *          paramType: path
- *          description: Your organization  Id
+ *          description: Your participant  Id
  *          required: true
  *          dataType: string
  *        - name: depth
@@ -72,32 +70,32 @@ router.post(organizationURL, function(req, res) {
  *          required: false
  *          dataType: string
  */
-router.get(organizationURL + '/:id', function(req, res) {
+router.get(participantURL + '/:id', function (req, res) {
 
-    try{
-    organizationcontroller.findOrganization(req, function(err, data) {
-        if (err) {
-            res.status(err.code).json({"Error(s)": err.error});
-        } else {
+  try {
+    participantController.findParticipant(req, function (err, data) {
+      if (err) {
+        res.status(err.code).json({"Error(s)": err.error});
+      } else {
 
-            res.status(200).json(data);
-        }
+        res.status(200).json(data);
+      }
     });
-    }catch(e){
-        res.status(500).json();
-    }
+  } catch (e) {
+    res.status(500).json();
+  }
 
 });
 
 
 /**
  * @swagger
- * path: /otto/organization
+ * path: /otto/participant
  * operations:
  *   -  httpMethod: GET
- *      summary: Get Organization
- *      notes: Returns Organization
- *      nickname: GetOrganization
+ *      summary: Get Participant
+ *      notes: Returns Participant
+ *      nickname: GetParticipant
  *      parameters:
  *        - name: depth
  *          description: depth
@@ -116,110 +114,110 @@ router.get(organizationURL + '/:id', function(req, res) {
  *          dataType: string
  *
  */
-router.get(organizationURL, function(req, res) {
-    try{
-    organizationcontroller.getAllOrganizationWithDepth(req, function(err, data) {
-        if (err) {
-           res.status(err.code).json({"Error(s)": err.error});
-        } else {
-            res.status(200).json({
-                organization: data
-            });
-        }
+router.get(participantURL, function (req, res) {
+  try {
+    participantController.getAllParticipantWithDepth(req, function (err, data) {
+      if (err) {
+        res.status(err.code).json({"Error(s)": err.error});
+      } else {
+        res.status(200).json({
+          participant: data
+        });
+      }
     });
-    }catch(e){
-        res.status(500).json();
-    }
+  } catch (e) {
+    res.status(500).json();
+  }
 });
 
 
 /**
  * @swagger
- * path: /otto/organization/{id}
+ * path: /otto/participant/{id}
  * operations:
  *   -  httpMethod: Delete
- *      summary: Delete organization
- *      notes: Returns organization  status
- *      nickname: Deleteorganization
+ *      summary: Delete participant
+ *      notes: Returns participant  status
+ *      nickname: Deleteparticipant
  *      consumes:
  *        - text/html
  *      parameters:
  *        - name: id
- *          description: Your organization Id
+ *          description: Your participant Id
  *          paramType: path
  *          required: true
  *          dataType: string
  *
  *
  */
-router.delete(organizationURL + '/:id', function(req, res) {
-    try{
-    organizationcontroller.deleteOrganization(req, function(err) {
-        if (err) {
-            res.status(err.code).json({"Error(s)": err.error});
-        } else {
-            res.status(200).json();
-        }
+router.delete(participantURL + '/:id', function (req, res) {
+  try {
+    participantController.deleteParticipant(req, function (err) {
+      if (err) {
+        res.status(err.code).json({"Error(s)": err.error});
+      } else {
+        res.status(200).json();
+      }
     });
-}catch(e){
-        res.status(500).json();
-    }
+  } catch (e) {
+    res.status(500).json();
+  }
 
 });
 
 
 /**
  * @swagger
- * path: /otto/organization/{id}
+ * path: /otto/participant/{id}
  * operations:
  *   -  httpMethod: PUT
- *      summary: Update organization
+ *      summary: Update participant
  *      notes: Returns Status
- *      nickname: Putorganization
+ *      nickname: Putparticipant
  *      consumes:
  *        - text/html
  *      parameters:
  *        - name: id
- *          description: Your organization  Id
+ *          description: Your participant  Id
  *          paramType: path
  *          required: true
  *          dataType: string
  *        - name: body
- *          description: Your organization Information
+ *          description: Your participant Information
  *          paramType: body
  *          required: true
  *          dataType: string
  *
  */
-router.put(organizationURL + "/:id", function(req, res) {
-    try{
-    organizationcontroller.updateOrganizattion(req, function(err, data) {
-        console.log(err);
-        if (err) {
-            res.status(err.code).json({"Error(s)": err.error});
-        } else {
+router.put(participantURL + "/:id", function (req, res) {
+  try {
+    participantController.updateParticipant(req, function (err, data) {
+      console.log(err);
+      if (err) {
+        res.status(err.code).json({"Error(s)": err.error});
+      } else {
 
-            res.status(200).json();
-        }
+        res.status(200).json();
+      }
     });
-}catch(e){
-        res.status(500).json();
-    }
+  } catch (e) {
+    res.status(500).json();
+  }
 });
 
 /**
  * @swagger
- * path: /otto/organization/{oid}/federation/{fid}
+ * path: /otto/participant/{oid}/federation/{fid}
  * operations:
  *   -  httpMethod: POST
- *      summary: Add Federation to Organization
+ *      summary: Add Federation to Participant
  *      notes: Returns Status
- *      nickname: AddFederationToOrganization
+ *      nickname: AddFederationToParticipant
  *      consumes:
  *        - text/html
  *      parameters:
  *        - name: oid
- *          description: Your Organization  Id
+ *          description: Your Participant  Id
  *          paramType: path
  *          required: true
  *          dataType: string
@@ -230,31 +228,31 @@ router.put(organizationURL + "/:id", function(req, res) {
  *          dataType: string
  *
  */
-router.post(organizationURL + "/:oid/federation/:fid", function(req, res) {
-try{
-    organizationcontroller.joinFederationOrganization(req,function(err,docs){
-         if (err)
-            res.status(err.code).json({"Error(s)": err.error});
-         res.status(200).json();
+router.post(participantURL + "/:oid/federation/:fid", function (req, res) {
+  try {
+    participantController.joinFederationParticipant(req, function (err, docs) {
+      if (err)
+        res.status(err.code).json({"Error(s)": err.error});
+      res.status(200).json();
     });
-}catch(e){
-        res.status(500).json();
-    }
+  } catch (e) {
+    res.status(500).json();
+  }
 });
 
 /**
  * @swagger
- * path: /otto/organization/{oid}/federation_entity/{eid}
+ * path: /otto/participant/{oid}/entity/{eid}
  * operations:
  *   -  httpMethod: POST
- *      summary: Add Entity to Organization
+ *      summary: Add Entity to Participant
  *      notes: Returns Status
- *      nickname: AddEntityToOrganization
+ *      nickname: AddEntityToParticipant
  *      consumes:
  *        - text/html
  *      parameters:
  *        - name: oid
- *          description: Your Organization Id
+ *          description: Your Participant Id
  *          paramType: path
  *          required: true
  *          dataType: string
@@ -265,17 +263,17 @@ try{
  *          dataType: string
  *
  */
-router.post(organizationURL + "/:oid/federation_entity/:eid", function(req, res) {
-try{
-    organizationcontroller.joinEntityOrganization(req,function(err,docs){
-         if (err) {
-             res.status(err.code).json({"Error(s)": err.error});
-         }
-         res.status(200).json();
+router.post(participantURL + "/:oid/entity/:eid", function (req, res) {
+  try {
+    participantController.joinEntityParticipant(req, function (err, docs) {
+      if (err) {
+        res.status(err.code).json({"Error(s)": err.error});
+      }
+      res.status(200).json();
     });
-    }catch(e){
-        res.status(500).json();
-    }
+  } catch (e) {
+    res.status(500).json();
+  }
 });
 
 module.exports = router;

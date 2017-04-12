@@ -1,10 +1,8 @@
 var mongoose = require('mongoose');
 var settings = require("../settings");
-var Schema = mongoose.Schema;
 
-
-// define the schema for our organization
-const ParticipantSchema = mongoose.Schema({
+// define the schema for our participant
+const participantSchema = mongoose.Schema({
   name: {
     type: String,
     required: true,
@@ -56,16 +54,12 @@ const ParticipantSchema = mongoose.Schema({
   strict: false
 });
 
-ParticipantSchema.pre("save", function (next, done) {
-
-  this['@id'] = settings.baseURL + settings.organization + "/" + this._id;
+participantSchema.pre('save', function (next, done) {
+  this['@id'] = settings.baseURL + settings.participant + '/' + this._id;
   this['@context'] = settings.contextSchema + settings.contextParticipant;
-  //console.log(this);
   next();
-
 });
 
-var Participant = mongoose.model('Participant', ParticipantSchema);
-module.exports = Participant;
+module.exports = mongoose.model('Participant', participantSchema);
 
 

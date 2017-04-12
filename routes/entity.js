@@ -1,21 +1,22 @@
-// File : routes/federations.js -->
+// File : routes/entity.js -->
 var express = require('express');
 var router = express.Router();
-var settings = require("../settings");
+
+var entityController = require("../controller/entitycontroller");
+var settings = require('../settings');
+
 var baseURL = settings.baseURL;
-var federationEntityURL = settings.entity;
-var federationentitycontroller = require("../controller/entitycontroller");
+var entityURL = settings.entity;
 
 /**
  * @swagger
- * resourcePath: /FederationsEntity
+ * resourcePath: /Entity
  * description: Open Trust Taxonomy for Federation Operators
  */
 
-
 /**
  * @swagger
- * path: /otto/federation_entity
+ * path: /otto/entity
  * operations:
  *   -  httpMethod: POST
  *      summary: Create Federation Entity
@@ -24,38 +25,36 @@ var federationentitycontroller = require("../controller/entitycontroller");
  *      consumes:
  *        - text/html
  *      parameters:
- *        - name: FederationEntity Json
+ *        - name: Entity Json
  *          description: Your Federation Entity JSON
  *          paramType: body
  *          required: true
  *          dataType: string
  */
-router.post(federationEntityURL, function(req, res) {
-
-    try{
-    federationentitycontroller.addFederationEntity(req, function(err, data) {
-        console.log(err);
-        if (err) {
-           res.status(err.code).json({"Error(s)": err.error});
-        } else {
-
-            res.status(201).json({
-                "@id": baseURL + federationEntityURL + "/" + data
-            });
-        }
+router.post(entityURL, function (req, res) {
+  try {
+    entityController.addEntity(req, function (err, data) {
+      console.log(err);
+      if (err) {
+        res.status(err.code).json({'Error(s)': err.error});
+      } else {
+        res.status(201).json({
+          '@id': baseURL + entityURL + '/' + data
+        });
+      }
     });
-    }catch(e){
-        res.status(500).json();
-    }
+  } catch (e) {
+    res.status(500).json();
+  }
 });
 
 /**
  * @swagger
- * path: /otto/federation_entity/{id}
+ * path: /otto/entity/{id}
  * operations:
  *   -  httpMethod: GET
- *      summary: Get Federations Entity By Id
- *      notes: Returns Federations Entity
+ *      summary: Get Entity By Id
+ *      notes: Returns Entity
  *      nickname: GetFederationsEntityById
  *      parameters:
  *        - name: id
@@ -72,36 +71,34 @@ router.post(federationEntityURL, function(req, res) {
  *          description: jspath filter syntax
  *          paramType: query
  *          required: false
- *          dataType: string  
- * 
+ *          dataType: string
+ *
  */
-router.get(federationEntityURL + '/:id', function(req, res) {
-
-    try{
-    federationentitycontroller.findFederationEntity(req, function(err, data) {
-        if (err) {
-            res.status(err.code).json({"Error(s)": err.error});
-        } else {
-            res.status(200).json(data);
-        }
+router.get(entityURL + '/:id', function (req, res) {
+  try {
+    entityController.findEntity(req, function (err, data) {
+      if (err) {
+        res.status(err.code).json({'Error(s)': err.error});
+      } else {
+        res.status(200).json(data);
+      }
     });
-    }catch(e){
-        res.status(500).json();
-    }
+  } catch (e) {
+    res.status(500).json();
+  }
 });
-
 
 /**
  * @swagger
- * path: /otto/federation_entity
+ * path: /otto/entity
  * operations:
  *   -  httpMethod: GET
- *      summary: Get Federations Entity
- *      notes: Returns Federations Entity
+ *      summary: Get Entity
+ *      notes: Returns Entity
  *      nickname: GetFederationsEntity
  *      parameters:
  *       - name: depth
- *         description: depth[federation_entity,federation_entity.organization]
+ *         description: depth[entity,entity.organization]
  *         paramType: query
  *         required: false
  *         dataType: string
@@ -115,99 +112,96 @@ router.get(federationEntityURL + '/:id', function(req, res) {
  *         paramType: query
  *         required: false
  *         dataType: string
- *      
+ *
  *
  */
-router.get(federationEntityURL, function(req, res) {
-    try{
-    federationentitycontroller.getAllFederationEntityWithDepth(req, function(err, data) {
-        if (err) {
+router.get(entityURL, function (req, res) {
+  try {
+    entityController.getAllEntityWithDepth(req, function (err, data) {
+      if (err) {
 
-           res.status(err.code).json({"Error(s)": err.error});
-        } else {
-                res.status(200).json({
-                federation_entity: data
-            });
-        }
+        res.status(err.code).json({'Error(s)': err.error});
+      } else {
+        res.status(200).json({
+          entity: data
+        });
+      }
     });
-    }catch(e){
-        res.status(500).json();
-    }
+  } catch (e) {
+    res.status(500).json();
+  }
 });
-
 
 /**
  * @swagger
- * path: /otto/federation_entity/{id}
+ * path: /otto/entity/{id}
  * operations:
  *   -  httpMethod: Delete
- *      summary: Delete federations Entity
- *      notes: Returns federations Entity status
- *      nickname: DeleteFederationEntity
+ *      summary: Delete Entity
+ *      notes: Returns Entity status
+ *      nickname: DeleteEntity
  *      consumes:
  *        - text/html
  *      parameters:
  *        - name: id
- *          description: Your federations Id
+ *          description: Your Entity Id
  *          paramType: path
  *          required: true
  *          dataType: string
  */
-router.delete(federationEntityURL + '/:id', function(req, res) {
-    try{
-    federationentitycontroller.deleteFederationEntity(req, function(err) {
-        if (err) {
-           res.status(err.code).json({"Error(s)": err.error});
-        } else {
-            res.status(200).json();
-        }
+router.delete(entityURL + '/:id', function (req, res) {
+  try {
+    entityController.deleteEntity(req, function (err) {
+      if (err) {
+        res.status(err.code).json({'Error(s)': err.error});
+      } else {
+        res.status(200).json();
+      }
     });
-    }
-    catch(e){
-        res.status(500).json();
-    }
+  }
+  catch (e) {
+    res.status(500).json();
+  }
 });
 
 
 /**
  * @swagger
- * path: /otto/federation_entity/{id}
+ * path: /otto/entity/{id}
  * operations:
  *   -  httpMethod: PUT
- *      summary: Update federations
+ *      summary: Update Entity
  *      notes: Returns Status
- *      nickname: PutFederationEntity
+ *      nickname: PutEntity
  *      consumes:
  *        - text/html
  *      parameters:
  *        - name: id
- *          description: Your federations Entity Id
+ *          description: Your Entity Id
  *          paramType: path
  *          required: true
  *          dataType: string
  *        - name: body
- *          description: Your federations Entity Information
+ *          description: Your Entity Information
  *          paramType: body
  *          required: true
  *          dataType: string
- *            
+ *
  */
-router.put(federationEntityURL + "/:id", function(req, res) {
-    try {
-    federationentitycontroller.updateFederationEntity(req, function(err, data) {
-        console.log(err);
-        if (err) {
-           res.status(err.code).json({"Error(s)": err.error});
-        } else {
+router.put(entityURL + '/:id', function (req, res) {
+  try {
+    entityController.updateEntity(req, function (err, data) {
+      console.log(err);
+      if (err) {
+        res.status(err.code).json({'Error(s)': err.error});
+      } else {
 
-            res.status(200).json();
-        }
+        res.status(200).json();
+      }
     });
-}catch(e){
-        res.status(500).json();
-    }
+  } catch (e) {
+    res.status(500).json();
+  }
 });
-
-
 
 module.exports = router;

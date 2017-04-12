@@ -1,9 +1,8 @@
 var mongoose = require('mongoose');
 var settings = require("../settings");
-var Schema = mongoose.Schema;
 var deepPopulate = require('mongoose-deep-populate')(mongoose);
 
-const FederationSchema = mongoose.Schema({
+const federationSchema = mongoose.Schema({
   name: {
     type: String,
     required: true,
@@ -37,7 +36,7 @@ const FederationSchema = mongoose.Schema({
   registeredBy: {
     type: String
   },
-  sponsor: [{
+  sponsors: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Participant'
   }],
@@ -56,7 +55,7 @@ const FederationSchema = mongoose.Schema({
   strict: false
 });
 
-FederationSchema.plugin(deepPopulate, {
+federationSchema.plugin(deepPopulate, {
   whitelist: [
     'entities',
     'organization',
@@ -71,13 +70,19 @@ FederationSchema.plugin(deepPopulate, {
     }
   }
 });
-FederationSchema.pre("save", function (next, done) {
 
-  this['@id'] = settings.baseURL + settings.federations + "/" + this._id;
+federationSchema.pre('findOne', preFind);
+federationSchema.pre('findById', preFind);
+federationSchema.pre('save', preSave);
+
+function preFind() {
+  return this.select('-__v -_id').populate({path:'federates', select: '-__v -_id'}).populate({path:'members', select: '-__v -_id'});
+}
+
+function preSave(next, done) {
+  this['@id'] = settings.baseURL + settings.federations + '/' + this._id;
   this['@context'] = settings.contextSchema + settings.contextFederation;
   next();
+}
 
-});
-
-var Federation = mongoose.model('Federation', FederationSchema);
-module.exports = Federation;
+module.exports = mongoose.model('Federation', federationSchema);
