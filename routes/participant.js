@@ -207,16 +207,16 @@ router.put(participantURL + "/:id", function (req, res) {
 
 /**
  * @swagger
- * path: /otto/participant/{oid}/federation/{fid}
+ * path: /otto/participant/{pid}/federation/{fid}
  * operations:
  *   -  httpMethod: POST
- *      summary: Add Federation to Participant
- *      notes: Returns Status
+ *      summary: Participant as a member
+ *      notes: A federation to which this Participant is a member
  *      nickname: AddFederationToParticipant
  *      consumes:
  *        - text/html
  *      parameters:
- *        - name: oid
+ *        - name: pid
  *          description: Your Participant  Id
  *          paramType: path
  *          required: true
@@ -228,11 +228,11 @@ router.put(participantURL + "/:id", function (req, res) {
  *          dataType: string
  *
  */
-router.post(participantURL + "/:oid/federation/:fid", function (req, res) {
+router.post(participantURL + '/:pid/federation/:fid', function (req, res) {
   try {
     participantController.joinFederationParticipant(req, function (err, docs) {
       if (err)
-        res.status(err.code).json({"Error(s)": err.error});
+        res.status(err.code).json({'Error(s)': err.error});
       res.status(200).json();
     });
   } catch (e) {
@@ -242,7 +242,7 @@ router.post(participantURL + "/:oid/federation/:fid", function (req, res) {
 
 /**
  * @swagger
- * path: /otto/participant/{oid}/entity/{eid}
+ * path: /otto/participant/{pid}/entity/{eid}
  * operations:
  *   -  httpMethod: POST
  *      summary: Add Entity to Participant
@@ -251,7 +251,7 @@ router.post(participantURL + "/:oid/federation/:fid", function (req, res) {
  *      consumes:
  *        - text/html
  *      parameters:
- *        - name: oid
+ *        - name: pid
  *          description: Your Participant Id
  *          paramType: path
  *          required: true
@@ -263,7 +263,7 @@ router.post(participantURL + "/:oid/federation/:fid", function (req, res) {
  *          dataType: string
  *
  */
-router.post(participantURL + "/:oid/entity/:eid", function (req, res) {
+router.post(participantURL + '/:pid/entity/:eid', function (req, res) {
   try {
     participantController.joinEntityParticipant(req, function (err, docs) {
       if (err) {

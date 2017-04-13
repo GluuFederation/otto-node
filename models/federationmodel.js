@@ -40,13 +40,13 @@ const federationSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Participant'
   }],
-  technicalContactPoint: [{
+  technicalContact: [{
     type: mongoose.Schema.Types.Mixed
   }],
-  executiveContactPoint: [{
+  executiveContact: [{
     type: mongoose.Schema.Types.Mixed
   }],
-  securityContactPoint: [{
+  securityContact: [{
     type: mongoose.Schema.Types.Mixed
   }]
 }, {
@@ -71,13 +71,7 @@ federationSchema.plugin(deepPopulate, {
   }
 });
 
-federationSchema.pre('findOne', preFind);
-federationSchema.pre('findById', preFind);
 federationSchema.pre('save', preSave);
-
-function preFind() {
-  return this.select('-__v -_id').populate({path:'federates', select: '-__v -_id'}).populate({path:'members', select: '-__v -_id'});
-}
 
 function preSave(next, done) {
   this['@id'] = settings.baseURL + settings.federations + '/' + this._id;

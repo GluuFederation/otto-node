@@ -18,10 +18,10 @@ var participantAJVSchema = {
       type: "string"
     }
   },
-  required: ["name"]
+  required: ['name']
 };
 
-exports.getAllOrganization = function (req, callback) {
+exports.getAllParticipant = function (req, callback) {
   if (req.query.depth == null) {
     participantModel.find({}, "_id", function (err, docs) {
       var participantArr = Array();
@@ -163,8 +163,8 @@ exports.getAllParticipantWithDepth = function (req, callback) {
 exports.addParticipant = function (req, callback) {
   var valid = ajv.validate(participantAJVSchema, req.body);
   if (valid) {
-    var oOrganization = new participantModel(req.body);
-    oOrganization.save(function (err, obj) {
+    var oParticipant = new participantModel(req.body);
+    oParticipant.save(function (err, obj) {
       if (err) throw (err);
       callback(null, obj._id);
     });
@@ -183,7 +183,7 @@ exports.addParticipant = function (req, callback) {
 exports.findParticipant = function (req, callback) {
   if (!mongoose.Types.ObjectId.isValid(req.params.id))
     return callback({
-      error: ['Invalid Organization Id'],
+      error: ['Invalid Participant Id'],
       code: 400
     }, null);
 
@@ -320,95 +320,78 @@ exports.updateParticipant = function (req, callback) {
   }
 };
 
-exports.joinFederationOrganization = function (req, callback) {
-
-  if (!mongoose.Types.ObjectId.isValid(req.params.oid))
+exports.joinFederationParticipant = function (req, callback) {
+  if (!mongoose.Types.ObjectId.isValid(req.params.pid)) {
     return callback({
-      error: ['Invalid Organization Id'],
+      error: ['Invalid Participant Id'],
       code: 400
     }, null);
-  if (!mongoose.Types.ObjectId.isValid(req.params.fid))
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(req.params.fid)) {
     return callback({
       error: ['Invalid Federation Id'],
       code: 400
     }, null);
+  }
 
-  participantModel.findOne({
-    _id: req.params.oid
-  }, function (err, doc) {
+  participantModel.findById(req.params.pid)
+    .then(function (oParticipant) {
+      if (!oParticipant) {
+        return Promise.reject(callback({
+          error: ['Participant doesn\'t exists'],
+          code: 404
+        }, null));
+      }
 
-    if (err)
-      return callback(err, null);
-    if (doc == null)
-      return callback({
-        error: ['Organization doesn\'t exists'],
-        code: 404
-      }, null);
+      if (oParticipant.memberOf.indexOf(req.params.fid) > -1)
+        return Promise.reject(callback({
+          error: ['Federation already exist'],
+          code: 404
+        }, null));
 
-    if (doc.federations.indexOf(req.params.fid) > -1)
-      return callback({
-        error: ["Federation already exist"],
-        code: 404
-      }, null);
-
-    doc.federations.push(req.params.fid);
-    var transaction = new Transaction();
-    transaction.update('Organization', req.params.oid, doc);
-    transaction.update('Federation', req.params.fid, {
-      participant: req.params.oid
+      oParticipant.memberOf.push(req.params.fid);
+      return oParticipant.save();
+    })
+    .then(function (oParticipant) {
+      return callback(null, oParticipant);
+    })
+    .catch(function (err) {
+      return callback({error: err, code: 404}, null);
     });
-    transaction.run(function (err, docs) {
-      if (err)
-        throw (err);
-      return callback(null, doc);
-    });
-  });
-
 };
 
 
-exports.joinEntityOrganization = function (req, callback) {
-
-  if (!mongoose.Types.ObjectId.isValid(req.params.oid))
+exports.joinEntityParticipant = function (req, callback) {
+  if (!mongoose.Types.ObjectId.isValid(req.params.pid)) {
     return callback({
-      error: ['Invalid Organization Id'],
+      error: ['Invalid Participant Id'],
       code: 400
     }, null);
-  if (!mongoose.Types.ObjectId.isValid(req.params.eid))
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(req.params.eid)) {
     return callback({
       error: ['Invalid Federation Entity Id'],
       code: 400
     }, null);
+  }
 
-  participantModel.findOne({
-    _id: req.params.oid
-  }, function (err, doc) {
-
-    if (err)
-      callback(err, null);
-    if (doc == null)
-      callback({
-        error: ['Organization doesn\'t exists'],
-        code: 404
-      }, null);
-
-    if (doc.entities.indexOf(req.params.eid) > -1)
-      return callback({
-        error: ["Federation Entity already exist"],
-        code: 404
-      }, null);
-
-    doc.entities.push(req.params.eid);
-    var transaction = new Transaction();
-    transaction.update('Organization', req.params.oid, doc);
-    transaction.update('Provider', req.params.eid, {
-      participant: req.params.oid
+  participantModel.findById(req.params.pid)
+    .then(function (oParticipant) {
+      if (!oParticipant) {
+        return Promise.reject(callback({
+          error: ['Participant doesn\'t exists'],
+          code: 404
+        }, null));
+      }
+      oParticipant.operates = req.params.eid;
+      return oParticipant.save();
+    })
+    .then(function (oParticipant) {
+      return callback(null, oParticipant);
+    })
+    .catch(function (err) {
+      return callback({error: err, code: 404}, null);
     });
-    transaction.run(function (err, docs) {
-      if (err)
-        throw (err);
-      callback(null, doc);
-    });
-  });
-
 };

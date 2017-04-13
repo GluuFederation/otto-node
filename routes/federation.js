@@ -1,11 +1,11 @@
 // File : routes/federations.js -->
 var express = require('express');
 var router = express.Router();
-var settings = require("../settings");
+var settings = require('../settings');
 var baseURL = settings.baseURL;
 var federationURL = settings.federations;
-var federationController = require("../controller/federationcontroller");
-var entityController = require("../controller/entitycontroller");
+var federationController = require('../controller/federationcontroller');
+var entityController = require('../controller/entitycontroller');
 var jws = require('jws');
 var fs = require('fs');
 var keypair = require('keypair');
@@ -40,7 +40,7 @@ router.post(settings.federations, function (req, res) {
     console.log(err);
     if (err) {
       res.status(err.code).json({
-        "Error(s)": err.error
+        'Error(s)': err.error
       });
     } else {
       res.status(201).json({
@@ -87,11 +87,10 @@ router.post(settings.federations, function (req, res) {
  *
  */
 router.get(settings.federations + '/:id', function (req, res) {
-
   federationController.findFederation(req, function (err, data) {
     if (err) {
       res.status(err.code).json({
-        "Error(s)": err.error
+        'Error(s)': err.error
       });
     } else {
       if (req.query.sign != null && req.query.sign != undefined) {
@@ -164,7 +163,7 @@ router.get(settings.federations + '/:id', function (req, res) {
 });
 
 /**
- * @swagger
+ *
  * path: /otto/federations/{id}/jwks
  * operations:
  *   -  httpMethod: GET
@@ -182,7 +181,7 @@ router.get(settings.federations + '/:id/jwks', function (req, res) {
   federationController.getJWKsForFederation(req, function (err, data) {
     if (err) {
       res.status(err.code).json({
-        "Error(s)": err.error
+        'Error(s)': err.error
       });
     } else {
       res.status(200).json(data);
@@ -200,7 +199,7 @@ router.get(settings.federations + '/:id/jwks', function (req, res) {
  *      nickname: GetFederations
  *      parameters:
  *        - name: depth
- *          description: depth[federations,federations.entities,federations.organization,federations.entities.organization]
+ *          description: depth[federates,members]
  *          paramType: query
  *          required: false
  *          dataType: string
@@ -221,7 +220,7 @@ router.get(settings.federations, function (req, res) {
     federationController.getAllFederationWithDepth(req, function (err, data) {
       if (err) {
         res.status(err.code).json({
-          "Error(s)": err.error
+          'Error(s)': err.error
         });
       } else {
         res.status(200).json({
@@ -258,7 +257,7 @@ router.delete(settings.federations + '/:id', function (req, res) {
     federationController.deleteFederation(req, function (err) {
       if (err) {
         res.status(err.code).json({
-          "Error(s)": err.error
+          'Error(s)': err.error
         });
       } else {
         res.status(200).json();
@@ -298,7 +297,7 @@ router.put(settings.federations + "/:id", function (req, res) {
       console.log(err);
       if (err) {
         res.status(err.code).json({
-          "Error(s)": err.error
+          'Error(s)': err.error
         });
       } else {
         res.status(200).json();
@@ -336,7 +335,7 @@ router.delete(settings.federations + '/:fid/:eid', function (req, res) {
     federationController.leaveFederation(req, function (err, callback) {
       if (err) {
         res.status(err.code).json({
-          "Error(s)": err.error
+          'Error(s)': err.error
         });
       }
       res.status(200).json();
@@ -352,7 +351,7 @@ router.delete(settings.federations + '/:fid/:eid', function (req, res) {
  * operations:
  *   -  httpMethod: post
  *      summary: Join federation (Existing Entity)
- *      notes: Returns federations status
+ *      notes: Join federation with entity that is federation.federates
  *      nickname: JoinFederation
  *      consumes:
  *        - text/html
@@ -373,7 +372,7 @@ router.post(settings.federations + '/:fid/:eid', function (req, res) {
     federationController.joinFederation(req, function (err, callback) {
       if (err) {
         res.status(err.code).json({
-          "Error(s)": err.error
+          'Error(s)': err.error
         });
       }
       res.status(200).json();
@@ -407,18 +406,18 @@ router.post(settings.federations + '/:fid/:eid', function (req, res) {
  */
 router.post(settings.federations + '/:fid/', function (req, res) {
   try {
-    entityController.addFederationEntity(req, function (err, data) {
+    entityController.addEntity(req, function (err, data) {
       console.log(err);
       if (err) {
         res.status(err.code).json({
-          "Error(s)": err.error
+          'Error(s)': err.error
         });
       } else {
         req.params.eid = data.toString();
         federationController.joinFederation(req, function (err, callback) {
           if (err) {
             res.status(409).json({
-              "Error(s)": err
+              'Error(s)': err
             });
           }
           res.status(200).json();
@@ -433,10 +432,10 @@ router.post(settings.federations + '/:fid/', function (req, res) {
 
 /**
  * @swagger
- * path: /otto/federations/{fid}/organization/{oid}
+ * path: /otto/federations/{fid}/participant/{pid}
  * operations:
  *   -  httpMethod: POST
- *      summary: Link Organization as Participant in Federation
+ *      summary: Add Participant in Federation
  *      notes: Returns Status
  *      nickname: AddParticipant
  *      consumes:
@@ -447,18 +446,18 @@ router.post(settings.federations + '/:fid/', function (req, res) {
  *          paramType: path
  *          required: true
  *          dataType: string
- *        - name: oid
- *          description: Your Organization  Id
+ *        - name: pid
+ *          description: Your Participant Id
  *          paramType: path
  *          required: true
  *          dataType: string
  *
  */
-router.post(federationURL + "/:fid/organization/:oid", function (req, res) {
+router.post(federationURL + '/:fid/participant/:pid', function (req, res) {
   try {
     federationController.addParticipant(req, function (err, docs) {
       if (err)
-        return res.status(err.code).json({"Error(s)": err.error});
+        return res.status(err.code).json({'Error(s)': err.error});
       return res.status(200).json();
     });
   } catch (e) {

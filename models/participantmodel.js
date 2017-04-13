@@ -39,13 +39,13 @@ const participantSchema = mongoose.Schema({
   registeredBy: {
     type: String
   },
-  technicalContactPoint: [{
+  technicalContact: [{
     type: mongoose.Schema.Types.Mixed
   }],
-  executiveContactPoint: [{
+  executiveContact: [{
     type: mongoose.Schema.Types.Mixed
   }],
-  securityContactPoint: [{
+  securityContact: [{
     type: mongoose.Schema.Types.Mixed
   }]
 }, {
