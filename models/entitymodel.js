@@ -4,6 +4,12 @@ var deepPopulate = require('mongoose-deep-populate')(mongoose);
 
 // define the schema for openid connect provider
 const entitySchema = mongoose.Schema({
+  '@id': {
+    type: String
+  },
+  '@context': {
+    type: String
+  },
   name: {
     type: String,
     required: true
@@ -21,22 +27,6 @@ const entitySchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Federation'
   }],
-  entityId: {
-    type: String
-  },
-  entityIdUrl: {
-    type: String
-  },
-  isApproved: {
-    type: Boolean,
-    required: false
-  },
-  '@context': {
-    type: String
-  },
-  '@id': {
-    type: String
-  },
   metadata: {
     type: mongoose.Schema.Types.Mixed
   }

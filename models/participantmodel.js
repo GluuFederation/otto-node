@@ -3,6 +3,12 @@ var settings = require("../settings");
 
 // define the schema for our participant
 const participantSchema = mongoose.Schema({
+  '@id': {
+    type: String
+  },
+  '@context': {
+    type: String
+  },
   name: {
     type: String,
     required: true,
@@ -14,24 +20,10 @@ const participantSchema = mongoose.Schema({
   description: {
     type: String
   },
-  isApproved: {
-    type: Boolean,
-    default: false
-  },
-  trustMarkFile: {
-    type: String
-  },
-  '@context': {
-    type: String
-  },
-  '@id': {
-    type: String
-  },
   memberOf: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Federation'
   }],
-  trustMark: String,
   operates: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Entity'
@@ -47,7 +39,10 @@ const participantSchema = mongoose.Schema({
   }],
   securityContact: [{
     type: mongoose.Schema.Types.Mixed
-  }]
+  }],
+  trustMarkFile: {
+    type: String
+  }
 }, {
   timestamps: true
 }, {

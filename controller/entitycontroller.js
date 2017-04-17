@@ -312,24 +312,24 @@ exports.joinEntity = function (req, callback) {
   entityModel.findById(req.params.eid)
     .then(function (oEntity) {
       if (!oEntity) {
-        return Promise.reject(callback({ error: 'Entity doesn\'t exist', code: 404}, null));
+        return Promise.reject({ error: 'Entity doesn\'t exist', code: 404});
       }
 
       if (oEntity.federatedBy.indexOf(req.params.eid) > -1) {
-        return Promise.reject(callback({
+        return Promise.reject({
           error: ['Federation already exist'],
           code: 400
-        }, null));
+        });
       }
       entity = oEntity;
       return federationModel.findById(req.params.fid);
     })
     .then(function (docs) {
       if (!docs) {
-        return Promise.reject(callback({
+        return Promise.reject({
           error: ['Federation doesn\'t exist'],
           code: 404
-        }, null));
+        });
       }
       entity.federatedBy.push(req.params.eid);
       return entity.save();

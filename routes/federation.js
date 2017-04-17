@@ -199,7 +199,7 @@ router.get(settings.federations + '/:id/jwks', function (req, res) {
  *      nickname: GetFederations
  *      parameters:
  *        - name: depth
- *          description: depth[federates,members]
+ *          description: depth[federations, federations.federates, federations.members]
  *          paramType: query
  *          required: false
  *          dataType: string
@@ -350,8 +350,8 @@ router.delete(settings.federations + '/:fid/:eid', function (req, res) {
  * path: /otto/federations/{federationid}/{entityid}
  * operations:
  *   -  httpMethod: post
- *      summary: Join federation (Existing Entity)
- *      notes: Join federation with entity that is federation.federates
+ *      summary: Join federation with Existing Entity(federates)
+ *      notes: Join federation with entity
  *      nickname: JoinFederation
  *      consumes:
  *        - text/html
@@ -435,7 +435,7 @@ router.post(settings.federations + '/:fid/', function (req, res) {
  * path: /otto/federations/{fid}/participant/{pid}
  * operations:
  *   -  httpMethod: POST
- *      summary: Add Participant in Federation
+ *      summary: Add Participant(member) in Federation
  *      notes: Returns Status
  *      nickname: AddParticipant
  *      consumes:

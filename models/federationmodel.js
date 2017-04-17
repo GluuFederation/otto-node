@@ -3,32 +3,23 @@ var settings = require("../settings");
 var deepPopulate = require('mongoose-deep-populate')(mongoose);
 
 const federationSchema = mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  url: {
-    type: String
-  },
-  isActive: {
-    type: Boolean,
-    default: false
-  },
   '@context': {
     type: String
   },
   '@id': {
     type: String
   },
-  federates: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Entity'
-  }],
-  members: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Participant'
-  }],
+  name: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  description: {
+    type: String
+  },
+  url: {
+    type: String
+  },
   operates: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Entity'
@@ -36,7 +27,15 @@ const federationSchema = mongoose.Schema({
   registeredBy: {
     type: String
   },
-  sponsors: [{
+  member: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Participant'
+  }],
+  federates: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Entity'
+  }],
+  sponsor: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Participant'
   }],
@@ -48,7 +47,20 @@ const federationSchema = mongoose.Schema({
   }],
   securityContact: [{
     type: mongoose.Schema.Types.Mixed
-  }]
+  }],
+  dataProtectionCodeOfConduct: {
+    type: String
+  },
+  federationAgreement: {
+    type: String
+  },
+  federationPolicy: {
+    type: String
+  },
+  isActive: {
+    type: Boolean,
+    default: false
+  }
 }, {
   timestamps: true
 }, {

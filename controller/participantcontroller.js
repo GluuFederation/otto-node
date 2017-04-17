@@ -258,19 +258,20 @@ exports.findParticipant = function (req, callback) {
 };
 
 exports.deleteParticipant = function (req, callback) {
-  if (!mongoose.Types.ObjectId.isValid(req.params.id))
-    callback({
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return callback({
       error: ['Invalid Participant Id'],
       code: 400
     }, null);
+  }
 
   participantModel.findById(req.params.id)
     .then(function (oParticipant) {
       if (!oParticipant) {
-        return callback({
+        return Promise.reject({
           error: ['Participant doesn\'t exist'],
           code: 404
-        }, null);
+        });
       }
 
       return participantModel.findOneAndRemove({_id: req.params.id});
@@ -279,26 +280,27 @@ exports.deleteParticipant = function (req, callback) {
       return callback(null, oParticipant);
     })
     .catch(function (err) {
-      return callback(err, null);
+      return callback({ error: err, code: 404 }, null);
     });
 };
 
 exports.updateParticipant = function (req, callback) {
-  if (!mongoose.Types.ObjectId.isValid(req.params.id))
-    callback({
-      error: ['Invalid Participant Id'],
-      code: 400
-    }, null);
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+   return callback({
+     error: ['Invalid Participant Id'],
+     code: 400
+   }, null);
+  }
 
   var valid = ajv.validate(participantAJVSchema, req.body);
   if (valid) {
     participantModel.findById(req.params.id)
       .then(function (doc) {
         if (!doc) {
-          return callback({
+          return Promise.reject({
             error: ['Participant doesn\'t exist'],
             code: 404
-          }, null);
+          });
         }
         return participantModel.findOneAndUpdate({_id: req.params.id}, req.body);
       })
@@ -338,10 +340,10 @@ exports.joinFederationParticipant = function (req, callback) {
   participantModel.findById(req.params.pid)
     .then(function (oParticipant) {
       if (!oParticipant) {
-        return Promise.reject(callback({
+        return Promise.reject({
           error: ['Participant doesn\'t exists'],
           code: 404
-        }, null));
+        });
       }
 
       if (oParticipant.memberOf.indexOf(req.params.fid) > -1)
@@ -380,10 +382,10 @@ exports.joinEntityParticipant = function (req, callback) {
   participantModel.findById(req.params.pid)
     .then(function (oParticipant) {
       if (!oParticipant) {
-        return Promise.reject(callback({
+        return Promise.reject({
           error: ['Participant doesn\'t exists'],
           code: 404
-        }, null));
+        });
       }
       oParticipant.operates = req.params.eid;
       return oParticipant.save();
