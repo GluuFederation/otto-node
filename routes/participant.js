@@ -210,7 +210,7 @@ router.put(participantURL + "/:id", function (req, res) {
  * path: /otto/participant/{pid}/federation/{fid}
  * operations:
  *   -  httpMethod: POST
- *      summary: Participant as a member
+ *      summary: Link participant as a member of federation
  *      notes: A federation to which this Participant is a member
  *      nickname: AddFederationToParticipant
  *      consumes:
@@ -245,8 +245,8 @@ router.post(participantURL + '/:pid/federation/:fid', function (req, res) {
  * path: /otto/participant/{pid}/entity/{eid}
  * operations:
  *   -  httpMethod: POST
- *      summary: Add Entity to Participant
- *      notes: Returns Status
+ *      summary: Link entity as a service to participant
+ *      notes: A service operated by the Participant
  *      nickname: AddEntityToParticipant
  *      consumes:
  *        - text/html

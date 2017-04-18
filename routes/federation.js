@@ -310,7 +310,7 @@ router.put(settings.federations + "/:id", function (req, res) {
 
 /**
  * @swagger
- * path: /otto/federations/{federationid}/{entityid}
+ * path: /otto/federations/{fid}/entity/{eid}
  * operations:
  *   -  httpMethod: Delete
  *      summary: Leave federation
@@ -330,7 +330,7 @@ router.put(settings.federations + "/:id", function (req, res) {
  *          required: true
  *          dataType: string
  */
-router.delete(settings.federations + '/:fid/:eid', function (req, res) {
+router.delete(settings.federations + '/:fid/entity/:eid', function (req, res) {
   try {
     federationController.leaveFederation(req, function (err, callback) {
       if (err) {
@@ -347,27 +347,27 @@ router.delete(settings.federations + '/:fid/:eid', function (req, res) {
 
 /**
  * @swagger
- * path: /otto/federations/{federationid}/{entityid}
+ * path: /otto/federations/{fid}/entity/{eid}
  * operations:
  *   -  httpMethod: post
- *      summary: Join federation with Existing Entity(federates)
- *      notes: Join federation with entity
+ *      summary: Link entity to the federation
+ *      notes: Services registered to the federation i:e federation.federates
  *      nickname: JoinFederation
  *      consumes:
  *        - text/html
  *      parameters:
- *        - name: federationid
+ *        - name: fid
  *          description: Your federations Id
  *          paramType: path
  *          required: true
  *          dataType: string
- *        - name: entityid
+ *        - name: eid
  *          description: Your Entity Id
  *          paramType: path
  *          required: true
  *          dataType: string
  */
-router.post(settings.federations + '/:fid/:eid', function (req, res) {
+router.post(settings.federations + '/:fid/entity/:eid', function (req, res) {
   try {
     federationController.joinFederation(req, function (err, callback) {
       if (err) {
@@ -384,16 +384,16 @@ router.post(settings.federations + '/:fid/:eid', function (req, res) {
 
 /**
  * @swagger
- * path: /otto/federations/{federationid}
+ * path: /otto/federations/{fid}
  * operations:
  *   -  httpMethod: POST
- *      summary: Join federation (Create New Entity)
+ *      summary: Add new service
  *      notes: Returns federations status
  *      nickname: JoinFederation
  *      consumes:
  *        - text/html
  *      parameters:
- *        - name: federationid
+ *        - name: fid
  *          description: Your federations Id
  *          paramType: path
  *          required: true
@@ -435,8 +435,8 @@ router.post(settings.federations + '/:fid/', function (req, res) {
  * path: /otto/federations/{fid}/participant/{pid}
  * operations:
  *   -  httpMethod: POST
- *      summary: Add Participant(member) in Federation
- *      notes: Returns Status
+ *      summary: Link Participant as a member in Federation
+ *      notes: List of organizational members of the Federation
  *      nickname: AddParticipant
  *      consumes:
  *        - text/html

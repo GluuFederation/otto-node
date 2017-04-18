@@ -59,11 +59,11 @@ router.post(entityURL, function (req, res) {
  *      parameters:
  *        - name: id
  *          paramType: path
- *          description: Your Federation Entity Id
+ *          description: Your Entity Id
  *          required: true
  *          dataType: string
  *        - name: depth
- *          description: depth[entities.organization]
+ *          description: depth[entities.federatedBy]
  *          paramType: query
  *          required: false
  *          dataType: string
@@ -205,7 +205,7 @@ router.put(entityURL + '/:id', function (req, res) {
 
 /**
  * @swagger
- * path: /otto/entity/{entityid}/{federationid}
+ * path: /otto/entity/{eid}/federation/{fid}
  * operations:
  *   -  httpMethod: post
  *      summary: Join entity (Existing federation)
@@ -214,18 +214,18 @@ router.put(entityURL + '/:id', function (req, res) {
  *      consumes:
  *        - text/html
  *      parameters:
- *        - name: entityid
+ *        - name: eid
  *          description: Your Entity Id
  *          paramType: path
  *          required: true
  *          dataType: string
- *        - name: federationid
+ *        - name: fid
  *          description: Your Federation Id
  *          paramType: path
  *          required: true
  *          dataType: string
  */
-router.post(entityURL + '/:eid/:fid', function (req, res) {
+router.post(entityURL + '/:eid/federation/:fid', function (req, res) {
   try {
     entityController.joinEntity(req, function (err, callback) {
       if (err) {

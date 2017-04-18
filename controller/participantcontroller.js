@@ -188,20 +188,27 @@ exports.findParticipant = function (req, callback) {
     }, null);
 
   if (req.query.depth == null) {
-    participantModel.findById(req.params.id).exec(function (err, docs) {
-      if (err) throw (err);
-      var data = JSON.parse(JSON.stringify(docs._doc));
-      for (var i = 0; i < data.memberOf.length; i++) {
-        data.memberOf[i] = settings.baseURL + settings.federations + '/' + data.memberOf[i];
-      }
-      if (req.query.filter == null)
-        callback(null, data);
-      else {
-        // Apply jsPath filter here.
-        var filterdata = JSPath.apply(req.query.filter, data);
-        callback(null, filterdata);
-      }
-    });
+    participantModel.findById(req.params.id)
+      .select('-_id -__v')
+      .populate({path: 'registeredBy', select: {'@id': 1, name: 1, _id: 0}})
+      .populate({path: 'memberOf', select: '-_id -__v'})
+      .populate({path: 'operates', select: '-_id -__v'})
+      .exec(function (err, docs) {
+        if (err) throw (err);
+        var data = JSON.parse(JSON.stringify(docs._doc));
+        data.memberOf = data.memberOf.map(function (item, index) {
+          return item['@id'];
+        });
+        data.operates = data.operates['@id'];
+
+        if (req.query.filter == null)
+          callback(null, data);
+        else {
+          // Apply jsPath filter here.
+          var filterdata = JSPath.apply(req.query.filter, data);
+          callback(null, filterdata);
+        }
+      });
   }
   else if (req.query.depth == 'federations') {
     participantModel.findOne({_id: req.params.id}).select('-__v -_id').populate({
@@ -280,16 +287,16 @@ exports.deleteParticipant = function (req, callback) {
       return callback(null, oParticipant);
     })
     .catch(function (err) {
-      return callback({ error: err, code: 404 }, null);
+      return callback({error: err, code: 404}, null);
     });
 };
 
 exports.updateParticipant = function (req, callback) {
   if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-   return callback({
-     error: ['Invalid Participant Id'],
-     code: 400
-   }, null);
+    return callback({
+      error: ['Invalid Participant Id'],
+      code: 400
+    }, null);
   }
 
   var valid = ajv.validate(participantAJVSchema, req.body);

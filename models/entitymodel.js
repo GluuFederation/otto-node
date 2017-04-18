@@ -21,14 +21,16 @@ const entitySchema = mongoose.Schema({
     type: String
   },
   registeredBy: {
-    type: String
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'RegistrationAuthority'
   },
   federatedBy: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Federation'
   }],
   metadata: {
-    type: mongoose.Schema.Types.Mixed
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Metadata'
   }
 }, {
   timestamps: true

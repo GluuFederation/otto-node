@@ -17,12 +17,16 @@
   exports.federations = "/otto/federations"
   exports.entity = "/otto/entity"
   exports.participant = "/otto/participant"
+  exports.registrationAuthority = "/otto/registrationAuthority"
+  exports.metadata = "/otto/metadata"
   exports.schema = "/otto/schema"
 
   exports.contextSchema = "https://raw.githubusercontent.com/KantaraInitiative/wg-otto/master/schema/"
   exports.contextParticipant = "otto/participant.jsonld"
   exports.contextFederation = "otto/federation.jsonld"
   exports.contextOpenIdProvider = "openid/op.jsonld"
+  exports.contextRegistrationAuthority = "otto/ra.jsonld"
+  exports.contextMetadata = "otto/metadata.jsonld"
 
   exports.trustMarkURL = '/trustmark/'  //@context URL
   exports.trustMarkFilePath = './public/trustmark/'

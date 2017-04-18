@@ -29,7 +29,8 @@ const participantSchema = mongoose.Schema({
     ref: 'Entity'
   },
   registeredBy: {
-    type: String
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'RegistrationAuthority'
   },
   technicalContact: [{
     type: mongoose.Schema.Types.Mixed

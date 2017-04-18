@@ -176,20 +176,27 @@ exports.findEntity = function (req, callback) {
   if (req.query.depth == null) {
     var query = entityModel.findOne({
       _id: req.params.id
-    }).lean();
+    })
+      .select('-_id -__v')
+      .populate({path: 'metadata', select: {'@id': 1, metadataFormat: 1, _id: 0}})
+      .populate({path: 'registeredBy', select: {'@id': 1, name: 1, _id: 0}})
+      .populate({path: 'federatedBy', select: '-_id -__v'})
+      .lean();
     query.exec(function (err, docs) {
       if (docs != null) {
         if (err) throw (err);
 
-        if (req.query.filter == null)
-          callback(null, docs);
+        if (req.query.filter == null) {
+          docs.federatedBy = docs.federatedBy.map(function (item, index) {
+            return item['@id'];
+          });
 
-        else {
+          callback(null, docs);
+        } else {
           // Apply jsPath filter here.
           var filterdata = JSPath.apply(req.query.filter, docs);
           callback(null, filterdata);
         }
-
       } else {
 
         callback({
@@ -312,10 +319,10 @@ exports.joinEntity = function (req, callback) {
   entityModel.findById(req.params.eid)
     .then(function (oEntity) {
       if (!oEntity) {
-        return Promise.reject({ error: 'Entity doesn\'t exist', code: 404});
+        return Promise.reject({error: 'Entity doesn\'t exist', code: 404});
       }
 
-      if (oEntity.federatedBy.indexOf(req.params.eid) > -1) {
+      if (oEntity.federatedBy.indexOf(req.params.fid) > -1) {
         return Promise.reject({
           error: ['Federation already exist'],
           code: 400
@@ -331,13 +338,13 @@ exports.joinEntity = function (req, callback) {
           code: 404
         });
       }
-      entity.federatedBy.push(req.params.eid);
+      entity.federatedBy.push(req.params.fid);
       return entity.save();
     })
     .then(function (oEntity) {
       return callback(null, oEntity);
     })
     .catch(function (err) {
-      return callback({ error: err, code: 404 }, null);
+      return callback({error: err, code: 404}, null);
     });
 };

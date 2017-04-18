@@ -9,6 +9,8 @@ var Ajv = require('ajv');
 var settings = require('../settings');
 var federationModel = require('../models/federationmodel');
 var entityModel = require('../models/entitymodel');
+var raModel = require('../models/ramodel');
+var metadataModel = require('../models/metadatamodel');
 
 var ajv = Ajv({
   allErrors: true
@@ -129,6 +131,7 @@ exports.findFederation = function (req, callback) {
       select: '-_id -__v'
     })
     .populate({path: 'member', select: '-_id -__v'})
+    .populate({path: 'registeredBy', select: { '@id': 1, name: 1, _id: 0 }})
     .lean()
     .exec(function (err, federation) {
       if (err) throw (err);
@@ -356,14 +359,14 @@ exports.leaveFederation = function (req, callback) {
 exports.addParticipant = function (req, callback) {
   if (!mongoose.Types.ObjectId.isValid(req.params.fid)) {
     return callback({
-      error: ['Invalid Organization Id'],
+      error: ['Invalid Federation Id'],
       code: 400
     }, null);
   }
 
   if (!mongoose.Types.ObjectId.isValid(req.params.pid)) {
     return callback({
-      error: ['Invalid Federation Id'],
+      error: ['Invalid Participant Id'],
       code: 400
     }, null);
   }

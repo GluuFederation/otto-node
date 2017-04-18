@@ -25,7 +25,8 @@ const federationSchema = mongoose.Schema({
     ref: 'Entity'
   },
   registeredBy: {
-    type: String
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'RegistrationAuthority'
   },
   member: [{
     type: mongoose.Schema.Types.ObjectId,
@@ -56,10 +57,6 @@ const federationSchema = mongoose.Schema({
   },
   federationPolicy: {
     type: String
-  },
-  isActive: {
-    type: Boolean,
-    default: false
   }
 }, {
   timestamps: true
