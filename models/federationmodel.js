@@ -3,52 +3,61 @@ var settings = require("../settings");
 var deepPopulate = require('mongoose-deep-populate')(mongoose);
 
 const federationSchema = mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  url: {
-    type: String
-  },
-  isActive: {
-    type: Boolean,
-    default: false
-  },
   '@context': {
     type: String
   },
   '@id': {
     type: String
   },
-  federates: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Entity'
-  }],
-  members: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Participant'
-  }],
+  name: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  description: {
+    type: String
+  },
+  url: {
+    type: String
+  },
   operates: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Entity'
   },
   registeredBy: {
-    type: String
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'RegistrationAuthority'
   },
-  sponsors: [{
+  member: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Participant'
   }],
-  technicalContactPoint: [{
+  federates: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Entity'
+  }],
+  sponsor: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Participant'
+  }],
+  technicalContact: [{
     type: mongoose.Schema.Types.Mixed
   }],
-  executiveContactPoint: [{
+  executiveContact: [{
     type: mongoose.Schema.Types.Mixed
   }],
-  securityContactPoint: [{
+  securityContact: [{
     type: mongoose.Schema.Types.Mixed
-  }]
+  }],
+  dataProtectionCodeOfConduct: {
+    type: String
+  },
+  federationAgreement: {
+    type: String
+  },
+  federationPolicy: {
+    type: String
+  }
 }, {
   timestamps: true
 }, {
@@ -71,13 +80,7 @@ federationSchema.plugin(deepPopulate, {
   }
 });
 
-federationSchema.pre('findOne', preFind);
-federationSchema.pre('findById', preFind);
 federationSchema.pre('save', preSave);
-
-function preFind() {
-  return this.select('-__v -_id').populate({path:'federates', select: '-__v -_id'}).populate({path:'members', select: '-__v -_id'});
-}
 
 function preSave(next, done) {
   this['@id'] = settings.baseURL + settings.federations + '/' + this._id;

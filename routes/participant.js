@@ -1,10 +1,10 @@
 // File : routes/participant.js -->
 var express = require('express');
 var router = express.Router();
-var settings = require("../settings");
+var settings = require('../settings');
 var baseURL = settings.baseURL;
 var participantURL = settings.participant;
-var participantController = require("../controller/participantcontroller");
+var participantController = require('../controller/participantcontroller');
 /**
  * @swagger
  * resourcePath: /Participant
@@ -33,7 +33,7 @@ router.post(participantURL, function (req, res) {
     participantController.addParticipant(req, function (err, data) {
       console.log(err);
       if (err) {
-        res.status(err.code).json({"Error(s)": err.error});
+        res.status(err.code).json({'Error(s)': err.error});
       } else {
         res.status(200).json({
           '@id': baseURL + participantURL + '/' + data
@@ -75,7 +75,7 @@ router.get(participantURL + '/:id', function (req, res) {
   try {
     participantController.findParticipant(req, function (err, data) {
       if (err) {
-        res.status(err.code).json({"Error(s)": err.error});
+        res.status(err.code).json({'Error(s)': err.error});
       } else {
 
         res.status(200).json(data);
@@ -118,7 +118,7 @@ router.get(participantURL, function (req, res) {
   try {
     participantController.getAllParticipantWithDepth(req, function (err, data) {
       if (err) {
-        res.status(err.code).json({"Error(s)": err.error});
+        res.status(err.code).json({'Error(s)': err.error});
       } else {
         res.status(200).json({
           participant: data
@@ -154,7 +154,7 @@ router.delete(participantURL + '/:id', function (req, res) {
   try {
     participantController.deleteParticipant(req, function (err) {
       if (err) {
-        res.status(err.code).json({"Error(s)": err.error});
+        res.status(err.code).json({'Error(s)': err.error});
       } else {
         res.status(200).json();
       }
@@ -194,7 +194,7 @@ router.put(participantURL + "/:id", function (req, res) {
     participantController.updateParticipant(req, function (err, data) {
       console.log(err);
       if (err) {
-        res.status(err.code).json({"Error(s)": err.error});
+        res.status(err.code).json({'Error(s)': err.error});
       } else {
 
         res.status(200).json();
@@ -207,16 +207,16 @@ router.put(participantURL + "/:id", function (req, res) {
 
 /**
  * @swagger
- * path: /otto/participant/{oid}/federation/{fid}
+ * path: /otto/participant/{pid}/federation/{fid}
  * operations:
  *   -  httpMethod: POST
- *      summary: Add Federation to Participant
- *      notes: Returns Status
+ *      summary: Link participant as a member of federation
+ *      notes: A federation to which this Participant is a member
  *      nickname: AddFederationToParticipant
  *      consumes:
  *        - text/html
  *      parameters:
- *        - name: oid
+ *        - name: pid
  *          description: Your Participant  Id
  *          paramType: path
  *          required: true
@@ -228,11 +228,11 @@ router.put(participantURL + "/:id", function (req, res) {
  *          dataType: string
  *
  */
-router.post(participantURL + "/:oid/federation/:fid", function (req, res) {
+router.post(participantURL + '/:pid/federation/:fid', function (req, res) {
   try {
     participantController.joinFederationParticipant(req, function (err, docs) {
       if (err)
-        res.status(err.code).json({"Error(s)": err.error});
+        res.status(err.code).json({'Error(s)': err.error});
       res.status(200).json();
     });
   } catch (e) {
@@ -242,16 +242,16 @@ router.post(participantURL + "/:oid/federation/:fid", function (req, res) {
 
 /**
  * @swagger
- * path: /otto/participant/{oid}/entity/{eid}
+ * path: /otto/participant/{pid}/entity/{eid}
  * operations:
  *   -  httpMethod: POST
- *      summary: Add Entity to Participant
- *      notes: Returns Status
+ *      summary: Link entity as a service to participant
+ *      notes: A service operated by the Participant
  *      nickname: AddEntityToParticipant
  *      consumes:
  *        - text/html
  *      parameters:
- *        - name: oid
+ *        - name: pid
  *          description: Your Participant Id
  *          paramType: path
  *          required: true
@@ -263,11 +263,11 @@ router.post(participantURL + "/:oid/federation/:fid", function (req, res) {
  *          dataType: string
  *
  */
-router.post(participantURL + "/:oid/entity/:eid", function (req, res) {
+router.post(participantURL + '/:pid/entity/:eid', function (req, res) {
   try {
     participantController.joinEntityParticipant(req, function (err, docs) {
       if (err) {
-        res.status(err.code).json({"Error(s)": err.error});
+        res.status(err.code).json({'Error(s)': err.error});
       }
       res.status(200).json();
     });

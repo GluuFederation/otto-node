@@ -32,7 +32,7 @@ router.get(settings.discoveryEndpoint, function(req, res) {
         "url": baseURL,
         "description": "OTTO Registration Authority",
         "federation_endpoint": baseURL + settings.federations,
-        "participant_endpoint": baseURL + settings.organization,
+        "participant_endpoint": baseURL + settings.participant,
         "entity_endpoint": baseURL + settings.entity,
         "registers": []
     };

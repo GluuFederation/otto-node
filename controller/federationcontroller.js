@@ -8,9 +8,10 @@ var Ajv = require('ajv');
 
 var settings = require('../settings');
 var federationModel = require('../models/federationmodel');
+var entityModel = require('../models/entitymodel');
+var raModel = require('../models/ramodel');
+var metadataModel = require('../models/metadatamodel');
 
-var baseURL = settings.baseURL;
-var FederationURL = settings.federations;
 var ajv = Ajv({
   allErrors: true
 });
@@ -24,213 +25,36 @@ var FederationAJVSchema = {
   required: ['name']
 };
 
-exports.getAllFederation = function (req, callback) {
-  if (req.query.depth == null) {
-    federationModel.find({}, '@id', function (err, docs) {
-      var federationsArr = Array();
-      docs.forEach(function (element) {
-        federationsArr.push(element['@id']);
-      });
-      callback(null, federationsArr);
-    });
-  } else if (req.query.depth == 'federations') {
-    federationModel.find({}).lean().exec(function (err, docs) {
-      if (err) throw err;
-      for (var i = 0; i < docs.length; i++) {
-        if (docs[i].hasOwnProperty("organizationId")) {
-          docs[i]['organization'] = settings.baseURL + settings.organization + "/" + docs[i].organizationId;
-          delete docs[i].organizationId;
-        }
-        if (docs[i].hasOwnProperty("entities")) {
-          for (var j = 0; j < docs[i].entities.length; j++) {
-            docs[i].entities[j] = settings.baseURL + settings.federation_entity + "/" + docs[i].entities[j];
-          }
-        }
-
-      }
-      callback(null, docs);
-    });
-  } else if (req.query.depth == 'federations.entities') {
-    federationModel.find({}).select('-__v -_id').populate({
-      path: 'entities',
-      select: '-_id -__v',
-      match: {}
-    }).lean().exec(function (err, docs) {
-      for (var i = 0; i < docs.length; i++) {
-
-        if (docs[i].hasOwnProperty("organizationId")) {
-          docs[i]['organization'] = settings.baseURL + settings.organization + "/" + docs[i].organizationId;
-          delete docs[i].organizationId;
-        }
-
-        for (var j = 0; j < docs[i].entities.length; j++) {
-
-          if (docs[i].entities[j].hasOwnProperty("organizationId")) {
-            docs[i].entities[j]['organization'] = settings.baseURL + settings.organization + "/" + docs[i].entities[j].organizationId;
-            delete docs[i].entities[j].organizationId;
-          }
-
-        }
-      }
-      callback(null, docs);
-
-    });
-  } else if (req.query.depth == 'federations.entities.organization') {
-    federationModel.find({}).select('-__v -_id').lean().exec(function (err, docs) {
-      federationModel.deepPopulate(docs, 'entities.organizationId', function (err, doc) {
-        var data = JSON.parse(JSON.stringify(doc));
-        data.forEach(function (element) {
-          element.entities.forEach(function (ele) {
-            ele['organization'] = ele.organizationId;
-            delete ele.organizationId;
-          });
-          if (element.hasOwnProperty("organizationId")) {
-            element['organization'] = settings.baseURL + settings.organization + "/" + element.organizationId;
-            delete element.organizationId;
-          }
-        });
-        callback(null, data);
-
-      });
-    });
-  } else if (req.query.depth == 'federations.organization') {
-    federationModel.find({}).select('-__v -_id').populate({
-      path: 'organizationId',
-      select: 'name @id -_id'
-    }).lean().exec(function (err, docs) {
-      for (var i = 0; i < docs.length; i++) {
-        if (docs[i].hasOwnProperty("organizationId")) {
-          docs[i]['organization'] = docs[i].organizationId;
-          delete docs[i].organizationId;
-
-        }
-        if (docs[i].hasOwnProperty("entities")) {
-          for (var j = 0; j < docs[i].entities.length; j++) {
-            docs[i].entities[j] = settings.baseURL + settings.federation_entity + "/" + docs[i].entities[j];
-          }
-        }
-      }
-      callback(null, docs);
-    });
-  } else {
-    callback({
-      error: ['unknown value for depth parameter'],
-      "code": 400
-    }, null);
-  }
-};
-
 exports.getAllFederationWithDepth = function (req, callback) {
-  var pageno = +req.query.pageno;
+  var pageNo = +req.query.pageno;
   var pageLength = +req.query.pagelength;
+  var depth = '';
 
-  if (req.query.depth == null) {
-    if (pageno == undefined) {
-      federationModel.find({}, {'@id': 1}, function (err, docs) {
-        var federationsArr = Array();
-        docs.forEach(function (element) {
-          console.log(element);
-          federationsArr.push(element['@id']);
-        });
-        callback(null, federationsArr);
-      });
-    } else {
-      federationModel.find({}).select("_id").skip(pageno * pageLength).limit(pageLength).exec(function (err, docs) {
-        if (err)
-          throw err;
-
-        var federationsArr = Array();
-        docs.forEach(function (element) {
-          federationsArr.push(baseURL + FederationURL + "/" + element._id);
-        });
-        callback(null, federationsArr);
-      });
-    }
-  } else {
-    var depthArr = Array();
-    depthArr = depthArr.concat(req.query.depth);
-
-    for (var i = 0; i < depthArr.length; i++) {
-      if (!(possibleDepthArr.indexOf(depthArr[i]) > -1)) {
-        callback({error: ['Invalid value (" + depthArr[i] + ") for depth param'], "code": 400}, null);
-      }
-    }
-
-    function callbackgetFederaions(err, docs, depthArr) {
-      federationModel.deepPopulate(docs, 'entities.organizationId', function (err, doc) {
-        var data = JSON.parse(JSON.stringify(doc));
-        var isFedOrgDepth = false,
-          isFedEntityDepth = false,
-          isFedEntOrg = false;
-
-        if (depthArr.indexOf("federations.organization") > -1)
-          isFedOrgDepth = true;
-
-        if (depthArr.indexOf("federations.entities") > -1)
-          isFedEntityDepth = true;
-
-        if (depthArr.indexOf("federations.entities.organization") > -1) {
-          isFedEntOrg = true;
-          isFedEntityDepth = true;
-        }
-
-        data.forEach(function (ele) {
-
-          if (ele.hasOwnProperty("organizationId")) {
-            ele['organization'] = ele.organizationId;
-            delete ele.organizationId;
-            if (!isFedOrgDepth) {
-              if (ele['organization'] != undefined)
-                ele['organization'] = ele['organization']['@id'];
-            }
-          }
-          if (!isFedEntityDepth) {
-            var temp = Array();
-            for (var i = 0; i < ele.entities.length; i++) {
-              temp.push(ele.entities[i]['@id']);
-            }
-            // ele.entities.forEach(function(eleEnt) {
-            //     //eleEnt = eleEnt['@id'];
-
-            // });
-            ele['entities'] = temp;
-          } else {
-            ele.entities.forEach(function (eleEnt) {
-              eleEnt['organization'] = eleEnt.organizationId;
-              delete eleEnt.organizationId;
-              if (!isFedEntOrg) {
-                eleEnt['organization'] = eleEnt['organization']['@id'];
-              }
-            });
-          }
-        });
-        callback(null, data);
-      });
-    }
-
-    if (pageno == undefined) {
-      federationModel.find({}).select('-__v -_id -keys').populate({
-        path: 'organizationId',
-        select: 'name @id -_id'
-      }).lean().exec(function (err, docs) {
-        if (err)
-          throw err;
-        console.log("depth + pageno");
-        callbackgetFederaions(err, docs, depthArr);
-      });
-    }
-    else {
-      federationModel.find({}).select('-__v -_id -keys').skip(pageno * pageLength).limit(pageLength).populate({
-        path: 'organizationId',
-        select: 'name @id -_id'
-      }).lean().exec(function (err, docs) {
-        if (err)
-          throw err;
-        console.log("depth + pageno");
-        callbackgetFederaions(err, docs, depthArr);
-      });
-    }
+  if (req.query.depth == 'federations.federates') {
+    depth = {path: 'federates', select: '-_id -__v'};
+  } else if (req.query.depth == 'federations.member') {
+    depth = {path: 'member', select: '-_id -__v'};
   }
+
+  federationModel.find({}).select('-_id -__v')
+    .skip((!!pageLength && !!pageNo ? pageNo * pageLength : 0))
+    .limit((!!pageLength ? pageLength : 0))
+    .populate(depth)
+    .lean()
+    .exec(function (err, federations) {
+      if (err) throw (err);
+
+      if (!req.query.depth) {
+        federations = federations.map(function (item) {
+          return item['@id'];
+        });
+      }
+
+      callback(null, federations);
+    })
+    .catch(function (err) {
+      return callback({error: err, code: 404}, null);
+    });
 };
 
 exports.addFederation = function (req, callback) {
@@ -301,7 +125,14 @@ exports.findFederation = function (req, callback) {
       code: 400
     }, null);
 
-  federationModel.findById(req.params.id)
+  federationModel.findById(req.params.id).select('-_id -__v -updatedAt -createdAt')
+    .populate({
+      path: 'federates',
+      select: '-_id -__v'
+    })
+    .populate({path: 'member', select: '-_id -__v'})
+    .populate({path: 'sponsor', select: '-_id -__v'})
+    .populate({path: 'registeredBy', select: { '@id': 1, name: 1, _id: 0 }})
     .lean()
     .exec(function (err, federation) {
       if (err) throw (err);
@@ -313,21 +144,25 @@ exports.findFederation = function (req, callback) {
         }, null);
       }
       if (req.query.depth == null) {
+        federation.registeredBy = federation.registeredBy['@id'];
         federation.federates = federation.federates.map(function (item, index) {
           return item['@id'];
         });
-        federation.members = federation.members.map(function (item, index) {
-          return settings.baseURL + settings.participant + '/' + item;
+        federation.member = federation.member.map(function (item, index) {
+          return item['@id'];
+        });
+        federation.sponsor = federation.sponsor.map(function (item, index) {
+          return item['@id'];
         });
       } else if (req.query.depth == 'federates') {
-        federation.members = federation.members.map(function (item, index) {
-          return settings.baseURL + settings.participant + '/' + item;
+        federation.member = federation.member.map(function (item, index) {
+          return item['@id'];
         });
-      } else if (req.query.depth == 'members') {
+      } else if (req.query.depth == 'member') {
         federation.federates = federation.federates.map(function (item, index) {
           return item['@id'];
         });
-      } else if (req.query.depth == 'federates,members') {
+      } else if (req.query.depth == 'federates,member') {
       } else {
         return callback({
           error: ['unknown value for depth parameter'],
@@ -371,24 +206,23 @@ exports.getJWKsForFederation = function (req, callback) {
     }
     callback(null, {jwks: jwks});
   });
-
-
 };
 
 exports.deleteFederation = function (req, callback) {
-  if (!mongoose.Types.ObjectId.isValid(req.params.id))
-    return callback({
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return Promise.reject({
       error: ['Invalid Federation Id'],
       code: 400
-    }, null);
+    });
+  }
 
   federationModel.findById(req.params.id)
     .then(function (oFederation) {
       if (!oFederation) {
-        return callback({
+        return Promise.reject({
           error: ['Federation doesn\'t exist'],
           code: 404
-        }, null);
+        });
       }
 
       return federationModel.findOneAndRemove({_id: req.params.id});
@@ -397,7 +231,7 @@ exports.deleteFederation = function (req, callback) {
       return callback(null, oFederation);
     })
     .catch(function (err) {
-      return callback(err, null);
+      return callback({error: err, code: 404}, null);
     });
 };
 
@@ -413,10 +247,10 @@ exports.updateFederation = function (req, callback) {
     federationModel.findById(req.params.id)
       .then(function (doc) {
         if (!doc) {
-          return callback({
+          return Promise.reject({
             error: ['Federation doesn\'t exist'],
             code: 404
-          }, null);
+          });
         }
         return federationModel.findOneAndUpdate({_id: req.params.id}, req.body);
       })
@@ -424,7 +258,7 @@ exports.updateFederation = function (req, callback) {
         return callback(null, oFederation);
       })
       .catch((function (err) {
-        throw (err);
+        return callback({error: err, code: 404}, null);
       }));
   } else {
     var errorMsg = Array();
@@ -439,128 +273,173 @@ exports.updateFederation = function (req, callback) {
 };
 
 exports.joinFederation = function (req, callback) {
-
-  if (!mongoose.Types.ObjectId.isValid(req.params.fid))
-    callback({
+  if (!mongoose.Types.ObjectId.isValid(req.params.fid)) {
+    return callback({
       error: ['Invalid Federation Id'],
       code: 400
     }, null);
-  if (!mongoose.Types.ObjectId.isValid(req.params.eid))
-    callback({
-      error: ['Invalid Federation Entity Id'],
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(req.params.eid)) {
+    return callback({
+      error: ['Invalid Entity Id'],
       code: 400
     }, null);
-  federationModel.findOne({
-    _id: req.params.fid
-  }, function (err, doc) {
-    if (err)
-      throw (err);
-    if (doc == null)
-      callback("Federation doesn\'t exist", null);
+  }
+  var federation = null;
+  federationModel.findById(req.params.fid)
+    .then(function (oFederation) {
+      if (!oFederation) {
+        return Promise.reject({error: 'Federation doesn\'t exist', code: 404});
+      }
 
-    if (doc.entities.indexOf(req.params.eid) > -1)
-      callback({
-        error: ['Federation Entity already exist'],
-        code: 400
-      }, null);
-    else {
-      var query = FederationEntity.findOne({
-        _id: req.params.eid
-      }).select('-_id -__v');
-
-      query.exec(function (err, docs) {
-        if (err) throw (err);
-        if (docs == null || docs == undefined)
-          callback({
-            error: ['Federation Entity doesn\'t exist'],
-            code: 404
-          }, null);
-        else {
-          doc.entities.push(req.params.eid);
-          doc.save();
-          callback(null, doc);
-        }
-      });
-    }
-  });
-
+      if (oFederation.federates.indexOf(req.params.eid) > -1) {
+        return Promise.reject({
+          error: ['Entity already exist'],
+          code: 400
+        });
+      }
+      federation = oFederation;
+      return entityModel.findById(req.params.eid);
+    })
+    .then(function (docs) {
+      if (!docs) {
+        return Promise.reject({
+          error: ['Entity doesn\'t exist'],
+          code: 404
+        });
+      }
+      federation.federates.push(req.params.eid);
+      return federation.save();
+    })
+    .then(function (oFederation) {
+      return callback(null, oFederation);
+    })
+    .catch(function (err) {
+      return callback({error: err, code: 404}, null);
+    });
 };
 
 exports.leaveFederation = function (req, callback) {
-  if (!mongoose.Types.ObjectId.isValid(req.params.fid))
-    callback('Invalid Federation Id');
-  if (!mongoose.Types.ObjectId.isValid(req.params.eid))
-    callback('Invalid Federation Entity Id');
+  if (!mongoose.Types.ObjectId.isValid(req.params.fid)) {
+    return callback({
+      error: ['Invalid Federation Id'],
+      code: 400
+    }, null);
+  }
 
-  federationModel.findOne({
-    _id: req.params.fid
-  }, function (err, doc) {
-    if (err)
-      callback(err, null);
-    if (doc == null)
-      callback({
-        error: ['Federation doesn\'t exist'],
-        code: 404
-      }, null);
+  if (!mongoose.Types.ObjectId.isValid(req.params.eid)) {
+    return callback({
+      error: ['Invalid Entity Id'],
+      code: 400
+    }, null);
+  }
 
-    var index = doc.entities.indexOf(req.params.eid);
-    if (index > -1) {
-      doc.entities.splice(index, 1);
-      doc.save();
-      callback(null, doc);
-    } else {
-      callback({
-        error: ['Entity doesn\'t exist in Federation'],
-        code: 404
-      }, null);
-    }
-  });
+  federationModel.findById(req.params.fid)
+    .then(function (doc) {
+      if (!doc) {
+        return Promise.reject({
+          error: ['Federation doesn\'t exist'],
+          code: 404
+        });
+      }
+      var index = doc.federates.indexOf(req.params.eid);
+      if (index == -1) {
+        return Promise.reject({
+          error: ['Entity doesn\'t exist in Federation'],
+          code: 404
+        });
+      }
+      doc.federates.splice(index, 1);
+      return doc.save();
+    })
+    .then(function (oFederation) {
+      return callback(null, oFederation);
+    })
+    .catch(function (err) {
+      return callback({error: err, code: 404}, null);
+    });
 };
 
 exports.addParticipant = function (req, callback) {
   if (!mongoose.Types.ObjectId.isValid(req.params.fid)) {
     return callback({
-      error: ['Invalid Organization Id'],
+      error: ['Invalid Federation Id'],
       code: 400
     }, null);
   }
 
-  if (!mongoose.Types.ObjectId.isValid(req.params.oid)) {
+  if (!mongoose.Types.ObjectId.isValid(req.params.pid)) {
+    return callback({
+      error: ['Invalid Participant Id'],
+      code: 400
+    }, null);
+  }
+
+  federationModel.findById(req.params.fid)
+    .then(function (oFederation) {
+      if (!oFederation) {
+        return Promise.reject({
+          error: ['Federation doesn\'t exist'],
+          code: 404
+        });
+      }
+      if (oFederation.member.indexOf(req.params.pid) > -1) {
+        return Promise.reject({
+          error: ['Participant already exist'],
+          code: 404
+        });
+      }
+
+      oFederation.member.push(req.params.pid);
+      return oFederation.save();
+    })
+    .then(function (oFederation) {
+      return callback(null, oFederation);
+    })
+    .catch(function (err) {
+      return callback({error: err, code: 404}, null);
+    });
+};
+
+exports.addSponsor = function (req, callback) {
+  if (!mongoose.Types.ObjectId.isValid(req.params.fid)) {
     return callback({
       error: ['Invalid Federation Id'],
       code: 400
     }, null);
   }
 
-  federationModel.findOne({
-    _id: req.params.fid
-  }, function (err, doc) {
+  if (!mongoose.Types.ObjectId.isValid(req.params.pid)) {
+    return callback({
+      error: ['Invalid Participant Id'],
+      code: 400
+    }, null);
+  }
 
-    if (err) {
-      return callback(err, null);
-    }
+  federationModel.findById(req.params.fid)
+    .then(function (oFederation) {
+      if (!oFederation) {
+        return Promise.reject({
+          error: ['Federation doesn\'t exist'],
+          code: 404
+        });
+      }
 
-    if (doc == null) {
-      return callback({
-        error: ['Federation doesn\'t exists'],
-        code: 404
-      }, null);
-    }
+      if (oFederation.sponsor.indexOf(req.params.pid) > -1) {
+        return Promise.reject({
+          error: ['Participant already exist'],
+          code: 404
+        });
+      }
 
-    if (doc.participants.indexOf(req.params.oid) > -1) {
-      return callback({
-        error: ['Federation already exist'],
-        code: 404
-      }, null);
-    }
-
-    doc.participants.push(req.params.oid);
-    var transaction = new Transaction();
-    transaction.update('Federation', req.params.fid, doc);
-    transaction.run(function (err, docs) {
-      if (err)
-        throw (err);
-      return callback(null, doc);
+      oFederation.sponsor.push(req.params.pid);
+      return oFederation.save();
+    })
+    .then(function (oFederation) {
+      return callback(null, oFederation);
+    })
+    .catch(function (err) {
+      return callback({error: err, code: 404}, null);
     });
-  });
 };

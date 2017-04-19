@@ -59,11 +59,11 @@ router.post(entityURL, function (req, res) {
  *      parameters:
  *        - name: id
  *          paramType: path
- *          description: Your Federation Entity Id
+ *          description: Your Entity Id
  *          required: true
  *          dataType: string
  *        - name: depth
- *          description: depth[entities.organization]
+ *          description: depth[entities.federatedBy]
  *          paramType: query
  *          required: false
  *          dataType: string
@@ -195,9 +195,45 @@ router.put(entityURL + '/:id', function (req, res) {
       if (err) {
         res.status(err.code).json({'Error(s)': err.error});
       } else {
-
         res.status(200).json();
       }
+    });
+  } catch (e) {
+    res.status(500).json();
+  }
+});
+
+/**
+ * @swagger
+ * path: /otto/entity/{eid}/federation/{fid}
+ * operations:
+ *   -  httpMethod: post
+ *      summary: Join entity (Existing federation)
+ *      notes: The federation to which this entity is affiliated
+ *      nickname: JoinFederation
+ *      consumes:
+ *        - text/html
+ *      parameters:
+ *        - name: eid
+ *          description: Your Entity Id
+ *          paramType: path
+ *          required: true
+ *          dataType: string
+ *        - name: fid
+ *          description: Your Federation Id
+ *          paramType: path
+ *          required: true
+ *          dataType: string
+ */
+router.post(entityURL + '/:eid/federation/:fid', function (req, res) {
+  try {
+    entityController.joinEntity(req, function (err, callback) {
+      if (err) {
+        res.status(err.code).json({
+          'Error(s)': err.error
+        });
+      }
+      res.status(200).json();
     });
   } catch (e) {
     res.status(500).json();
