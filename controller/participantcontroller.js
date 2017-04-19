@@ -165,7 +165,9 @@ exports.addParticipant = function (req, callback) {
   if (valid) {
     var oParticipant = new participantModel(req.body);
     oParticipant.save(function (err, obj) {
-      if (err) throw (err);
+      if (err) {
+        return callback({error: err, code: 404}, null);
+      }
       callback(null, obj._id);
     });
   } else {
@@ -189,7 +191,7 @@ exports.findParticipant = function (req, callback) {
 
   if (req.query.depth == null) {
     participantModel.findById(req.params.id)
-      .select('-_id -__v')
+      .select('-_id -__v -updatedAt -createdAt')
       .populate({path: 'registeredBy', select: {'@id': 1, name: 1, _id: 0}})
       .populate({path: 'memberOf', select: '-_id -__v'})
       .populate({path: 'operates', select: '-_id -__v'})
@@ -199,8 +201,8 @@ exports.findParticipant = function (req, callback) {
         data.memberOf = data.memberOf.map(function (item, index) {
           return item['@id'];
         });
-        data.operates = data.operates['@id'];
-
+        data.operates = (!!data.operates) ? data.operates['@id'] : "";
+        data.registeredBy = data.registeredBy['@id'];
         if (req.query.filter == null)
           callback(null, data);
         else {
@@ -369,7 +371,6 @@ exports.joinFederationParticipant = function (req, callback) {
       return callback({error: err, code: 404}, null);
     });
 };
-
 
 exports.joinEntityParticipant = function (req, callback) {
   if (!mongoose.Types.ObjectId.isValid(req.params.pid)) {

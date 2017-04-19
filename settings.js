@@ -21,12 +21,12 @@
   exports.metadata = "/otto/metadata"
   exports.schema = "/otto/schema"
 
-  exports.contextSchema = "https://raw.githubusercontent.com/KantaraInitiative/wg-otto/master/schema/"
-  exports.contextParticipant = "otto/participant.jsonld"
-  exports.contextFederation = "otto/federation.jsonld"
-  exports.contextOpenIdProvider = "openid/op.jsonld"
-  exports.contextRegistrationAuthority = "otto/ra.jsonld"
-  exports.contextMetadata = "otto/metadata.jsonld"
+  exports.contextSchema = "https://rawgit.com/KantaraInitiative/wg-otto/master/html/otto-vocab-1.0.html"
+  exports.contextParticipant = "#participant"
+  exports.contextFederation = "#federation"
+  exports.contextEntity = "#entity"
+  exports.contextRegistrationAuthority = "#registration-authority"
+  exports.contextMetadata = "#metadata"
 
   exports.trustMarkURL = '/trustmark/'  //@context URL
   exports.trustMarkFilePath = './public/trustmark/'

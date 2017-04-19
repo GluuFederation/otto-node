@@ -177,7 +177,7 @@ exports.findEntity = function (req, callback) {
     var query = entityModel.findOne({
       _id: req.params.id
     })
-      .select('-_id -__v')
+      .select('-_id -__v -updatedAt -createdAt')
       .populate({path: 'metadata', select: {'@id': 1, metadataFormat: 1, _id: 0}})
       .populate({path: 'registeredBy', select: {'@id': 1, name: 1, _id: 0}})
       .populate({path: 'federatedBy', select: '-_id -__v'})
@@ -187,6 +187,7 @@ exports.findEntity = function (req, callback) {
         if (err) throw (err);
 
         if (req.query.filter == null) {
+          docs.registeredBy = docs.registeredBy['@id'];
           docs.federatedBy = docs.federatedBy.map(function (item, index) {
             return item['@id'];
           });

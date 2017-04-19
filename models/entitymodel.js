@@ -40,7 +40,7 @@ const entitySchema = mongoose.Schema({
 
 entitySchema.pre('save', function (next, done) {
   this['@id'] = settings.baseURL + settings.entity + '/' + this._id;
-  this['@context'] = settings.contextSchema + settings.contextOpenIdProvider;
+  this['@context'] = settings.contextSchema + settings.contextEntity;
   next();
 });
 

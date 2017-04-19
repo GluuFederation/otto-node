@@ -465,4 +465,39 @@ router.post(federationURL + '/:fid/participant/:pid', function (req, res) {
   }
 });
 
+/**
+ * @swagger
+ * path: /otto/federations/{fid}/sponsor/{pid}
+ * operations:
+ *   -  httpMethod: POST
+ *      summary: Link Participant as a sponsor to Federation
+ *      notes: Organization legally responsible for management of the Federation
+ *      nickname: AddParticipant
+ *      consumes:
+ *        - text/html
+ *      parameters:
+ *        - name: fid
+ *          description: Your Federation Id
+ *          paramType: path
+ *          required: true
+ *          dataType: string
+ *        - name: pid
+ *          description: Your Participant Id
+ *          paramType: path
+ *          required: true
+ *          dataType: string
+ *
+ */
+router.post(federationURL + '/:fid/sponsor/:pid', function (req, res) {
+  try {
+    federationController.addSponsor(req, function (err, docs) {
+      if (err)
+        return res.status(err.code).json({'Error(s)': err.error});
+      return res.status(200).json();
+    });
+  } catch (e) {
+    res.status(500).json();
+  }
+});
+
 module.exports = router;

@@ -125,12 +125,13 @@ exports.findFederation = function (req, callback) {
       code: 400
     }, null);
 
-  federationModel.findById(req.params.id).select('-_id -__v')
+  federationModel.findById(req.params.id).select('-_id -__v -updatedAt -createdAt')
     .populate({
       path: 'federates',
       select: '-_id -__v'
     })
     .populate({path: 'member', select: '-_id -__v'})
+    .populate({path: 'sponsor', select: '-_id -__v'})
     .populate({path: 'registeredBy', select: { '@id': 1, name: 1, _id: 0 }})
     .lean()
     .exec(function (err, federation) {
@@ -143,10 +144,14 @@ exports.findFederation = function (req, callback) {
         }, null);
       }
       if (req.query.depth == null) {
+        federation.registeredBy = federation.registeredBy['@id'];
         federation.federates = federation.federates.map(function (item, index) {
           return item['@id'];
         });
         federation.member = federation.member.map(function (item, index) {
+          return item['@id'];
+        });
+        federation.sponsor = federation.sponsor.map(function (item, index) {
           return item['@id'];
         });
       } else if (req.query.depth == 'federates') {
@@ -379,7 +384,6 @@ exports.addParticipant = function (req, callback) {
           code: 404
         });
       }
-
       if (oFederation.member.indexOf(req.params.pid) > -1) {
         return Promise.reject({
           error: ['Participant already exist'],
@@ -388,6 +392,48 @@ exports.addParticipant = function (req, callback) {
       }
 
       oFederation.member.push(req.params.pid);
+      return oFederation.save();
+    })
+    .then(function (oFederation) {
+      return callback(null, oFederation);
+    })
+    .catch(function (err) {
+      return callback({error: err, code: 404}, null);
+    });
+};
+
+exports.addSponsor = function (req, callback) {
+  if (!mongoose.Types.ObjectId.isValid(req.params.fid)) {
+    return callback({
+      error: ['Invalid Federation Id'],
+      code: 400
+    }, null);
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(req.params.pid)) {
+    return callback({
+      error: ['Invalid Participant Id'],
+      code: 400
+    }, null);
+  }
+
+  federationModel.findById(req.params.fid)
+    .then(function (oFederation) {
+      if (!oFederation) {
+        return Promise.reject({
+          error: ['Federation doesn\'t exist'],
+          code: 404
+        });
+      }
+
+      if (oFederation.sponsor.indexOf(req.params.pid) > -1) {
+        return Promise.reject({
+          error: ['Participant already exist'],
+          code: 404
+        });
+      }
+
+      oFederation.sponsor.push(req.params.pid);
       return oFederation.save();
     })
     .then(function (oFederation) {
