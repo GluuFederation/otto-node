@@ -18,50 +18,10 @@ var possibleDepthArr = ['federation_entity', 'federation_entity.organization'];
 var entityAJVSchema = {
   properties: {
     name: {
-      type: "string"
+      type: 'string'
     }
   },
   required: ['name']
-};
-
-exports.getAllEntity = function (req, callback) {
-  if (req.query.depth == null) {
-    entityModel.find({}, function (err, docs) {
-      var entityArr = Array();
-      docs.forEach(function (element) {
-        entityArr.push(baseURL + entityURL + '/' + element._id);
-      });
-      callback(null, entityArr);
-    });
-  } else if (req.query.depth == "federation_entity") {
-    entityModel.find({}).select('-__v -_id').lean().exec(function (err, docs) {
-      if (err) throw err;
-      for (var i = 0; i < docs.length; i++) {
-        if (docs[i].organization != null || docs[i].organization != undefined)
-          docs[i]['organization'] = settings.baseURL + settings.organization + "/" + docs[i].organization;
-        delete docs[i].organization;
-      }
-      callback(null, docs);
-    });
-  } else if (req.query.depth == "federation_entity.organization") {
-    entityModel.find({}).select('-__v -_id').populate({
-      path: 'organization',
-      select: '-_id -__v -federations -entities'
-    }).lean().exec(function (err, docs) {
-      //var finalFedArr = [];
-      for (var i = 0; i < docs.length; i++) {
-        if (docs[i]['organization'] != null || docs[i]['organization'] != undefined)
-          docs[i]['organization'] = docs[i]['organization'];
-        delete docs[i].organization;
-      }
-      callback(null, docs);
-    });
-  } else {
-    callback({
-      error: ['unknown value for depth parameter'],
-      code: 400
-    }, null);
-  }
 };
 
 exports.getAllEntityWithDepth = function (req, callback) {

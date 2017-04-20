@@ -56,11 +56,11 @@ router.post(participantURL, function (req, res) {
  *      parameters:
  *        - name: id
  *          paramType: path
- *          description: Your participant  Id
+ *          description: Your participant Id
  *          required: true
  *          dataType: string
  *        - name: depth
- *          description: depth
+ *          description: depth[memberOf, operates]
  *          paramType: query
  *          required: false
  *          dataType: string
@@ -71,13 +71,11 @@ router.post(participantURL, function (req, res) {
  *          dataType: string
  */
 router.get(participantURL + '/:id', function (req, res) {
-
   try {
     participantController.findParticipant(req, function (err, data) {
       if (err) {
         res.status(err.code).json({'Error(s)': err.error});
       } else {
-
         res.status(200).json(data);
       }
     });
@@ -98,7 +96,7 @@ router.get(participantURL + '/:id', function (req, res) {
  *      nickname: GetParticipant
  *      parameters:
  *        - name: depth
- *          description: depth
+ *          description: depth[participants, participants.memberOf, participants.operates]
  *          paramType: query
  *          required: false
  *          dataType: string

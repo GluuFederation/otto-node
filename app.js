@@ -14,6 +14,7 @@ var routesIndex = require('./routes/index');
 var routesFederations = require('./routes/federation');
 var routesEntity = require('./routes/entity');
 var routesParticipant = require('./routes/participant');
+var metadataParticipant = require('./routes/metadata');
 
 app.set('port', process.env.PORT || settings.port);
 app.set('views', __dirname + '/views');
@@ -27,7 +28,7 @@ app.use(swagger.init(app, {
     swaggerURL: '/swagger',
     swaggerJSON: '/api-docs.json',
     swaggerUI: './public/swagger/',
-    apis: ['./routes/index.js' , './routes/federation.js', './routes/participant.js', './routes/entity.js']
+    apis: ['./routes/index.js' , './routes/federation.js', './routes/participant.js', './routes/entity.js', './routes/metadata.js']
 }));
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -50,6 +51,7 @@ app.use('/', routesIndex);
 app.use('/', routesFederations);
 app.use('/', routesEntity);
 app.use('/', routesParticipant);
+app.use('/', metadataParticipant);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

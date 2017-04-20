@@ -5,159 +5,68 @@ var Ajv = require('ajv');
 
 var settings = require('../settings');
 var participantModel = require('../models/participantmodel');
+var common = require('../helpers/common');
 
 var baseURL = settings.baseURL;
 var participantURL = settings.participant;
-var possibleDepthArr = ['participant.federations', 'participant', 'participant.entities'];
 var ajv = Ajv({
   allErrors: true
 });
 var participantAJVSchema = {
   properties: {
     name: {
-      type: "string"
+      type: 'string'
     }
   },
   required: ['name']
 };
 
-exports.getAllParticipant = function (req, callback) {
-  if (req.query.depth == null) {
-    participantModel.find({}, "_id", function (err, docs) {
-      var participantArr = Array();
-      docs.forEach(function (element) {
-        participantArr.push(baseURL + participantURL + "/" + element._id);
-      });
-      callback(null, participantArr);
-    });
-  } else if (req.query.depth == 'participant') {
-
-    participantModel.find({}).select('-__v -_id').lean().exec(function (err, docs) {
-
-      docs.forEach(function (element) {
-
-        for (var i = 0; i < docs.length; i++) {
-
-          for (var j = 0; j < docs[i].entities.length; j++) {
-            docs[i].entities[j] = settings.baseURL + settings.federation_entity + "/" + docs[i].entities[j];
-          }
-          for (var j = 0; j < docs[i].federations.length; j++) {
-            docs[i].federations[j] = settings.baseURL + settings.federations + "/" + docs[i].federations[j];
-          }
-        }
-        callback(null, docs);
-      }, this);
-    });
-
-  } else if (req.query.depth == 'participant.federations') {
-    participantModel.find({}).select('-__v -_id').populate({
-      path: 'federations',
-      select: '-_id -__v -participantId -entities'
-    }).lean().exec(function (err, docs) {
-      for (var i = 0; i < docs.length; i++) {
-        for (var j = 0; j < docs[i].entities.length; j++) {
-          docs[i].entities[j] = settings.baseURL + settings.federation_entity + "/" + docs[i].entities[j];
-        }
-      }
-      callback(null, docs);
-    });
-
-  } else if (req.query.depth == 'participant.entities') {
-
-    participantModel.find({}).select('-__v -_id').populate({
-      path: 'entities',
-      select: '-_id -__v -participantId -entities'
-    }).lean().exec(function (err, docs) {
-
-      for (var i = 0; i < docs.length; i++) {
-        for (var j = 0; j < docs[i].federations.length; j++) {
-          docs[i].federations[j] = settings.baseURL + settings.federations + "/" + docs[i].federations[j];
-        }
-      }
-
-      callback(null, docs);
-    });
-  } else {
-
-    callback({
-      error: ['unknown value for depth parameter'],
-      code: 400
-    }, null);
-  }
-
-};
-
 exports.getAllParticipantWithDepth = function (req, callback) {
-
-  var pageno = +req.query.pageno;
+  var pageNo = +req.query.pageno;
   var pageLength = +req.query.pagelength;
+  var depth = '';
 
-  if (req.query.depth == null) {
-    if (pageno == undefined) {
-      participantModel.find({}, function (err, docs) {
-        var participantArr = Array();
-        docs.forEach(function (element) {
-          participantArr.push(element['@id']);
-        });
-        callback(null, participantArr);
-      });
-    }
-    else {
-      participantModel.find({}).select("_id").skip(pageno * pageLength).limit(pageLength).exec(function (err, docs) {
-        var participantArr = Array();
-        docs.forEach(function (element) {
-          participantArr.push(baseURL + participantURL + "/" + element._id);
-        });
-        callback(null, participantArr);
-      });
-    }
+  if (!!req.query.depth) {
+    depth = [
+      {path: 'memberOf', select: '-_id -__v -updatedAt -createdAt'},
+      {path: 'operates', select: '-_id -__v -updatedAt -createdAt'}
+    ];
   }
-  else {
 
-    for (var i = 0; i < depthArr.length; i++) {
-      if (!(possibleDepthArr.indexOf(depthArr[i]) > -1)) {
-        callback({error: ['unknown value for depth parameter'], code: 400}, null);
+  participantModel.find({}).select('-_id -__v -updatedAt -createdAt')
+    .skip((!!pageLength && !!pageNo ? pageNo * pageLength : 0))
+    .limit((!!pageLength ? pageLength : 0))
+    .populate(depth)
+    .lean()
+    .then(function (participants) {
+      if (!req.query.depth) {
+        participants = participants.map(function (item) {
+          return item['@id'];
+        });
+        return Promise.resolve(participants);
+      } else if (req.query.depth == 'participants') {
+        participants.forEach(function (item) {
+          item.operates = !!item.operates ? item.operates['@id'] : '';
+        });
+
+        return common.customCollectionFilter(participants, ['memberOf']);
+      } else if (req.query.depth == 'participants.memberOf') {
+        participants.forEach(function (item) {
+          item.operates = !!item.operates ? item.operates['@id'] : '';
+        });
+
+        return Promise.resolve(participants);
+      } else if (req.query.depth == 'participants.operates') {
+        return common.customCollectionFilter(participants, ['memberOf']);
       }
-    }
-    if (pageno == undefined) {
-      participantModel.find({}).select('-__v -_id').populate({
-        path: 'federations',
-        select: '-_id -__v -participantId -entities'
-      }).populate({
-        path: 'entities',
-        select: '-_id -__v -participantId'
-      }).lean().exec(function (err, docs) {
 
-        for (var i = 0; i < docs.length; i++) {
-
-          for (var j = 0; j < docs[i].entities.length; j++) {
-            docs[i].entities[j] = settings.baseURL + settings.federation_entity + "/" + docs[i].entities[j];
-          }
-
-        }
-        callback(null, docs);
-      });
-    }
-    else {
-
-      participantModel.find({}).select('-__v -_id').populate({
-        path: 'federations',
-        select: '-_id -__v -participantId -entities'
-      }).populate({
-        path: 'entities',
-        select: '-_id -__v -participantId'
-      }).skip(pageno * pageLength).limit(pageLength).lean().exec(function (err, docs) {
-
-        for (var i = 0; i < docs.length; i++) {
-
-          for (var j = 0; j < docs[i].entities.length; j++) {
-            docs[i].entities[j] = settings.baseURL + settings.entity + "/" + docs[i].entities[j];
-          }
-        }
-        callback(null, docs);
-      });
-    }
-  }
+    })
+    .then(function (federations) {
+      return callback(null, federations);
+    })
+    .catch(function (err) {
+      return callback({error: err, code: 404}, null);
+    });
 };
 
 exports.addParticipant = function (req, callback) {
@@ -183,87 +92,52 @@ exports.addParticipant = function (req, callback) {
 };
 
 exports.findParticipant = function (req, callback) {
-  if (!mongoose.Types.ObjectId.isValid(req.params.id))
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
     return callback({
       error: ['Invalid Participant Id'],
       code: 400
     }, null);
-
-  if (req.query.depth == null) {
-    participantModel.findById(req.params.id)
-      .select('-_id -__v -updatedAt -createdAt')
-      .populate({path: 'registeredBy', select: {'@id': 1, name: 1, _id: 0}})
-      .populate({path: 'memberOf', select: '-_id -__v'})
-      .populate({path: 'operates', select: '-_id -__v'})
-      .exec(function (err, docs) {
-        if (err) throw (err);
-        var data = JSON.parse(JSON.stringify(docs._doc));
-        data.memberOf = data.memberOf.map(function (item, index) {
-          return item['@id'];
-        });
-        data.operates = (!!data.operates) ? data.operates['@id'] : "";
-        data.registeredBy = data.registeredBy['@id'];
-        if (req.query.filter == null)
-          callback(null, data);
-        else {
-          // Apply jsPath filter here.
-          var filterdata = JSPath.apply(req.query.filter, data);
-          callback(null, filterdata);
-        }
-      });
   }
-  else if (req.query.depth == 'federations') {
-    participantModel.findOne({_id: req.params.id}).select('-__v -_id').populate({
-      path: 'federations',
-      select: '-_id -__v -participantId -entities'
-    }).lean().exec(function (err, docs) {
 
+  participantModel.findById(req.params.id).select('-_id -__v -updatedAt -createdAt')
+    .populate({path: 'memberOf', select: '-_id -__v'})
+    .populate({path: 'operates', select: '-_id -__v'})
+    .populate({path: 'registeredBy', select: {'@id': 1, name: 1, _id: 0}})
+    .lean()
+    .exec(function (err, participant) {
+      if (err) throw (err);
 
-      for (var j = 0; j < docs.entities.length; j++) {
-        docs.entities[j] = settings.baseURL + settings.federation_entity + "/" + docs.entities[j];
+      if (!participant) {
+        return callback({
+          error: ['Federation doesn\'t exist'],
+          code: 404
+        }, null);
       }
-      if (req.query.filter == null)
-        callback(null, docs);
-
-      else {
-        // Apply jsPath filter here.
-        var filterdata = JSPath.apply(req.query.filter, docs);
-        callback(null, filterdata);
+      participant.registeredBy = participant.registeredBy['@id'];
+      if (req.query.depth == null) {
+        participant.operates = participant.operates['@id'];
+        participant = common.customObjectFilter(participant, ['memberOf']);
+      } else if (req.query.depth == 'operates') {
+        participant = common.customObjectFilter(participant, ['memberOf']);
+      } else if (req.query.depth == 'memberOf') {
+        participant.operates = participant.operates['@id'];
+      } else if (req.query.depth == 'memberOf,operates') {
+      } else {
+        return callback({
+          error: ['unknown value for depth parameter'],
+          code: 400
+        }, null);
       }
-
-    });
-
-  } else if (req.query.depth == 'entities') {
-
-    participantModel.findOne({_id: req.params.id}).select('-__v -_id').populate({
-      path: 'entities',
-      select: '-_id -__v -participantId -entities'
-    }).lean().exec(function (err, docs) {
-
-
-      for (var j = 0; j < docs.federations.length; j++) {
-        docs.federations[j] = settings.baseURL + settings.federations + "/" + docs.federations[j];
-      }
-
 
       if (req.query.filter == null)
-        callback(null, docs);
-
+        callback(null, participant);
       else {
         // Apply jsPath filter here.
-        var filterdata = JSPath.apply(req.query.filter, docs);
-        callback(null, filterdata);
+        var filterData = JSPath.apply(req.query.filter, federation);
+        callback(null, filterData);
       }
-
-
     });
-  }
-  else {
-    callback({
-      error: ['unknown value for depth parameter'],
-      code: 400
-    }, null);
-  }
+
 };
 
 exports.deleteParticipant = function (req, callback) {

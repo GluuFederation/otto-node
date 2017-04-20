@@ -65,7 +65,7 @@ router.post(settings.federations, function (req, res) {
  *          required: true
  *          dataType: string
  *        - name: depth
- *          description: depth[federates, members]
+ *          description: depth[federates, member, sponsor]
  *          paramType: query
  *          required: false
  *          dataType: string
@@ -199,7 +199,7 @@ router.get(settings.federations + '/:id/jwks', function (req, res) {
  *      nickname: GetFederations
  *      parameters:
  *        - name: depth
- *          description: depth[federations, federations.federates, federations.members]
+ *          description: depth[federations, federations.sponsor, federations.federates, federations.member]
  *          paramType: query
  *          required: false
  *          dataType: string

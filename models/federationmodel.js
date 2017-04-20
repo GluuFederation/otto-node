@@ -20,10 +20,6 @@ const federationSchema = mongoose.Schema({
   url: {
     type: String
   },
-  operates: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Entity'
-  },
   registeredBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'RegistrationAuthority'
@@ -57,7 +53,13 @@ const federationSchema = mongoose.Schema({
   },
   federationPolicy: {
     type: String
-  }
+  },
+  trustMarkDefinitionSupported: [{
+    type: mongoose.Schema.Types.Mixed
+  }],
+  badgeSupported: [{
+    type: mongoose.Schema.Types.Mixed
+  }]
 }, {
   timestamps: true
 }, {

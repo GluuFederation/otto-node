@@ -11,11 +11,11 @@ var federationModel = require('../models/federationmodel');
 var entityModel = require('../models/entitymodel');
 var raModel = require('../models/ramodel');
 var metadataModel = require('../models/metadatamodel');
+var common = require('../helpers/common');
 
 var ajv = Ajv({
   allErrors: true
 });
-var possibleDepthArr = ['federations', 'federations.entities', 'federations.organization', 'federations.entities.organization'];
 var FederationAJVSchema = {
   properties: {
     name: {
@@ -30,27 +30,37 @@ exports.getAllFederationWithDepth = function (req, callback) {
   var pageLength = +req.query.pagelength;
   var depth = '';
 
-  if (req.query.depth == 'federations.federates') {
-    depth = {path: 'federates', select: '-_id -__v'};
-  } else if (req.query.depth == 'federations.member') {
-    depth = {path: 'member', select: '-_id -__v'};
+  if (!!req.query.depth) {
+    depth = [
+      {path: 'sponsor', select: '-_id -__v -updatedAt -createdAt'},
+      {path: 'federates', select: '-_id -__v -updatedAt -createdAt'},
+      {path: 'member', select: '-_id -__v -updatedAt -createdAt'}
+    ];
   }
 
-  federationModel.find({}).select('-_id -__v')
+  federationModel.find({}).select('-_id -__v -updatedAt -createdAt')
     .skip((!!pageLength && !!pageNo ? pageNo * pageLength : 0))
     .limit((!!pageLength ? pageLength : 0))
     .populate(depth)
     .lean()
-    .exec(function (err, federations) {
-      if (err) throw (err);
-
+    .then(function (federations) {
       if (!req.query.depth) {
         federations = federations.map(function (item) {
           return item['@id'];
         });
+        return Promise.resolve(federations);
+      } else if (req.query.depth == 'federations') {
+        return common.customCollectionFilter(federations, ['member', 'federates', 'sponsor']);
+      } else if (req.query.depth == 'federations.federates') {
+        return common.customCollectionFilter(federations, ['member', 'sponsor']);
+      } else if (req.query.depth == 'federations.member') {
+        return common.customCollectionFilter(federations, ['sponsor', 'federates']);
+      } else if (req.query.depth == 'federations.sponsor') {
+        return common.customCollectionFilter(federations, ['federates', 'member']);
       }
-
-      callback(null, federations);
+    })
+    .then(function (federationss) {
+      return callback(null, federationss);
     })
     .catch(function (err) {
       return callback({error: err, code: 404}, null);
@@ -132,7 +142,7 @@ exports.findFederation = function (req, callback) {
     })
     .populate({path: 'member', select: '-_id -__v'})
     .populate({path: 'sponsor', select: '-_id -__v'})
-    .populate({path: 'registeredBy', select: { '@id': 1, name: 1, _id: 0 }})
+    .populate({path: 'registeredBy', select: {'@id': 1, name: 1, _id: 0}})
     .lean()
     .exec(function (err, federation) {
       if (err) throw (err);
@@ -143,26 +153,16 @@ exports.findFederation = function (req, callback) {
           code: 404
         }, null);
       }
+      federation.registeredBy = federation.registeredBy['@id'];
       if (req.query.depth == null) {
-        federation.registeredBy = federation.registeredBy['@id'];
-        federation.federates = federation.federates.map(function (item, index) {
-          return item['@id'];
-        });
-        federation.member = federation.member.map(function (item, index) {
-          return item['@id'];
-        });
-        federation.sponsor = federation.sponsor.map(function (item, index) {
-          return item['@id'];
-        });
+        federation = common.customObjectFilter(federation, ['sponsor', 'member', 'federates']);
       } else if (req.query.depth == 'federates') {
-        federation.member = federation.member.map(function (item, index) {
-          return item['@id'];
-        });
+        federation = common.customObjectFilter(federation, ['sponsor', 'member']);
       } else if (req.query.depth == 'member') {
-        federation.federates = federation.federates.map(function (item, index) {
-          return item['@id'];
-        });
-      } else if (req.query.depth == 'federates,member') {
+        federation = common.customObjectFilter(federation, ['sponsor', 'federates']);
+      } else if (req.query.depth == 'sponsor') {
+        federation = common.customObjectFilter(federation, ['member', 'federates']);
+      } else if (req.query.depth == 'federates,member,sponsor') {
       } else {
         return callback({
           error: ['unknown value for depth parameter'],
