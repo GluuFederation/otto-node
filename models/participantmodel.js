@@ -43,11 +43,15 @@ const participantSchema = mongoose.Schema({
   }],
   trustMarkFile: {
     type: String
-  }
+  },
+  trustMarkAsserted: [{
+    type: mongoose.Schema.Types.Mixed
+  }],
+  badgeSupported: [{
+    type: mongoose.Schema.Types.Mixed
+  }]
 }, {
   timestamps: true
-}, {
-  strict: false
 });
 
 participantSchema.pre('save', function (next, done) {

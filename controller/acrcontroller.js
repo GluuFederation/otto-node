@@ -2,7 +2,7 @@ var mongoose = require('mongoose');
 var Ajv = require('ajv');
 var JSPath = require('jspath');
 
-var entityModel = require('../models/entitymodel');
+var acrModel = require('../models/acrmodel');
 var federationModel = require('../models/federationmodel');
 var settings = require('../settings');
 var common = require('../helpers/common');
@@ -10,9 +10,6 @@ var common = require('../helpers/common');
 var ajv = Ajv({
   allErrors: true
 });
-
-var baseURL = settings.baseURL;
-var entityURL = settings.entity;
 
 var entityAJVSchema = {
   properties: {
@@ -23,58 +20,48 @@ var entityAJVSchema = {
   required: ['name']
 };
 
-exports.getAllEntityWithDepth = function (req, callback) {
+exports.getAllACRWithDepth = function (req, callback) {
   var pageNo = +req.query.pageno;
   var pageLength = +req.query.pagelength;
   var depth = '';
 
   if (!!req.query.depth) {
     depth = [
-      {path: 'metadata', select: '-_id -__v -updatedAt -createdAt'},
       {path: 'federatedBy', select: '-_id -__v -updatedAt -createdAt'}
     ];
   }
 
-  entityModel.find({}).select('-_id -__v -updatedAt -createdAt')
+  acrModel.find({}).select('-_id -__v -updatedAt -createdAt')
+    .populate({path: 'supportedBy', select: '-_id -__v -updatedAt -createdAt'})
     .skip((!!pageLength && !!pageNo ? pageNo * pageLength : 0))
     .limit((!!pageLength ? pageLength : 0))
     .populate(depth)
     .lean()
-    .then(function (entities) {
+    .then(function (acrs) {
       if (!req.query.depth) {
-        entities = entities.map(function (item) {
+        acrs = acrs.map(function (item) {
           return item['@id'];
         });
-        return Promise.resolve(entities);
-      } else if (req.query.depth == 'entities') {
-        entities.forEach(function (item) {
-          item.metadata = !!item.metadata ? item.metadata['@id'] : '';
-        });
-
-        return common.customCollectionFilter(entities, ['federatedBy']);
-      } else if (req.query.depth == 'entities.federatedBy') {
-        entities.forEach(function (item) {
-          item.metadata = !!item.metadata ? item.metadata['@id'] : '';
-        });
-
-        return Promise.resolve(entities);
-      } else if (req.query.depth == 'entities.metadata') {
-        return common.customCollectionFilter(entities, ['federatedBy']);
+        return Promise.resolve(acrs);
+      } else if (req.query.depth == 'acr') {
+        return common.customCollectionFilter(acrs, ['supportedBy']);
+      } else if (req.query.depth == 'acr.supportedBy') {
+        return Promise.resolve(acrs);
       }
     })
-    .then(function (entities) {
-      return callback(null, entities);
+    .then(function (acrs) {
+      return callback(null, acrs);
     })
     .catch(function (err) {
       return callback({error: err, code: 404}, null);
     });
 };
 
-exports.addEntity = function (req, callback) {
+exports.addACR = function (req, callback) {
   var valid = ajv.validate(entityAJVSchema, req.body);
   if (valid) {
-    var oEntity = new entityModel(req.body);
-    oEntity.save(function (err, obj) {
+    var oACR = new acrModel(req.body);
+    oACR.save(function (err, obj) {
       if (err) throw (err);
       callback(null, obj._id);
     });
@@ -90,37 +77,31 @@ exports.addEntity = function (req, callback) {
   }
 };
 
-exports.findEntity = function (req, callback) {
+exports.findACR = function (req, callback) {
   if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
     return callback({
-      error: ['Invalid Entity Id'],
+      error: ['Invalid ACR Id'],
       code: 400
     }, null);
   }
 
-  entityModel.findById(req.params.id).select('-_id -__v -updatedAt -createdAt')
-    .populate({path: 'metadata', select: '-_id -__v -updatedAt -createdAt'})
-    .populate({path: 'federatedBy', select: '-_id -__v -updatedAt -createdAt'})
-    .populate({path: 'registeredBy', select: {'@id': 1, name: 1, _id: 0}})
+  acrModel.findById(req.params.id).select('-_id -__v -updatedAt -createdAt')
+    .populate({path: 'supportedBy', select: '-_id -__v -updatedAt -createdAt'})
     .lean()
     .exec(function (err, entity) {
       if (err) throw (err);
 
       if (!entity) {
         return callback({
-          error: ['Entity doesn\'t exist'],
+          error: ['ACR doesn\'t exist'],
           code: 404
         }, null);
       }
-      entity.registeredBy = entity.registeredBy['@id'];
       if (req.query.depth == null) {
         entity.metadata = !!entity.metadata ? entity.metadata['@id'] : '';
-        entity = common.customObjectFilter(entity, ['federatedBy']);
-      } else if (req.query.depth == 'metadata') {
-        entity = common.customObjectFilter(entity, ['federatedBy']);
-      } else if (req.query.depth == 'federatedBy') {
-        entity.metadata = !!entity.metadata ? entity.metadata['@id'] : '';
-      } else if (req.query.depth == 'metadata,federatedBy') {
+        entity = common.customObjectFilter(entity, ['supportedBy']);
+      } else if (req.query.depth == 'supportedBy') {
+
       } else {
         return callback({
           error: ['unknown value for depth parameter'],
@@ -138,50 +119,50 @@ exports.findEntity = function (req, callback) {
     });
 };
 
-exports.deleteEntity = function (req, callback) {
+exports.deleteACR = function (req, callback) {
   if (!mongoose.Types.ObjectId.isValid(req.params.id))
     callback({
-      error: ['Invalid Entity Id'],
+      error: ['Invalid ACR Id'],
       code: 400
     }, null);
 
-  entityModel.findById(req.params.id)
-    .then(function (oEntity) {
-      if (!oEntity) {
+  acrModel.findById(req.params.id)
+    .then(function (oACR) {
+      if (!oACR) {
         return callback({
-          error: ['Entity doesn\'t exist'],
+          error: ['ACR doesn\'t exist'],
           code: 404
         }, null);
       }
 
-      return entityModel.findOneAndRemove({_id: req.params.id});
+      return acrModel.findOneAndRemove({_id: req.params.id});
     })
-    .then(function (oEntity) {
-      return callback(null, oEntity);
+    .then(function (oACR) {
+      return callback(null, oACR);
     })
     .catch(function (err) {
       return callback(err, null);
     });
 };
 
-exports.updateEntity = function (req, callback) {
+exports.updateACR = function (req, callback) {
   if (!mongoose.Types.ObjectId.isValid(req.params.id))
     callback({
-      error: ['Invalid Entity Id'],
+      error: ['Invalid ACR Id'],
       code: 400
     }, null);
 
   var valid = ajv.validate(entityAJVSchema, req.body);
   if (valid) {
-    entityModel.findById(req.params.id)
+    acrModel.findById(req.params.id)
       .then(function (doc) {
         if (!doc) {
           return callback({
-            error: ['Entity doesn\'t exist'],
+            error: ['ACR doesn\'t exist'],
             code: 404
           }, null);
         }
-        return entityModel.findOneAndUpdate({_id: req.params.id}, req.body);
+        return acrModel.findOneAndUpdate({_id: req.params.id}, req.body);
       })
       .then(function (oParticipant) {
         return callback(null, oParticipant);
@@ -201,7 +182,7 @@ exports.updateEntity = function (req, callback) {
   }
 };
 
-exports.joinEntity = function (req, callback) {
+exports.joinACR = function (req, callback) {
   if (!mongoose.Types.ObjectId.isValid(req.params.fid)) {
     return callback({
       error: ['Invalid Federation Id'],
@@ -211,25 +192,25 @@ exports.joinEntity = function (req, callback) {
 
   if (!mongoose.Types.ObjectId.isValid(req.params.eid)) {
     return callback({
-      error: ['Invalid Entity Id'],
+      error: ['Invalid ACR Id'],
       code: 400
     }, null);
   }
 
   var entity = null;
-  entityModel.findById(req.params.eid)
-    .then(function (oEntity) {
-      if (!oEntity) {
-        return Promise.reject({error: 'Entity doesn\'t exist', code: 404});
+  acrModel.findById(req.params.eid)
+    .then(function (oACR) {
+      if (!oACR) {
+        return Promise.reject({error: 'ACR doesn\'t exist', code: 404});
       }
 
-      if (oEntity.federatedBy.indexOf(req.params.fid) > -1) {
+      if (oACR.federatedBy.indexOf(req.params.fid) > -1) {
         return Promise.reject({
           error: ['Federation already exist'],
           code: 400
         });
       }
-      entity = oEntity;
+      entity = oACR;
       return federationModel.findById(req.params.fid);
     })
     .then(function (docs) {
@@ -242,8 +223,8 @@ exports.joinEntity = function (req, callback) {
       entity.federatedBy.push(req.params.fid);
       return entity.save();
     })
-    .then(function (oEntity) {
-      return callback(null, oEntity);
+    .then(function (oACR) {
+      return callback(null, oACR);
     })
     .catch(function (err) {
       return callback({error: err, code: 404}, null);

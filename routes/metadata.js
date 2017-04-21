@@ -1,45 +1,45 @@
-// File : routes/entity.js -->
+// File : routes/metadata.js -->
 var express = require('express');
 var router = express.Router();
 
-var entityController = require('../controller/entitycontroller');
+var metadataController = require('../controller/metadatacontroller');
 var settings = require('../settings');
 
 var baseURL = settings.baseURL;
-var entityURL = settings.entity;
+var metadataURL = settings.metadata;
 
 /**
  * @swagger
- * resourcePath: /Entity
+ * resourcePath: /Metadata
  * description: Open Trust Taxonomy for Federation Operators
  */
 
 /**
  * @swagger
- * path: /otto/entity
+ * path: /otto/metadata
  * operations:
  *   -  httpMethod: POST
- *      summary: Create Entity
- *      notes: Returns created Entity Id
- *      nickname: Entity
+ *      summary: Create Metadata
+ *      notes: Returns created Metadata Id
+ *      nickname: Metadata
  *      consumes:
  *        - text/html
  *      parameters:
- *        - name: Entity Json
- *          description: Your Entity JSON
+ *        - name: Metadata Json
+ *          description: Your Metadata JSON
  *          paramType: body
  *          required: true
  *          dataType: string
  */
-router.post(entityURL, function (req, res) {
+router.post(metadataURL, function (req, res) {
   try {
-    entityController.addEntity(req, function (err, data) {
+    metadataController.addMetadata(req, function (err, data) {
       console.log(err);
       if (err) {
         res.status(err.code).json({'Error(s)': err.error});
       } else {
         res.status(201).json({
-          '@id': baseURL + entityURL + '/' + data
+          '@id': baseURL + metadataURL + '/' + data
         });
       }
     });
@@ -50,22 +50,17 @@ router.post(entityURL, function (req, res) {
 
 /**
  * @swagger
- * path: /otto/entity/{id}
+ * path: /otto/metadata/{id}
  * operations:
  *   -  httpMethod: GET
- *      summary: Get Entity By Id
- *      notes: Returns Entity
- *      nickname: GetEntityById
+ *      summary: Get Metadata By Id
+ *      notes: Returns Metadata
+ *      nickname: GetMetadataById
  *      parameters:
  *        - name: id
  *          paramType: path
- *          description: Your Entity Id
+ *          description: Your Metadata Id
  *          required: true
- *          dataType: string
- *        - name: depth
- *          description: depth[metadata, federatedBy]
- *          paramType: query
- *          required: false
  *          dataType: string
  *        - name: filter
  *          description: jspath filter syntax
@@ -74,9 +69,9 @@ router.post(entityURL, function (req, res) {
  *          dataType: string
  *
  */
-router.get(entityURL + '/:id', function (req, res) {
+router.get(metadataURL + '/:id', function (req, res) {
   try {
-    entityController.findEntity(req, function (err, data) {
+    metadataController.findMetadata(req, function (err, data) {
       if (err) {
         res.status(err.code).json({'Error(s)': err.error});
       } else {
@@ -90,15 +85,15 @@ router.get(entityURL + '/:id', function (req, res) {
 
 /**
  * @swagger
- * path: /otto/entity
+ * path: /otto/metadata
  * operations:
  *   -  httpMethod: GET
- *      summary: Get Entity
- *      notes: Returns Entity
- *      nickname: GetEntity
+ *      summary: Get Metadata
+ *      notes: Returns Metadata
+ *      nickname: GetMetadata
  *      parameters:
  *       - name: depth
- *         description: depth[entities, entities.federatedBy, entities.metadata]
+ *         description: depth[metadata]
  *         paramType: query
  *         required: false
  *         dataType: string
@@ -115,15 +110,15 @@ router.get(entityURL + '/:id', function (req, res) {
  *
  *
  */
-router.get(entityURL, function (req, res) {
+router.get(metadataURL, function (req, res) {
   try {
-    entityController.getAllEntityWithDepth(req, function (err, data) {
+    metadataController.getAllMetadataWithDepth(req, function (err, data) {
       if (err) {
 
         res.status(err.code).json({'Error(s)': err.error});
       } else {
         res.status(200).json({
-          entity: data
+          metadata: data
         });
       }
     });
@@ -134,24 +129,24 @@ router.get(entityURL, function (req, res) {
 
 /**
  * @swagger
- * path: /otto/entity/{id}
+ * path: /otto/metadata/{id}
  * operations:
  *   -  httpMethod: Delete
- *      summary: Delete Entity
- *      notes: Returns Entity status
- *      nickname: DeleteEntity
+ *      summary: Delete Metadata
+ *      notes: Returns Metadata status
+ *      nickname: DeleteMetadata
  *      consumes:
  *        - text/html
  *      parameters:
  *        - name: id
- *          description: Your Entity Id
+ *          description: Your Metadata Id
  *          paramType: path
  *          required: true
  *          dataType: string
  */
-router.delete(entityURL + '/:id', function (req, res) {
+router.delete(metadataURL + '/:id', function (req, res) {
   try {
-    entityController.deleteEntity(req, function (err) {
+    metadataController.deleteMetadata(req, function (err) {
       if (err) {
         res.status(err.code).json({'Error(s)': err.error});
       } else {
@@ -167,73 +162,36 @@ router.delete(entityURL + '/:id', function (req, res) {
 
 /**
  * @swagger
- * path: /otto/entity/{id}
+ * path: /otto/metadata/{id}
  * operations:
  *   -  httpMethod: PUT
- *      summary: Update Entity
+ *      summary: Update Metadata
  *      notes: Returns Status
- *      nickname: PutEntity
+ *      nickname: PutMetadata
  *      consumes:
  *        - text/html
  *      parameters:
  *        - name: id
- *          description: Your Entity Id
+ *          description: Your Metadata Id
  *          paramType: path
  *          required: true
  *          dataType: string
  *        - name: body
- *          description: Your Entity Information
+ *          description: Your Metadata Information
  *          paramType: body
  *          required: true
  *          dataType: string
  *
  */
-router.put(entityURL + '/:id', function (req, res) {
+router.put(metadataURL + '/:id', function (req, res) {
   try {
-    entityController.updateEntity(req, function (err, data) {
+    metadataController.updateMetadata(req, function (err, data) {
       console.log(err);
       if (err) {
         res.status(err.code).json({'Error(s)': err.error});
       } else {
         res.status(200).json();
       }
-    });
-  } catch (e) {
-    res.status(500).json();
-  }
-});
-
-/**
- * @swagger
- * path: /otto/entity/{eid}/federation/{fid}
- * operations:
- *   -  httpMethod: post
- *      summary: Join entity (Existing federation)
- *      notes: The federation to which this entity is affiliated
- *      nickname: JoinFederation
- *      consumes:
- *        - text/html
- *      parameters:
- *        - name: eid
- *          description: Your Entity Id
- *          paramType: path
- *          required: true
- *          dataType: string
- *        - name: fid
- *          description: Your Federation Id
- *          paramType: path
- *          required: true
- *          dataType: string
- */
-router.post(entityURL + '/:eid/federation/:fid', function (req, res) {
-  try {
-    entityController.joinEntity(req, function (err, callback) {
-      if (err) {
-        res.status(err.code).json({
-          'Error(s)': err.error
-        });
-      }
-      res.status(200).json();
     });
   } catch (e) {
     res.status(500).json();

@@ -1,45 +1,45 @@
-// File : routes/entity.js -->
+// File : routes/acr.js -->
 var express = require('express');
 var router = express.Router();
 
-var entityController = require('../controller/entitycontroller');
+var acrController = require('../controller/acrcontroller');
 var settings = require('../settings');
 
 var baseURL = settings.baseURL;
-var entityURL = settings.entity;
+var acrURL = settings.acr;
 
 /**
  * @swagger
- * resourcePath: /Entity
+ * resourcePath: /ACR
  * description: Open Trust Taxonomy for Federation Operators
  */
 
 /**
  * @swagger
- * path: /otto/entity
+ * path: /otto/acr
  * operations:
  *   -  httpMethod: POST
- *      summary: Create Entity
- *      notes: Returns created Entity Id
- *      nickname: Entity
+ *      summary: Create ACR
+ *      notes: Returns created ACR Id
+ *      nickname: ACR
  *      consumes:
  *        - text/html
  *      parameters:
- *        - name: Entity Json
- *          description: Your Entity JSON
+ *        - name: ACR Json
+ *          description: Your ACR JSON
  *          paramType: body
  *          required: true
  *          dataType: string
  */
-router.post(entityURL, function (req, res) {
+router.post(acrURL, function (req, res) {
   try {
-    entityController.addEntity(req, function (err, data) {
+    acrController.addACR(req, function (err, data) {
       console.log(err);
       if (err) {
         res.status(err.code).json({'Error(s)': err.error});
       } else {
         res.status(201).json({
-          '@id': baseURL + entityURL + '/' + data
+          '@id': baseURL + acrURL + '/' + data
         });
       }
     });
@@ -50,16 +50,16 @@ router.post(entityURL, function (req, res) {
 
 /**
  * @swagger
- * path: /otto/entity/{id}
+ * path: /otto/acr/{id}
  * operations:
  *   -  httpMethod: GET
- *      summary: Get Entity By Id
- *      notes: Returns Entity
- *      nickname: GetEntityById
+ *      summary: Get ACR By Id
+ *      notes: Returns ACR
+ *      nickname: GetACRById
  *      parameters:
  *        - name: id
  *          paramType: path
- *          description: Your Entity Id
+ *          description: Your ACR Id
  *          required: true
  *          dataType: string
  *        - name: depth
@@ -74,9 +74,9 @@ router.post(entityURL, function (req, res) {
  *          dataType: string
  *
  */
-router.get(entityURL + '/:id', function (req, res) {
+router.get(acrURL + '/:id', function (req, res) {
   try {
-    entityController.findEntity(req, function (err, data) {
+    acrController.findACR(req, function (err, data) {
       if (err) {
         res.status(err.code).json({'Error(s)': err.error});
       } else {
@@ -90,15 +90,15 @@ router.get(entityURL + '/:id', function (req, res) {
 
 /**
  * @swagger
- * path: /otto/entity
+ * path: /otto/acr
  * operations:
  *   -  httpMethod: GET
- *      summary: Get Entity
- *      notes: Returns Entity
- *      nickname: GetEntity
+ *      summary: Get ACR
+ *      notes: Returns ACR
+ *      nickname: GetACR
  *      parameters:
  *       - name: depth
- *         description: depth[entities, entities.federatedBy, entities.metadata]
+ *         description: depth[acr, acr.supportedBy]
  *         paramType: query
  *         required: false
  *         dataType: string
@@ -115,15 +115,14 @@ router.get(entityURL + '/:id', function (req, res) {
  *
  *
  */
-router.get(entityURL, function (req, res) {
+router.get(acrURL, function (req, res) {
   try {
-    entityController.getAllEntityWithDepth(req, function (err, data) {
+    acrController.getAllACRWithDepth(req, function (err, data) {
       if (err) {
-
         res.status(err.code).json({'Error(s)': err.error});
       } else {
         res.status(200).json({
-          entity: data
+          acr: data
         });
       }
     });
@@ -134,24 +133,24 @@ router.get(entityURL, function (req, res) {
 
 /**
  * @swagger
- * path: /otto/entity/{id}
+ * path: /otto/acr/{id}
  * operations:
  *   -  httpMethod: Delete
- *      summary: Delete Entity
- *      notes: Returns Entity status
- *      nickname: DeleteEntity
+ *      summary: Delete ACR
+ *      notes: Returns ACR status
+ *      nickname: DeleteACR
  *      consumes:
  *        - text/html
  *      parameters:
  *        - name: id
- *          description: Your Entity Id
+ *          description: Your ACR Id
  *          paramType: path
  *          required: true
  *          dataType: string
  */
-router.delete(entityURL + '/:id', function (req, res) {
+router.delete(acrURL + '/:id', function (req, res) {
   try {
-    entityController.deleteEntity(req, function (err) {
+    acrController.deleteACR(req, function (err) {
       if (err) {
         res.status(err.code).json({'Error(s)': err.error});
       } else {
@@ -167,30 +166,30 @@ router.delete(entityURL + '/:id', function (req, res) {
 
 /**
  * @swagger
- * path: /otto/entity/{id}
+ * path: /otto/acr/{id}
  * operations:
  *   -  httpMethod: PUT
- *      summary: Update Entity
+ *      summary: Update ACR
  *      notes: Returns Status
- *      nickname: PutEntity
+ *      nickname: PutACR
  *      consumes:
  *        - text/html
  *      parameters:
  *        - name: id
- *          description: Your Entity Id
+ *          description: Your ACR Id
  *          paramType: path
  *          required: true
  *          dataType: string
  *        - name: body
- *          description: Your Entity Information
+ *          description: Your ACR Information
  *          paramType: body
  *          required: true
  *          dataType: string
  *
  */
-router.put(entityURL + '/:id', function (req, res) {
+router.put(acrURL + '/:id', function (req, res) {
   try {
-    entityController.updateEntity(req, function (err, data) {
+    acrController.updateACR(req, function (err, data) {
       console.log(err);
       if (err) {
         res.status(err.code).json({'Error(s)': err.error});
@@ -205,17 +204,17 @@ router.put(entityURL + '/:id', function (req, res) {
 
 /**
  * @swagger
- * path: /otto/entity/{eid}/federation/{fid}
+ * path: /otto/acr/{eid}/federation/{fid}
  * operations:
  *   -  httpMethod: post
- *      summary: Join entity (Existing federation)
- *      notes: The federation to which this entity is affiliated
+ *      summary: Join acr (Existing federation)
+ *      notes: The federation to which this acr is affiliated
  *      nickname: JoinFederation
  *      consumes:
  *        - text/html
  *      parameters:
  *        - name: eid
- *          description: Your Entity Id
+ *          description: Your ACR Id
  *          paramType: path
  *          required: true
  *          dataType: string
@@ -225,9 +224,9 @@ router.put(entityURL + '/:id', function (req, res) {
  *          required: true
  *          dataType: string
  */
-router.post(entityURL + '/:eid/federation/:fid', function (req, res) {
+router.post(acrURL + '/:eid/federation/:fid', function (req, res) {
   try {
-    entityController.joinEntity(req, function (err, callback) {
+    acrController.joinACR(req, function (err, callback) {
       if (err) {
         res.status(err.code).json({
           'Error(s)': err.error
