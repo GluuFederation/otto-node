@@ -1,45 +1,45 @@
-// File : routes/metadata.js -->
+// File : routes/requirement.js -->
 var express = require('express');
 var router = express.Router();
 
-var metadataController = require('../controller/metadatacontroller');
+var requirementController = require('../controller/requirementcontroller');
 var settings = require('../settings');
 
 var baseURL = settings.baseURL;
-var metadataURL = settings.metadata;
+var requirementURL = settings.requirement;
 
 /**
  * @swagger
- * resourcePath: /Metadata
+ * resourcePath: /Requirement
  * description: Open Trust Taxonomy for Federation Operators
  */
 
 /**
  * @swagger
- * path: /otto/metadata
+ * path: /otto/requirement
  * operations:
  *   -  httpMethod: POST
- *      summary: Create Metadata
- *      notes: Returns created Metadata Id
- *      nickname: Metadata
+ *      summary: Create Requirement
+ *      notes: Returns created Requirement Id
+ *      nickname: Requirement
  *      consumes:
  *        - text/html
  *      parameters:
- *        - name: Metadata Json
- *          description: Your Metadata JSON
+ *        - name: Requirement Json
+ *          description: Your Requirement JSON
  *          paramType: body
  *          required: true
  *          dataType: string
  */
-router.post(metadataURL, function (req, res) {
+router.post(requirementURL, function (req, res) {
   try {
-    metadataController.addMetadata(req, function (err, data) {
+    requirementController.addRequirement(req, function (err, data) {
       console.log(err);
       if (err) {
         res.status(err.code).json({'Error(s)': err.error});
       } else {
         res.status(201).json({
-          '@id': baseURL + metadataURL + '/' + data
+          '@id': baseURL + requirementURL + '/' + data
         });
       }
     });
@@ -50,16 +50,16 @@ router.post(metadataURL, function (req, res) {
 
 /**
  * @swagger
- * path: /otto/metadata/{id}
+ * path: /otto/requirement/{id}
  * operations:
  *   -  httpMethod: GET
- *      summary: Get Metadata By Id
- *      notes: Returns Metadata
- *      nickname: GetMetadataById
+ *      summary: Get Requirement By Id
+ *      notes: Returns Requirement
+ *      nickname: GetRequirementById
  *      parameters:
  *        - name: id
  *          paramType: path
- *          description: Your Metadata Id
+ *          description: Your Requirement Id
  *          required: true
  *          dataType: string
  *        - name: filter
@@ -69,9 +69,9 @@ router.post(metadataURL, function (req, res) {
  *          dataType: string
  *
  */
-router.get(metadataURL + '/:id', function (req, res) {
+router.get(requirementURL + '/:id', function (req, res) {
   try {
-    metadataController.findMetadata(req, function (err, data) {
+    requirementController.findRequirement(req, function (err, data) {
       if (err) {
         res.status(err.code).json({'Error(s)': err.error});
       } else {
@@ -85,15 +85,15 @@ router.get(metadataURL + '/:id', function (req, res) {
 
 /**
  * @swagger
- * path: /otto/metadata
+ * path: /otto/requirement
  * operations:
  *   -  httpMethod: GET
- *      summary: Get Metadata
- *      notes: Returns Metadata
- *      nickname: GetMetadata
+ *      summary: Get Requirement
+ *      notes: Returns Requirement
+ *      nickname: GetRequirement
  *      parameters:
  *       - name: depth
- *         description: depth[metadata]
+ *         description: depth[requirement]
  *         paramType: query
  *         required: false
  *         dataType: string
@@ -110,15 +110,15 @@ router.get(metadataURL + '/:id', function (req, res) {
  *
  *
  */
-router.get(metadataURL, function (req, res) {
+router.get(requirementURL, function (req, res) {
   try {
-    metadataController.getAllMetadataWithDepth(req, function (err, data) {
+    requirementController.getAllRequirementWithDepth(req, function (err, data) {
       if (err) {
 
         res.status(err.code).json({'Error(s)': err.error});
       } else {
         res.status(200).json({
-          metadata: data
+          requirement: data
         });
       }
     });
@@ -129,24 +129,24 @@ router.get(metadataURL, function (req, res) {
 
 /**
  * @swagger
- * path: /otto/metadata/{id}
+ * path: /otto/requirement/{id}
  * operations:
  *   -  httpMethod: Delete
- *      summary: Delete Metadata
- *      notes: Returns Metadata status
- *      nickname: DeleteMetadata
+ *      summary: Delete Requirement
+ *      notes: Returns Requirement status
+ *      nickname: DeleteRequirement
  *      consumes:
  *        - text/html
  *      parameters:
  *        - name: id
- *          description: Your Metadata Id
+ *          description: Your Requirement Id
  *          paramType: path
  *          required: true
  *          dataType: string
  */
-router.delete(metadataURL + '/:id', function (req, res) {
+router.delete(requirementURL + '/:id', function (req, res) {
   try {
-    metadataController.deleteMetadata(req, function (err) {
+    requirementController.deleteRequirement(req, function (err) {
       if (err) {
         res.status(err.code).json({'Error(s)': err.error});
       } else {
@@ -161,31 +161,31 @@ router.delete(metadataURL + '/:id', function (req, res) {
 
 
 /**
- * @swagger
- * path: /otto/metadata/{id}
+ * swagger
+ * path: /otto/requirement/{id}
  * operations:
  *   -  httpMethod: PUT
- *      summary: Update Metadata
+ *      summary: Update Requirement
  *      notes: Returns Status
- *      nickname: PutMetadata
+ *      nickname: PutRequirement
  *      consumes:
  *        - text/html
  *      parameters:
  *        - name: id
- *          description: Your Metadata Id
+ *          description: Your Requirement Id
  *          paramType: path
  *          required: true
  *          dataType: string
  *        - name: body
- *          description: Your Metadata Information
+ *          description: Your Requirement Information
  *          paramType: body
  *          required: true
  *          dataType: string
  *
  */
-router.put(metadataURL + '/:id', function (req, res) {
+router.put(requirementURL + '/:id', function (req, res) {
   try {
-    metadataController.updateMetadata(req, function (err, data) {
+    requirementController.updateRequirement(req, function (err, data) {
       console.log(err);
       if (err) {
         res.status(err.code).json({'Error(s)': err.error});

@@ -34,8 +34,6 @@ const entitySchema = mongoose.Schema({
   }
 }, {
   timestamps: true
-}, {
-  strict: false
 });
 
 entitySchema.pre('save', function (next, done) {

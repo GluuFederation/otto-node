@@ -35,8 +35,6 @@ const registrationAuthoritySchema = mongoose.Schema({
   }]
 }, {
   timestamps: true
-}, {
-  strict: false
 });
 
 registrationAuthoritySchema.pre('save', function (next, done) {

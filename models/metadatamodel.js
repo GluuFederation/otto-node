@@ -18,8 +18,6 @@ const metadataSchema = mongoose.Schema({
   }
 }, {
   timestamps: true
-}, {
-  strict: false
 });
 
 metadataSchema.pre('save', function (next, done) {

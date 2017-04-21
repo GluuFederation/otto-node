@@ -52,8 +52,6 @@ const participantSchema = mongoose.Schema({
   }]
 }, {
   timestamps: true
-}, {
-  strict: false
 });
 
 participantSchema.pre('save', function (next, done) {

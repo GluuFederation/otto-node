@@ -63,7 +63,7 @@ router.post(entityURL, function (req, res) {
  *          required: true
  *          dataType: string
  *        - name: depth
- *          description: depth[entities.federatedBy]
+ *          description: depth[metadata, federatedBy]
  *          paramType: query
  *          required: false
  *          dataType: string
@@ -98,7 +98,7 @@ router.get(entityURL + '/:id', function (req, res) {
  *      nickname: GetEntity
  *      parameters:
  *       - name: depth
- *         description: depth[entity,entity.organization]
+ *         description: depth[entities, entities.federatedBy, entities.metadata]
  *         paramType: query
  *         required: false
  *         dataType: string

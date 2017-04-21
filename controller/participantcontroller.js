@@ -61,8 +61,8 @@ exports.getAllParticipantWithDepth = function (req, callback) {
       }
 
     })
-    .then(function (federations) {
-      return callback(null, federations);
+    .then(function (participants) {
+      return callback(null, participants);
     })
     .catch(function (err) {
       return callback({error: err, code: 404}, null);
@@ -100,8 +100,8 @@ exports.findParticipant = function (req, callback) {
   }
 
   participantModel.findById(req.params.id).select('-_id -__v -updatedAt -createdAt')
-    .populate({path: 'memberOf', select: '-_id -__v'})
-    .populate({path: 'operates', select: '-_id -__v'})
+    .populate({path: 'memberOf', select: '-_id -__v -updatedAt -createdAt'})
+    .populate({path: 'operates', select: '-_id -__v -updatedAt -createdAt'})
     .populate({path: 'registeredBy', select: {'@id': 1, name: 1, _id: 0}})
     .lean()
     .exec(function (err, participant) {

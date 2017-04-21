@@ -2,38 +2,38 @@ var mongoose = require('mongoose');
 var Ajv = require('ajv');
 var JSPath = require('jspath');
 
-var metadataModel = require('../models/metadatamodel');
+var requirementModel = require('../models/requirementmodel');
 var common = require('../helpers/common');
 
 var ajv = Ajv({
   allErrors: true
 });
 
-var metadataAJVSchema = {
+var requirementAJVSchema = {
   properties: {
-    metadataFormat: {
+    requirementFormat: {
       type: 'string'
     }
   },
-  required: ['metadataFormat']
+  //required: ['']
 };
 
-exports.getAllMetadataWithDepth = function (req, callback) {
+exports.getAllRequirementWithDepth = function (req, callback) {
   var pageNo = +req.query.pageno;
   var pageLength = +req.query.pagelength;
 
-  metadataModel.find({}).select('-_id -__v -updatedAt -createdAt')
+  requirementModel.find({}).select('-_id -__v -updatedAt -createdAt')
     .skip((!!pageLength && !!pageNo ? pageNo * pageLength : 0))
     .limit((!!pageLength ? pageLength : 0))
     .lean()
-    .then(function (metadata) {
+    .then(function (requirement) {
       if (!req.query.depth) {
-        metadata = metadata.map(function (item) {
+        requirement = requirement.map(function (item) {
           return item['@id'];
         });
-        return callback(null, metadata);
-      } else if (req.query.depth == 'metadata') {
-        return callback(null, metadata);
+        return callback(null, requirement);
+      } else if (req.query.depth == 'requirement') {
+        return callback(null, requirement);
       }
     })
     .catch(function (err) {
@@ -41,12 +41,12 @@ exports.getAllMetadataWithDepth = function (req, callback) {
     });
 };
 
-exports.addMetadata = function (req, callback) {
+exports.addRequirement = function (req, callback) {
   req.body.expiration = new Date(req.body.expiration);
-  var valid = ajv.validate(metadataAJVSchema, req.body);
+  var valid = ajv.validate(requirementAJVSchema, req.body);
   if (valid) {
-    var oMetadata = new metadataModel(req.body);
-    oMetadata.save(function (err, obj) {
+    var oRequirement = new requirementModel(req.body);
+    oRequirement.save(function (err, obj) {
       if (err) throw (err);
       callback(null, obj._id);
     });
@@ -62,15 +62,15 @@ exports.addMetadata = function (req, callback) {
   }
 };
 
-exports.findMetadata = function (req, callback) {
+exports.findRequirement = function (req, callback) {
   if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
     return callback({
-      error: ['Invalid Metadata Id'],
+      error: ['Invalid Requirement Id'],
       code: 400
     }, null);
   }
 
-  var query = metadataModel.findOne({
+  var query = requirementModel.findOne({
     _id: req.params.id
   })
     .select('-_id -__v -updatedAt -createdAt')
@@ -89,57 +89,57 @@ exports.findMetadata = function (req, callback) {
       }
     } else {
       callback({
-        error: ['Metadata not found'],
+        error: ['Requirement not found'],
         code: 404
       }, null);
     }
   });
 };
 
-exports.deleteMetadata = function (req, callback) {
+exports.deleteRequirement = function (req, callback) {
   if (!mongoose.Types.ObjectId.isValid(req.params.id))
     callback({
-      error: ['Invalid Metadata Id'],
+      error: ['Invalid Requirement Id'],
       code: 400
     }, null);
 
-  metadataModel.findById(req.params.id)
-    .then(function (oMetadata) {
-      if (!oMetadata) {
+  requirementModel.findById(req.params.id)
+    .then(function (oRequirement) {
+      if (!oRequirement) {
         return callback({
-          error: ['Metadata doesn\'t exist'],
+          error: ['Requirement doesn\'t exist'],
           code: 404
         }, null);
       }
 
-      return metadataModel.findOneAndRemove({_id: req.params.id});
+      return requirementModel.findOneAndRemove({_id: req.params.id});
     })
-    .then(function (oMetadata) {
-      return callback(null, oMetadata);
+    .then(function (oRequirement) {
+      return callback(null, oRequirement);
     })
     .catch(function (err) {
       return callback(err, null);
     });
 };
 
-exports.updateMetadata = function (req, callback) {
+exports.updateRequirement = function (req, callback) {
   if (!mongoose.Types.ObjectId.isValid(req.params.id))
     callback({
-      error: ['Invalid Metadata Id'],
+      error: ['Invalid Requirement Id'],
       code: 400
     }, null);
 
-  var valid = ajv.validate(metadataAJVSchema, req.body);
+  var valid = ajv.validate(requirementAJVSchema, req.body);
   if (valid) {
-    metadataModel.findById(req.params.id)
+    requirementModel.findById(req.params.id)
       .then(function (doc) {
         if (!doc) {
           return callback({
-            error: ['Metadata doesn\'t exist'],
+            error: ['Requirement doesn\'t exist'],
             code: 404
           }, null);
         }
-        return metadataModel.findOneAndUpdate({_id: req.params.id}, req.body);
+        return requirementModel.findOneAndUpdate({_id: req.params.id}, req.body);
       })
       .then(function (oParticipant) {
         return callback(null, oParticipant);

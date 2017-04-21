@@ -59,11 +59,13 @@ const federationSchema = mongoose.Schema({
   }],
   badgeSupported: [{
     type: mongoose.Schema.Types.Mixed
+  }],
+  requirement: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Requirement'
   }]
 }, {
   timestamps: true
-}, {
-  strict: false
 });
 
 federationSchema.plugin(deepPopulate, {
