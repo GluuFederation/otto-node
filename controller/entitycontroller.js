@@ -80,7 +80,9 @@ exports.addEntity = function (req, callback) {
   if (valid) {
     var oEntity = new entityModel(req.body);
     oEntity.save(function (err, obj) {
-      if (err) throw (err);
+      if (err) {
+        return callback({error: err, code: 404}, null);
+      }
       callback(null, obj._id);
     });
   } else {
@@ -192,7 +194,7 @@ exports.updateEntity = function (req, callback) {
         return callback(null, oParticipant);
       })
       .catch((function (err) {
-        throw (err);
+        return callback({error: err, code: 404}, null);
       }));
   } else {
     var errorMsg = Array();

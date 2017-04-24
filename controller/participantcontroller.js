@@ -197,7 +197,10 @@ exports.updateParticipant = function (req, callback) {
         return callback(null, oParticipant);
       })
       .catch((function (err) {
-        throw (err);
+        callback({
+          error: err,
+          code: 400
+        }, null);
       }));
   } else {
     var errorMsg = Array();

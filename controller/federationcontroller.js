@@ -78,7 +78,9 @@ exports.addFederation = function (req, callback) {
   if (valid) {
     var oFederation = new federationModel(req.body);
     oFederation.save(function (err, obj) {
-      if (err) throw (err)
+      if (err) {
+        return callback({error: err, code: 404}, null);
+      }
       // createKeyPairAndAddtoFederation(ObjfederationModel._id, 'RS256', function (err, data) {
       //   console.log("Err :" + err);
       //   console.log("Data :" + data);
