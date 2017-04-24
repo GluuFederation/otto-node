@@ -10,7 +10,7 @@
 
   // If you want to change the port change in /public/swagger/index.html - "  discoveryUrl: "http://localhost:5053/api-docs.json","for swagger UI
   exports.port = "5053"
-  exports.baseURL = "http://192.168.200.86:5053";
+  exports.baseURL = "http://localhost:5053";
 
   //Endpoint Declaration
   exports.discoveryEndpoint = "/.well-known/otto-configuration"
@@ -21,6 +21,7 @@
   exports.metadata = "/otto/metadata"
   exports.requirement = "/otto/requirement"
   exports.acr = "/otto/acr"
+  exports.badge = "/otto/badge"
   exports.schema = "/otto/schema"
 
   exports.contextSchema = "https://rawgit.com/KantaraInitiative/wg-otto/master/html/otto-vocab-1.0.html"
@@ -32,6 +33,7 @@
   exports.contextMetadata = "#metadata"
   exports.contextRequirement = "#requirement"
   exports.contextACR = "#acr"
+  exports.contextBadge = "https://w3id.org/openbadges/v2"
 
   exports.trustMarkURL = '/trustmark/'  //@context URL
   exports.trustMarkFilePath = './public/trustmark/'

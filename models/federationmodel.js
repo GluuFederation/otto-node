@@ -55,10 +55,11 @@ const federationSchema = mongoose.Schema({
     type: String
   },
   trustMarkDefinitionSupported: [{
-    type: mongoose.Schema.Types.Mixed
+    type: String
   }],
   badgeSupported: [{
-    type: mongoose.Schema.Types.Mixed
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Badge'
   }],
   requirement: [{
     type: mongoose.Schema.Types.ObjectId,

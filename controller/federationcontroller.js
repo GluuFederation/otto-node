@@ -34,7 +34,8 @@ exports.getAllFederationWithDepth = function (req, callback) {
     depth = [
       {path: 'sponsor', select: '-_id -__v -updatedAt -createdAt'},
       {path: 'federates', select: '-_id -__v -updatedAt -createdAt'},
-      {path: 'member', select: '-_id -__v -updatedAt -createdAt'}
+      {path: 'member', select: '-_id -__v -updatedAt -createdAt'},
+      {path: 'registeredBy', select: '-_id -__v -updatedAt -createdAt'}
     ];
   }
 
@@ -44,6 +45,10 @@ exports.getAllFederationWithDepth = function (req, callback) {
     .populate(depth)
     .lean()
     .then(function (federations) {
+      federations.forEach(function (item) {
+        item.registeredBy = !!item.registeredBy ? item.registeredBy['@id'] : '';
+      });
+
       if (!req.query.depth) {
         federations = federations.map(function (item) {
           return item['@id'];
@@ -142,6 +147,8 @@ exports.findFederation = function (req, callback) {
     })
     .populate({path: 'member', select: '-_id -__v'})
     .populate({path: 'sponsor', select: '-_id -__v'})
+    .populate({path: 'badgeSupported', select: '-_id -__v'})
+    .populate({path: 'requirement', select: '-_id -__v'})
     .populate({path: 'registeredBy', select: {'@id': 1, name: 1, _id: 0}})
     .lean()
     .exec(function (err, federation) {
@@ -155,13 +162,13 @@ exports.findFederation = function (req, callback) {
       }
       federation.registeredBy = federation.registeredBy['@id'];
       if (req.query.depth == null) {
-        federation = common.customObjectFilter(federation, ['sponsor', 'member', 'federates']);
+        federation = common.customObjectFilter(federation, ['sponsor', 'member', 'federates', 'badgeSupported', 'requirement']);
       } else if (req.query.depth == 'federates') {
-        federation = common.customObjectFilter(federation, ['sponsor', 'member']);
+        federation = common.customObjectFilter(federation, ['sponsor', 'member', 'badgeSupported', 'requirement']);
       } else if (req.query.depth == 'member') {
-        federation = common.customObjectFilter(federation, ['sponsor', 'federates']);
+        federation = common.customObjectFilter(federation, ['sponsor', 'federates', 'badgeSupported', 'requirement']);
       } else if (req.query.depth == 'sponsor') {
-        federation = common.customObjectFilter(federation, ['member', 'federates']);
+        federation = common.customObjectFilter(federation, ['member', 'federates', 'badgeSupported', 'requirement']);
       } else if (req.query.depth == 'federates,member,sponsor') {
       } else {
         return callback({
