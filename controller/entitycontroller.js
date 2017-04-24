@@ -31,7 +31,8 @@ exports.getAllEntityWithDepth = function (req, callback) {
   if (!!req.query.depth) {
     depth = [
       {path: 'metadata', select: '-_id -__v -updatedAt -createdAt'},
-      {path: 'federatedBy', select: '-_id -__v -updatedAt -createdAt'}
+      {path: 'federatedBy', select: '-_id -__v -updatedAt -createdAt'},
+      {path: 'registeredBy', select: '-_id -__v -updatedAt -createdAt'}
     ];
   }
 
@@ -41,6 +42,10 @@ exports.getAllEntityWithDepth = function (req, callback) {
     .populate(depth)
     .lean()
     .then(function (entities) {
+      entities.forEach(function (item) {
+        item.registeredBy = !!item.registeredBy ? item.registeredBy['@id'] : '';
+      });
+
       if (!req.query.depth) {
         entities = entities.map(function (item) {
           return item['@id'];

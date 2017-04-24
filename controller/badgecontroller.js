@@ -2,8 +2,8 @@ var mongoose = require('mongoose');
 var Ajv = require('ajv');
 var JSPath = require('jspath');
 
-var acrModel = require('../models/acrmodel');
-var federationModel = require('../models/federationmodel');
+var badgeModel = require('../models/badgemodel');
+var participantModel = require('../models/participantmodel');
 var settings = require('../settings');
 var common = require('../helpers/common');
 
@@ -11,7 +11,7 @@ var ajv = Ajv({
   allErrors: true
 });
 
-var acrAJVSchema = {
+var badgeAJVSchema = {
   properties: {
     name: {
       type: 'string'
@@ -20,7 +20,7 @@ var acrAJVSchema = {
   required: ['name']
 };
 
-exports.getAllACRWithDepth = function (req, callback) {
+exports.getAllBadgeWithDepth = function (req, callback) {
   var pageNo = +req.query.pageno;
   var pageLength = +req.query.pagelength;
   var depth = '';
@@ -31,37 +31,37 @@ exports.getAllACRWithDepth = function (req, callback) {
     ];
   }
 
-  acrModel.find({}).select('-_id -__v -updatedAt -createdAt')
-    .populate({path: 'supportedBy', select: '-_id -__v -updatedAt -createdAt'})
+  badgeModel.find({}).select('-_id -__v -updatedAt -createdAt')
+    .populate({path: 'issuer', select: '-_id -__v -updatedAt -createdAt'})
     .skip((!!pageLength && !!pageNo ? pageNo * pageLength : 0))
     .limit((!!pageLength ? pageLength : 0))
     .populate(depth)
     .lean()
-    .then(function (acrs) {
+    .then(function (badges) {
       if (!req.query.depth) {
-        acrs = acrs.map(function (item) {
+        badges = badges.map(function (item) {
           return item['@id'];
         });
-        return Promise.resolve(acrs);
-      } else if (req.query.depth == 'acr') {
-        return common.customCollectionFilter(acrs, ['supportedBy']);
-      } else if (req.query.depth == 'acr.supportedBy') {
-        return Promise.resolve(acrs);
+        return Promise.resolve(badges);
+      } else if (req.query.depth == 'badge') {
+        return common.customCollectionFilter(badges, ['issuer']);
+      } else if (req.query.depth == 'badge.issuer') {
+        return Promise.resolve(badges);
       }
     })
-    .then(function (acrs) {
-      return callback(null, acrs);
+    .then(function (badges) {
+      return callback(null, badges);
     })
     .catch(function (err) {
       return callback({error: err, code: 404}, null);
     });
 };
 
-exports.addACR = function (req, callback) {
-  var valid = ajv.validate(acrAJVSchema, req.body);
+exports.addBadge = function (req, callback) {
+  var valid = ajv.validate(badgeAJVSchema, req.body);
   if (valid) {
-    var oACR = new acrModel(req.body);
-    oACR.save(function (err, obj) {
+    var oBadge = new badgeModel(req.body);
+    oBadge.save(function (err, obj) {
       if (err) throw (err);
       callback(null, obj._id);
     });
@@ -77,30 +77,30 @@ exports.addACR = function (req, callback) {
   }
 };
 
-exports.findACR = function (req, callback) {
+exports.findBadge = function (req, callback) {
   if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
     return callback({
-      error: ['Invalid ACR Id'],
+      error: ['Invalid Badge Id'],
       code: 400
     }, null);
   }
 
-  acrModel.findById(req.params.id).select('-_id -__v -updatedAt -createdAt')
-    .populate({path: 'supportedBy', select: '-_id -__v -updatedAt -createdAt'})
+  badgeModel.findById(req.params.id).select('-_id -__v -updatedAt -createdAt')
+    .populate({path: 'issuer', select: '-_id -__v -updatedAt -createdAt'})
     .lean()
-    .exec(function (err, acr) {
+    .exec(function (err, badge) {
       if (err) throw (err);
 
-      if (!acr) {
+      if (!badge) {
         return callback({
-          error: ['ACR doesn\'t exist'],
+          error: ['Badge doesn\'t exist'],
           code: 404
         }, null);
       }
       if (req.query.depth == null) {
-        acr.metadata = !!acr.metadata ? acr.metadata['@id'] : '';
-        acr = common.customObjectFilter(acr, ['supportedBy']);
-      } else if (req.query.depth == 'supportedBy') {
+        badge.metadata = !!badge.metadata ? badge.metadata['@id'] : '';
+        badge = common.customObjectFilter(badge, ['issuer']);
+      } else if (req.query.depth == 'issuer') {
 
       } else {
         return callback({
@@ -110,59 +110,59 @@ exports.findACR = function (req, callback) {
       }
 
       if (req.query.filter == null)
-        callback(null, acr);
+        callback(null, badge);
       else {
         // Apply jsPath filter here.
-        var filterData = JSPath.apply(req.query.filter, acr);
+        var filterData = JSPath.apply(req.query.filter, badge);
         callback(null, filterData);
       }
     });
 };
 
-exports.deleteACR = function (req, callback) {
+exports.deleteBadge = function (req, callback) {
   if (!mongoose.Types.ObjectId.isValid(req.params.id))
     callback({
-      error: ['Invalid ACR Id'],
+      error: ['Invalid Badge Id'],
       code: 400
     }, null);
 
-  acrModel.findById(req.params.id)
-    .then(function (oACR) {
-      if (!oACR) {
+  badgeModel.findById(req.params.id)
+    .then(function (oBadge) {
+      if (!oBadge) {
         return callback({
-          error: ['ACR doesn\'t exist'],
+          error: ['Badge doesn\'t exist'],
           code: 404
         }, null);
       }
 
-      return acrModel.findOneAndRemove({_id: req.params.id});
+      return badgeModel.findOneAndRemove({_id: req.params.id});
     })
-    .then(function (oACR) {
-      return callback(null, oACR);
+    .then(function (oBadge) {
+      return callback(null, oBadge);
     })
     .catch(function (err) {
       return callback(err, null);
     });
 };
 
-exports.updateACR = function (req, callback) {
+exports.updateBadge = function (req, callback) {
   if (!mongoose.Types.ObjectId.isValid(req.params.id))
     callback({
-      error: ['Invalid ACR Id'],
+      error: ['Invalid Badge Id'],
       code: 400
     }, null);
 
-  var valid = ajv.validate(acrAJVSchema, req.body);
+  var valid = ajv.validate(badgeAJVSchema, req.body);
   if (valid) {
-    acrModel.findById(req.params.id)
+    badgeModel.findById(req.params.id)
       .then(function (doc) {
         if (!doc) {
           return callback({
-            error: ['ACR doesn\'t exist'],
+            error: ['Badge doesn\'t exist'],
             code: 404
           }, null);
         }
-        return acrModel.findOneAndUpdate({_id: req.params.id}, req.body);
+        return badgeModel.findOneAndUpdate({_id: req.params.id}, req.body);
       })
       .then(function (oParticipant) {
         return callback(null, oParticipant);
@@ -182,49 +182,49 @@ exports.updateACR = function (req, callback) {
   }
 };
 
-exports.joinACR = function (req, callback) {
-  if (!mongoose.Types.ObjectId.isValid(req.params.fid)) {
+exports.issueBadge = function (req, callback) {
+  if (!mongoose.Types.ObjectId.isValid(req.params.bid)) {
     return callback({
       error: ['Invalid Federation Id'],
       code: 400
     }, null);
   }
 
-  if (!mongoose.Types.ObjectId.isValid(req.params.aid)) {
+  if (!mongoose.Types.ObjectId.isValid(req.params.pid)) {
     return callback({
-      error: ['Invalid ACR Id'],
+      error: ['Invalid Participant Id'],
       code: 400
     }, null);
   }
 
-  var acr = null;
-  acrModel.findById(req.params.aid)
-    .then(function (oACR) {
-      if (!oACR) {
-        return Promise.reject({error: 'ACR doesn\'t exist', code: 404});
+  var badge = null;
+  badgeModel.findById(req.params.bid)
+    .then(function (oBadge) {
+      if (!oBadge) {
+        return Promise.reject({error: 'Badge doesn\'t exist', code: 404});
       }
 
-      if (oACR.supportedBy.indexOf(req.params.fid) > -1) {
+      if (oBadge.issuer.indexOf(req.params.pid) > -1) {
         return Promise.reject({
           error: ['Federation already exist'],
           code: 400
         });
       }
-      acr = oACR;
-      return federationModel.findById(req.params.fid);
+      badge = oBadge;
+      return participantModel.findById(req.params.pid);
     })
     .then(function (docs) {
       if (!docs) {
         return Promise.reject({
-          error: ['Federation doesn\'t exist'],
+          error: ['Participant doesn\'t exist'],
           code: 404
         });
       }
-      acr.supportedBy.push(req.params.fid);
-      return acr.save();
+      badge.issuer.push(req.params.pid);
+      return badge.save();
     })
-    .then(function (oACR) {
-      return callback(null, oACR);
+    .then(function (oBadge) {
+      return callback(null, oBadge);
     })
     .catch(function (err) {
       return callback({error: err, code: 404}, null);

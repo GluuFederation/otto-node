@@ -1,45 +1,45 @@
-// File : routes/acr.js -->
+// File : routes/badge.js -->
 var express = require('express');
 var router = express.Router();
 
-var acrController = require('../controller/acrcontroller');
+var badgeController = require('../controller/badgecontroller');
 var settings = require('../settings');
 
 var baseURL = settings.baseURL;
-var acrURL = settings.acr;
+var badgeURL = settings.badge;
 
 /**
  * @swagger
- * resourcePath: /ACR
+ * resourcePath: /Badge
  * description: Open Trust Taxonomy for Federation Operators
  */
 
 /**
  * @swagger
- * path: /otto/acr
+ * path: /otto/badge
  * operations:
  *   -  httpMethod: POST
- *      summary: Create ACR
- *      notes: Returns created ACR Id
- *      nickname: ACR
+ *      summary: Create Badge
+ *      notes: Returns created Badge Id
+ *      nickname: Badge
  *      consumes:
  *        - text/html
  *      parameters:
- *        - name: ACR Json
- *          description: Your ACR JSON
+ *        - name: Badge Json
+ *          description: Your Badge JSON
  *          paramType: body
  *          required: true
  *          dataType: string
  */
-router.post(acrURL, function (req, res) {
+router.post(badgeURL, function (req, res) {
   try {
-    acrController.addACR(req, function (err, data) {
+    badgeController.addBadge(req, function (err, data) {
       console.log(err);
       if (err) {
         res.status(err.code).json({'Error(s)': err.error});
       } else {
         res.status(201).json({
-          '@id': baseURL + acrURL + '/' + data
+          '@id': baseURL + badgeURL + '/' + data
         });
       }
     });
@@ -50,16 +50,16 @@ router.post(acrURL, function (req, res) {
 
 /**
  * @swagger
- * path: /otto/acr/{id}
+ * path: /otto/badge/{id}
  * operations:
  *   -  httpMethod: GET
- *      summary: Get ACR By Id
- *      notes: Returns ACR
- *      nickname: GetACRById
+ *      summary: Get Badge By Id
+ *      notes: Returns Badge
+ *      nickname: GetBadgeById
  *      parameters:
  *        - name: id
  *          paramType: path
- *          description: Your ACR Id
+ *          description: Your Badge Id
  *          required: true
  *          dataType: string
  *        - name: depth
@@ -74,9 +74,9 @@ router.post(acrURL, function (req, res) {
  *          dataType: string
  *
  */
-router.get(acrURL + '/:id', function (req, res) {
+router.get(badgeURL + '/:id', function (req, res) {
   try {
-    acrController.findACR(req, function (err, data) {
+    badgeController.findBadge(req, function (err, data) {
       if (err) {
         res.status(err.code).json({'Error(s)': err.error});
       } else {
@@ -90,15 +90,15 @@ router.get(acrURL + '/:id', function (req, res) {
 
 /**
  * @swagger
- * path: /otto/acr
+ * path: /otto/badge
  * operations:
  *   -  httpMethod: GET
- *      summary: Get ACR
- *      notes: Returns ACR
- *      nickname: GetACR
+ *      summary: Get Badge
+ *      notes: Returns Badge
+ *      nickname: GetBadge
  *      parameters:
  *       - name: depth
- *         description: depth[acr, acr.supportedBy]
+ *         description: depth[badge, badge.supportedBy]
  *         paramType: query
  *         required: false
  *         dataType: string
@@ -115,14 +115,14 @@ router.get(acrURL + '/:id', function (req, res) {
  *
  *
  */
-router.get(acrURL, function (req, res) {
+router.get(badgeURL, function (req, res) {
   try {
-    acrController.getAllACRWithDepth(req, function (err, data) {
+    badgeController.getAllBadgeWithDepth(req, function (err, data) {
       if (err) {
         res.status(err.code).json({'Error(s)': err.error});
       } else {
         res.status(200).json({
-          acr: data
+          badge: data
         });
       }
     });
@@ -133,24 +133,24 @@ router.get(acrURL, function (req, res) {
 
 /**
  * @swagger
- * path: /otto/acr/{id}
+ * path: /otto/badge/{id}
  * operations:
  *   -  httpMethod: Delete
- *      summary: Delete ACR
- *      notes: Returns ACR status
- *      nickname: DeleteACR
+ *      summary: Delete Badge
+ *      notes: Returns Badge status
+ *      nickname: DeleteBadge
  *      consumes:
  *        - text/html
  *      parameters:
  *        - name: id
- *          description: Your ACR Id
+ *          description: Your Badge Id
  *          paramType: path
  *          required: true
  *          dataType: string
  */
-router.delete(acrURL + '/:id', function (req, res) {
+router.delete(badgeURL + '/:id', function (req, res) {
   try {
-    acrController.deleteACR(req, function (err) {
+    badgeController.deleteBadge(req, function (err) {
       if (err) {
         res.status(err.code).json({'Error(s)': err.error});
       } else {
@@ -166,30 +166,30 @@ router.delete(acrURL + '/:id', function (req, res) {
 
 /**
  * @swagger
- * path: /otto/acr/{id}
+ * path: /otto/badge/{id}
  * operations:
  *   -  httpMethod: PUT
- *      summary: Update ACR
+ *      summary: Update Badge
  *      notes: Returns Status
- *      nickname: PutACR
+ *      nickname: PutBadge
  *      consumes:
  *        - text/html
  *      parameters:
  *        - name: id
- *          description: Your ACR Id
+ *          description: Your Badge Id
  *          paramType: path
  *          required: true
  *          dataType: string
  *        - name: body
- *          description: Your ACR Information
+ *          description: Your Badge Information
  *          paramType: body
  *          required: true
  *          dataType: string
  *
  */
-router.put(acrURL + '/:id', function (req, res) {
+router.put(badgeURL + '/:id', function (req, res) {
   try {
-    acrController.updateACR(req, function (err, data) {
+    badgeController.updateBadge(req, function (err, data) {
       console.log(err);
       if (err) {
         res.status(err.code).json({'Error(s)': err.error});
@@ -204,29 +204,29 @@ router.put(acrURL + '/:id', function (req, res) {
 
 /**
  * @swagger
- * path: /otto/acr/{aid}/federation/{fid}
+ * path: /otto/badge/{bid}/issuer/{pid}
  * operations:
  *   -  httpMethod: post
- *      summary: Join acr (Existing federation)
- *      notes: The federation to which this acr is affiliated
- *      nickname: JoinFederation
+ *      summary: Issue badge
+ *      notes: Badge issue by participant
+ *      nickname: IssueBadge
  *      consumes:
  *        - text/html
  *      parameters:
- *        - name: aid
- *          description: Your ACR Id
+ *        - name: bid
+ *          description: Your Badge Id
  *          paramType: path
  *          required: true
  *          dataType: string
- *        - name: fid
- *          description: Your Federation Id
+ *        - name: pid
+ *          description: Your participant Id
  *          paramType: path
  *          required: true
  *          dataType: string
  */
-router.post(acrURL + '/:aid/federation/:fid', function (req, res) {
+router.post(badgeURL + '/:bid/issuer/:pid', function (req, res) {
   try {
-    acrController.joinACR(req, function (err, callback) {
+    badgeController.issueBadge(req, function (err, callback) {
       if (err) {
         res.status(err.code).json({
           'Error(s)': err.error

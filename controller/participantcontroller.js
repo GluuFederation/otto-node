@@ -29,7 +29,8 @@ exports.getAllParticipantWithDepth = function (req, callback) {
   if (!!req.query.depth) {
     depth = [
       {path: 'memberOf', select: '-_id -__v -updatedAt -createdAt'},
-      {path: 'operates', select: '-_id -__v -updatedAt -createdAt'}
+      {path: 'operates', select: '-_id -__v -updatedAt -createdAt'},
+      {path: 'registeredBy', select: '-_id -__v -updatedAt -createdAt'}
     ];
   }
 
@@ -39,6 +40,10 @@ exports.getAllParticipantWithDepth = function (req, callback) {
     .populate(depth)
     .lean()
     .then(function (participants) {
+      participants.forEach(function (item) {
+        item.registeredBy = !!item.registeredBy ? item.registeredBy['@id'] : '';
+      });
+
       if (!req.query.depth) {
         participants = participants.map(function (item) {
           return item['@id'];
@@ -101,6 +106,7 @@ exports.findParticipant = function (req, callback) {
 
   participantModel.findById(req.params.id).select('-_id -__v -updatedAt -createdAt')
     .populate({path: 'memberOf', select: '-_id -__v -updatedAt -createdAt'})
+    .populate({path: 'badgeSupported', select: '-_id -__v'})
     .populate({path: 'operates', select: '-_id -__v -updatedAt -createdAt'})
     .populate({path: 'registeredBy', select: {'@id': 1, name: 1, _id: 0}})
     .lean()
@@ -115,12 +121,12 @@ exports.findParticipant = function (req, callback) {
       }
       participant.registeredBy = participant.registeredBy['@id'];
       if (req.query.depth == null) {
-        participant.operates = participant.operates['@id'];
-        participant = common.customObjectFilter(participant, ['memberOf']);
+        participant.operates = !!participant.operates ? participant.operates['@id'] : '';
+        participant = common.customObjectFilter(participant, ['memberOf', 'badgeSupported']);
       } else if (req.query.depth == 'operates') {
-        participant = common.customObjectFilter(participant, ['memberOf']);
+        participant = common.customObjectFilter(participant, ['memberOf', 'badgeSupported']);
       } else if (req.query.depth == 'memberOf') {
-        participant.operates = participant.operates['@id'];
+        participant.operates = !!participant.operates ? participant.operates['@id'] : '';
       } else if (req.query.depth == 'memberOf,operates') {
       } else {
         return callback({

@@ -45,10 +45,11 @@ const participantSchema = mongoose.Schema({
     type: String
   },
   trustMarkAsserted: [{
-    type: mongoose.Schema.Types.Mixed
+    type: String
   }],
   badgeSupported: [{
-    type: mongoose.Schema.Types.Mixed
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Badge'
   }]
 }, {
   timestamps: true
