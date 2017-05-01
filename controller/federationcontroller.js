@@ -150,7 +150,7 @@ exports.findFederation = function (req, callback) {
     .populate({path: 'member', select: '-_id -__v'})
     .populate({path: 'sponsor', select: '-_id -__v'})
     .populate({path: 'badgeSupported', select: '-_id -__v'})
-    .populate({path: 'requirement', select: '-_id -__v'})
+    .populate({path: 'schemas', select: '-_id -__v'})
     .populate({path: 'registeredBy', select: {'@id': 1, name: 1, _id: 0}})
     .lean()
     .exec(function (err, federation) {
@@ -164,13 +164,13 @@ exports.findFederation = function (req, callback) {
       }
       federation.registeredBy = federation.registeredBy['@id'];
       if (req.query.depth == null) {
-        federation = common.customObjectFilter(federation, ['sponsor', 'member', 'federates', 'badgeSupported', 'requirement']);
+        federation = common.customObjectFilter(federation, ['sponsor', 'member', 'federates', 'badgeSupported', 'schemas']);
       } else if (req.query.depth == 'federates') {
-        federation = common.customObjectFilter(federation, ['sponsor', 'member', 'badgeSupported', 'requirement']);
+        federation = common.customObjectFilter(federation, ['sponsor', 'member', 'badgeSupported', 'schemas']);
       } else if (req.query.depth == 'member') {
-        federation = common.customObjectFilter(federation, ['sponsor', 'federates', 'badgeSupported', 'requirement']);
+        federation = common.customObjectFilter(federation, ['sponsor', 'federates', 'badgeSupported', 'schemas']);
       } else if (req.query.depth == 'sponsor') {
-        federation = common.customObjectFilter(federation, ['member', 'federates', 'badgeSupported', 'requirement']);
+        federation = common.customObjectFilter(federation, ['member', 'federates', 'badgeSupported', 'schemas']);
       } else if (req.query.depth == 'federates,member,sponsor') {
       } else {
         return callback({

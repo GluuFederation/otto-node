@@ -15,10 +15,9 @@ var routesFederations = require('./routes/federation');
 var routesEntity = require('./routes/entity');
 var routesParticipant = require('./routes/participant');
 var routesMetadata = require('./routes/metadata');
-var routesRequirement = require('./routes/requirement');
 var routesRa = require('./routes/ra');
-var routesACR = require('./routes/acr');
 var routesBadge = require('./routes/badge');
+var routesSchema = require('./routes/schema');
 
 app.set('port', process.env.PORT || settings.port);
 app.set('views', __dirname + '/views');
@@ -32,7 +31,7 @@ app.use(swagger.init(app, {
     swaggerURL: '/swagger',
     swaggerJSON: '/api-docs.json',
     swaggerUI: './public/swagger/',
-    apis: ['./routes/index.js' , './routes/federation.js', './routes/participant.js', './routes/entity.js', './routes/metadata.js', './routes/requirement.js', './routes/acr.js', './routes/badge.js']
+    apis: ['./routes/index.js' , './routes/federation.js', './routes/participant.js', './routes/entity.js', './routes/metadata.js', './routes/badge.js', './routes/schema.js']
 }));
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -56,10 +55,9 @@ app.use('/', routesFederations);
 app.use('/', routesEntity);
 app.use('/', routesParticipant);
 app.use('/', routesMetadata);
-app.use('/', routesRequirement);
 app.use('/', routesRa);
-app.use('/', routesACR);
 app.use('/', routesBadge);
+app.use('/', routesSchema);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

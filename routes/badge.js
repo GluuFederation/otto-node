@@ -9,7 +9,7 @@ var baseURL = settings.baseURL;
 var badgeURL = settings.badge;
 
 /**
- * @swagger
+ * swagger
  * resourcePath: /Badge
  * description: Open Trust Taxonomy for Federation Operators
  */

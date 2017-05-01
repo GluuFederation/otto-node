@@ -25,7 +25,6 @@
   exports.schema = "/otto/schema"
 
   exports.contextSchema = "https://rawgit.com/KantaraInitiative/wg-otto/master/html/otto-vocab-1.0.html"
-  exports.contextOPSchema = "https://rawgit.com/KantaraInitiative/wg-otto/master/html/otto-openid-1.0.htm"
   exports.contextParticipant = "#participant"
   exports.contextFederation = "#federation"
   exports.contextEntity = "#entity"
@@ -33,6 +32,7 @@
   exports.contextMetadata = "#metadata"
   exports.contextRequirement = "#requirement"
   exports.contextACR = "#acr"
+  exports.contextSchemaClass = "#schema"
   exports.contextBadge = "https://w3id.org/openbadges/v2"
 
   exports.trustMarkURL = '/trustmark/'  //@context URL

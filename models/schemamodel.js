@@ -3,7 +3,7 @@ var settings = require('../settings');
 var deepPopulate = require('mongoose-deep-populate')(mongoose);
 
 // define the schema for meta data
-const acrSchema = mongoose.Schema({
+const schemaSchema = mongoose.Schema({
   '@id': {
     type: String
   },
@@ -13,21 +13,30 @@ const acrSchema = mongoose.Schema({
   name: {
     type: String
   },
-  description: {
+  category: {
     type: String
+  },
+  url: {
+    type: String
+  },
+  required: {
+    type: Boolean
   },
   supportedBy: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Federation'
-  }]
+  }],
+  sameAs: {
+    type: String
+  }
 }, {
   timestamps: true
 });
 
-acrSchema.pre('save', function (next, done) {
-  this['@id'] = settings.baseURL + settings.acr + '/' + this._id;
-  this['@context'] = settings.contextOPSchema + settings.contextACR;
+schemaSchema.pre('save', function (next, done) {
+  this['@id'] = settings.baseURL + settings.schema + '/' + this._id;
+  this['@context'] = settings.contextSchema + settings.contextSchemaClass;
   next();
 });
 
-module.exports = mongoose.model('ACR', acrSchema);
+module.exports = mongoose.model('Schema', schemaSchema);

@@ -2,7 +2,7 @@ var mongoose = require('mongoose');
 var Ajv = require('ajv');
 var JSPath = require('jspath');
 
-var acrModel = require('../models/acrmodel');
+var schemaModel = require('../models/schemamodel');
 var federationModel = require('../models/federationmodel');
 var settings = require('../settings');
 var common = require('../helpers/common');
@@ -11,7 +11,7 @@ var ajv = Ajv({
   allErrors: true
 });
 
-var acrAJVSchema = {
+var schemaAJVSchema = {
   properties: {
     name: {
       type: 'string'
@@ -20,48 +20,48 @@ var acrAJVSchema = {
   required: ['name']
 };
 
-exports.getAllACRWithDepth = function (req, callback) {
+exports.getAllSchemaWithDepth = function (req, callback) {
   var pageNo = +req.query.pageno;
   var pageLength = +req.query.pagelength;
   var depth = '';
 
   if (!!req.query.depth) {
     depth = [
-      {path: 'federatedBy', select: '-_id -__v -updatedAt -createdAt'}
+      {path: 'supportedBy', select: '-_id -__v -updatedAt -createdAt'}
     ];
   }
 
-  acrModel.find({}).select('-_id -__v -updatedAt -createdAt')
+  schemaModel.find({}).select('-_id -__v -updatedAt -createdAt')
     .populate({path: 'supportedBy', select: '-_id -__v -updatedAt -createdAt'})
     .skip((!!pageLength && !!pageNo ? pageNo * pageLength : 0))
     .limit((!!pageLength ? pageLength : 0))
     .populate(depth)
     .lean()
-    .then(function (acrs) {
+    .then(function (schemas) {
       if (!req.query.depth) {
-        acrs = acrs.map(function (item) {
+        schemas = schemas.map(function (item) {
           return item['@id'];
         });
-        return Promise.resolve(acrs);
-      } else if (req.query.depth == 'acr') {
-        return common.customCollectionFilter(acrs, ['supportedBy']);
-      } else if (req.query.depth == 'acr.supportedBy') {
-        return Promise.resolve(acrs);
+        return Promise.resolve(schemas);
+      } else if (req.query.depth == 'schema') {
+        return common.customCollectionFilter(schemas, ['supportedBy']);
+      } else if (req.query.depth == 'schema.supportedBy') {
+        return Promise.resolve(schemas);
       }
     })
-    .then(function (acrs) {
-      return callback(null, acrs);
+    .then(function (schemas) {
+      return callback(null, schemas);
     })
     .catch(function (err) {
       return callback({error: err, code: 404}, null);
     });
 };
 
-exports.addACR = function (req, callback) {
-  var valid = ajv.validate(acrAJVSchema, req.body);
+exports.addSchema = function (req, callback) {
+  var valid = ajv.validate(schemaAJVSchema, req.body);
   if (valid) {
-    var oACR = new acrModel(req.body);
-    oACR.save(function (err, obj) {
+    var oSchema = new schemaModel(req.body);
+    oSchema.save(function (err, obj) {
       if (err) throw (err);
       callback(null, obj._id);
     });
@@ -77,29 +77,28 @@ exports.addACR = function (req, callback) {
   }
 };
 
-exports.findACR = function (req, callback) {
+exports.findSchema = function (req, callback) {
   if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
     return callback({
-      error: ['Invalid ACR Id'],
+      error: ['Invalid Schema Id'],
       code: 400
     }, null);
   }
 
-  acrModel.findById(req.params.id).select('-_id -__v -updatedAt -createdAt')
+  schemaModel.findById(req.params.id).select('-_id -__v -updatedAt -createdAt')
     .populate({path: 'supportedBy', select: '-_id -__v -updatedAt -createdAt'})
     .lean()
-    .exec(function (err, acr) {
+    .exec(function (err, schema) {
       if (err) throw (err);
 
-      if (!acr) {
+      if (!schema) {
         return callback({
-          error: ['ACR doesn\'t exist'],
+          error: ['Schema doesn\'t exist'],
           code: 404
         }, null);
       }
       if (req.query.depth == null) {
-        acr.metadata = !!acr.metadata ? acr.metadata['@id'] : '';
-        acr = common.customObjectFilter(acr, ['supportedBy']);
+        schema = common.customObjectFilter(schema, ['supportedBy']);
       } else if (req.query.depth == 'supportedBy') {
 
       } else {
@@ -110,59 +109,59 @@ exports.findACR = function (req, callback) {
       }
 
       if (req.query.filter == null)
-        callback(null, acr);
+        callback(null, schema);
       else {
         // Apply jsPath filter here.
-        var filterData = JSPath.apply(req.query.filter, acr);
+        var filterData = JSPath.apply(req.query.filter, schema);
         callback(null, filterData);
       }
     });
 };
 
-exports.deleteACR = function (req, callback) {
+exports.deleteSchema = function (req, callback) {
   if (!mongoose.Types.ObjectId.isValid(req.params.id))
     callback({
-      error: ['Invalid ACR Id'],
+      error: ['Invalid Schema Id'],
       code: 400
     }, null);
 
-  acrModel.findById(req.params.id)
-    .then(function (oACR) {
-      if (!oACR) {
+  schemaModel.findById(req.params.id)
+    .then(function (oSchema) {
+      if (!oSchema) {
         return callback({
-          error: ['ACR doesn\'t exist'],
+          error: ['Schema doesn\'t exist'],
           code: 404
         }, null);
       }
 
-      return acrModel.findOneAndRemove({_id: req.params.id});
+      return schemaModel.findOneAndRemove({_id: req.params.id});
     })
-    .then(function (oACR) {
-      return callback(null, oACR);
+    .then(function (oSchema) {
+      return callback(null, oSchema);
     })
     .catch(function (err) {
       return callback(err, null);
     });
 };
 
-exports.updateACR = function (req, callback) {
+exports.updateSchema = function (req, callback) {
   if (!mongoose.Types.ObjectId.isValid(req.params.id))
     callback({
-      error: ['Invalid ACR Id'],
+      error: ['Invalid Schema Id'],
       code: 400
     }, null);
 
-  var valid = ajv.validate(acrAJVSchema, req.body);
+  var valid = ajv.validate(schemaAJVSchema, req.body);
   if (valid) {
-    acrModel.findById(req.params.id)
+    schemaModel.findById(req.params.id)
       .then(function (doc) {
         if (!doc) {
           return callback({
-            error: ['ACR doesn\'t exist'],
+            error: ['Schema doesn\'t exist'],
             code: 404
           }, null);
         }
-        return acrModel.findOneAndUpdate({_id: req.params.id}, req.body);
+        return schemaModel.findOneAndUpdate({_id: req.params.id}, req.body);
       })
       .then(function (oParticipant) {
         return callback(null, oParticipant);
@@ -182,7 +181,7 @@ exports.updateACR = function (req, callback) {
   }
 };
 
-exports.joinACR = function (req, callback) {
+exports.joinSchema = function (req, callback) {
   if (!mongoose.Types.ObjectId.isValid(req.params.fid)) {
     return callback({
       error: ['Invalid Federation Id'],
@@ -190,41 +189,54 @@ exports.joinACR = function (req, callback) {
     }, null);
   }
 
-  if (!mongoose.Types.ObjectId.isValid(req.params.aid)) {
+  if (!mongoose.Types.ObjectId.isValid(req.params.sid)) {
     return callback({
-      error: ['Invalid ACR Id'],
+      error: ['Invalid Schema Id'],
       code: 400
     }, null);
   }
 
-  var acr = null;
-  acrModel.findById(req.params.aid)
-    .then(function (oACR) {
-      if (!oACR) {
-        return Promise.reject({error: 'ACR doesn\'t exist', code: 404});
+  var schema = null;
+  var federation = null;
+  schemaModel.findById(req.params.sid)
+    .then(function (oSchema) {
+      if (!oSchema) {
+        return Promise.reject({error: 'Schema doesn\'t exist', code: 404});
       }
 
-      if (oACR.supportedBy.indexOf(req.params.fid) > -1) {
+      if (oSchema.supportedBy.indexOf(req.params.fid) > -1) {
         return Promise.reject({
           error: ['Federation already exist'],
           code: 400
         });
       }
-      acr = oACR;
+      schema = oSchema;
       return federationModel.findById(req.params.fid);
     })
-    .then(function (docs) {
-      if (!docs) {
+    .then(function (oFederation) {
+      if (!oFederation) {
         return Promise.reject({
           error: ['Federation doesn\'t exist'],
           code: 404
         });
       }
-      acr.supportedBy.push(req.params.fid);
-      return acr.save();
+      federation = oFederation;
+      if (federation.schemas.indexOf(req.params.sid) > -1) {
+        return Promise.reject({
+          error: ['Schema already exist'],
+          code: 400
+        });
+      }
+
+      federation.schemas.push(req.params.sid);
+      return federation.save();
     })
-    .then(function (oACR) {
-      return callback(null, oACR);
+    .then(function (oFederation) {
+      schema.supportedBy.push(req.params.fid);
+      return schema.save();
+    })
+    .then(function (oSchema) {
+      return callback(null, oSchema);
     })
     .catch(function (err) {
       return callback({error: err, code: 404}, null);

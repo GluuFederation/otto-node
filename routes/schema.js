@@ -1,45 +1,45 @@
-// File : routes/acr.js -->
+// File : routes/schema.js -->
 var express = require('express');
 var router = express.Router();
 
-var acrController = require('../controller/acrcontroller');
+var schemaController = require('../controller/schemacontroller');
 var settings = require('../settings');
 
 var baseURL = settings.baseURL;
-var acrURL = settings.acr;
+var schemaURL = settings.schema;
 
 /**
  * @swagger
- * resourcePath: /ACR
+ * resourcePath: /Schema
  * description: Open Trust Taxonomy for Federation Operators
  */
 
 /**
  * @swagger
- * path: /otto/acr
+ * path: /otto/schema
  * operations:
  *   -  httpMethod: POST
- *      summary: Create ACR
- *      notes: Returns created ACR Id
- *      nickname: ACR
+ *      summary: Create Schema
+ *      notes: Returns created Schema Id
+ *      nickname: Schema
  *      consumes:
  *        - text/html
  *      parameters:
- *        - name: ACR Json
- *          description: Your ACR JSON
+ *        - name: Schema Json
+ *          description: Your Schema JSON
  *          paramType: body
  *          required: true
  *          dataType: string
  */
-router.post(acrURL, function (req, res) {
+router.post(schemaURL, function (req, res) {
   try {
-    acrController.addACR(req, function (err, data) {
+    schemaController.addSchema(req, function (err, data) {
       console.log(err);
       if (err) {
         res.status(err.code).json({'Error(s)': err.error});
       } else {
         res.status(201).json({
-          '@id': baseURL + acrURL + '/' + data
+          '@id': baseURL + schemaURL + '/' + data
         });
       }
     });
@@ -50,16 +50,16 @@ router.post(acrURL, function (req, res) {
 
 /**
  * @swagger
- * path: /otto/acr/{id}
+ * path: /otto/schema/{id}
  * operations:
  *   -  httpMethod: GET
- *      summary: Get ACR By Id
- *      notes: Returns ACR
- *      nickname: GetACRById
+ *      summary: Get Schema By Id
+ *      notes: Returns Schema
+ *      nickname: GetSchemaById
  *      parameters:
  *        - name: id
  *          paramType: path
- *          description: Your ACR Id
+ *          description: Your Schema Id
  *          required: true
  *          dataType: string
  *        - name: depth
@@ -74,9 +74,9 @@ router.post(acrURL, function (req, res) {
  *          dataType: string
  *
  */
-router.get(acrURL + '/:id', function (req, res) {
+router.get(schemaURL + '/:id', function (req, res) {
   try {
-    acrController.findACR(req, function (err, data) {
+    schemaController.findSchema(req, function (err, data) {
       if (err) {
         res.status(err.code).json({'Error(s)': err.error});
       } else {
@@ -90,15 +90,15 @@ router.get(acrURL + '/:id', function (req, res) {
 
 /**
  * @swagger
- * path: /otto/acr
+ * path: /otto/schema
  * operations:
  *   -  httpMethod: GET
- *      summary: Get ACR
- *      notes: Returns ACR
- *      nickname: GetACR
+ *      summary: Get Schema
+ *      notes: Returns Schema
+ *      nickname: GetSchema
  *      parameters:
  *       - name: depth
- *         description: depth[acr, acr.supportedBy]
+ *         description: depth[schema, schema.supportedBy]
  *         paramType: query
  *         required: false
  *         dataType: string
@@ -115,14 +115,14 @@ router.get(acrURL + '/:id', function (req, res) {
  *
  *
  */
-router.get(acrURL, function (req, res) {
+router.get(schemaURL, function (req, res) {
   try {
-    acrController.getAllACRWithDepth(req, function (err, data) {
+    schemaController.getAllSchemaWithDepth(req, function (err, data) {
       if (err) {
         res.status(err.code).json({'Error(s)': err.error});
       } else {
         res.status(200).json({
-          acr: data
+          schema: data
         });
       }
     });
@@ -133,24 +133,24 @@ router.get(acrURL, function (req, res) {
 
 /**
  * @swagger
- * path: /otto/acr/{id}
+ * path: /otto/schema/{id}
  * operations:
  *   -  httpMethod: Delete
- *      summary: Delete ACR
- *      notes: Returns ACR status
- *      nickname: DeleteACR
+ *      summary: Delete Schema
+ *      notes: Returns Schema status
+ *      nickname: DeleteSchema
  *      consumes:
  *        - text/html
  *      parameters:
  *        - name: id
- *          description: Your ACR Id
+ *          description: Your Schema Id
  *          paramType: path
  *          required: true
  *          dataType: string
  */
-router.delete(acrURL + '/:id', function (req, res) {
+router.delete(schemaURL + '/:id', function (req, res) {
   try {
-    acrController.deleteACR(req, function (err) {
+    schemaController.deleteSchema(req, function (err) {
       if (err) {
         res.status(err.code).json({'Error(s)': err.error});
       } else {
@@ -166,30 +166,30 @@ router.delete(acrURL + '/:id', function (req, res) {
 
 /**
  * @swagger
- * path: /otto/acr/{id}
+ * path: /otto/schema/{id}
  * operations:
  *   -  httpMethod: PUT
- *      summary: Update ACR
+ *      summary: Update Schema
  *      notes: Returns Status
- *      nickname: PutACR
+ *      nickname: PutSchema
  *      consumes:
  *        - text/html
  *      parameters:
  *        - name: id
- *          description: Your ACR Id
+ *          description: Your Schema Id
  *          paramType: path
  *          required: true
  *          dataType: string
  *        - name: body
- *          description: Your ACR Information
+ *          description: Your Schema Information
  *          paramType: body
  *          required: true
  *          dataType: string
  *
  */
-router.put(acrURL + '/:id', function (req, res) {
+router.put(schemaURL + '/:id', function (req, res) {
   try {
-    acrController.updateACR(req, function (err, data) {
+    schemaController.updateSchema(req, function (err, data) {
       console.log(err);
       if (err) {
         res.status(err.code).json({'Error(s)': err.error});
@@ -204,17 +204,17 @@ router.put(acrURL + '/:id', function (req, res) {
 
 /**
  * @swagger
- * path: /otto/acr/{aid}/federation/{fid}
+ * path: /otto/schema/{sid}/federation/{fid}
  * operations:
  *   -  httpMethod: post
- *      summary: Join acr (Existing federation)
- *      notes: The federation to which this acr is affiliated
+ *      summary: Join schema (Existing federation)
+ *      notes: The federation to which this schema is affiliated
  *      nickname: JoinFederation
  *      consumes:
  *        - text/html
  *      parameters:
- *        - name: aid
- *          description: Your ACR Id
+ *        - name: sid
+ *          description: Your Schema Id
  *          paramType: path
  *          required: true
  *          dataType: string
@@ -224,9 +224,9 @@ router.put(acrURL + '/:id', function (req, res) {
  *          required: true
  *          dataType: string
  */
-router.post(acrURL + '/:aid/federation/:fid', function (req, res) {
+router.post(schemaURL + '/:sid/federation/:fid', function (req, res) {
   try {
-    acrController.joinACR(req, function (err, callback) {
+    schemaController.joinSchema(req, function (err, callback) {
       if (err) {
         res.status(err.code).json({
           'Error(s)': err.error

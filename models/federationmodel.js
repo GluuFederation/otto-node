@@ -61,9 +61,9 @@ const federationSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Badge'
   }],
-  requirement: [{
+  schemas: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Requirement'
+    ref: 'Schema'
   }]
 }, {
   timestamps: true
