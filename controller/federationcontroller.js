@@ -136,11 +136,12 @@ function createKeyPairAndAddtoFederation(fid, alg, callback) {
 }
 
 exports.findFederation = function (req, callback) {
-  if (!mongoose.Types.ObjectId.isValid(req.params.id))
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
     return callback({
       error: ['Invalid Federation Id'],
       code: 400
     }, null);
+  }
 
   federationModel.findById(req.params.id).select('-_id -__v -updatedAt -createdAt')
     .populate({
@@ -150,7 +151,7 @@ exports.findFederation = function (req, callback) {
     .populate({path: 'member', select: '-_id -__v'})
     .populate({path: 'sponsor', select: '-_id -__v'})
     .populate({path: 'badgeSupported', select: '-_id -__v'})
-    .populate({path: 'schemas', select: '-_id -__v'})
+    .populate({path: 'supports', select: '-_id -__v'})
     .populate({path: 'registeredBy', select: {'@id': 1, name: 1, _id: 0}})
     .lean()
     .exec(function (err, federation) {
@@ -164,13 +165,13 @@ exports.findFederation = function (req, callback) {
       }
       federation.registeredBy = federation.registeredBy['@id'];
       if (req.query.depth == null) {
-        federation = common.customObjectFilter(federation, ['sponsor', 'member', 'federates', 'badgeSupported', 'schemas']);
+        federation = common.customObjectFilter(federation, ['sponsor', 'member', 'federates', 'badgeSupported', 'supports']);
       } else if (req.query.depth == 'federates') {
-        federation = common.customObjectFilter(federation, ['sponsor', 'member', 'badgeSupported', 'schemas']);
+        federation = common.customObjectFilter(federation, ['sponsor', 'member', 'badgeSupported', 'supports']);
       } else if (req.query.depth == 'member') {
-        federation = common.customObjectFilter(federation, ['sponsor', 'federates', 'badgeSupported', 'schemas']);
+        federation = common.customObjectFilter(federation, ['sponsor', 'federates', 'badgeSupported', 'supports']);
       } else if (req.query.depth == 'sponsor') {
-        federation = common.customObjectFilter(federation, ['member', 'federates', 'badgeSupported', 'schemas']);
+        federation = common.customObjectFilter(federation, ['member', 'federates', 'badgeSupported', 'supports']);
       } else if (req.query.depth == 'federates,member,sponsor') {
       } else {
         return callback({

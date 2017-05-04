@@ -23,8 +23,12 @@ const schemaSchema = mongoose.Schema({
     type: Boolean
   },
   supportedBy: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Federation'
+    id: {
+      type: mongoose.Schema.Types.ObjectId
+    },
+    type: {
+      type: String
+    }
   }],
   sameAs: {
     type: String

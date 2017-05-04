@@ -4,6 +4,7 @@ var JSPath = require('jspath');
 
 var schemaModel = require('../models/schemamodel');
 var federationModel = require('../models/federationmodel');
+var entityModel = require('../models/entitymodel');
 var settings = require('../settings');
 var common = require('../helpers/common');
 
@@ -44,7 +45,16 @@ exports.getAllSchemaWithDepth = function (req, callback) {
         });
         return Promise.resolve(schemas);
       } else if (req.query.depth == 'schema') {
-        return common.customCollectionFilter(schemas, ['supportedBy']);
+        schemas.map(function (schema) {
+          schema.supportedBy = schema.supportedBy.map(function (item) {
+            if (item.type == 'Federation')
+              return settings.baseURL + settings.federations + '/' + item.id;
+            else if (item.type == 'Entity')
+              return settings.baseURL + settings.entity + '/' + item.id;
+          });
+          return schema;
+        });
+        return Promise.resolve(schemas);
       } else if (req.query.depth == 'schema.supportedBy') {
         return Promise.resolve(schemas);
       }
@@ -86,7 +96,6 @@ exports.findSchema = function (req, callback) {
   }
 
   schemaModel.findById(req.params.id).select('-_id -__v -updatedAt -createdAt')
-    .populate({path: 'supportedBy', select: '-_id -__v -updatedAt -createdAt'})
     .lean()
     .exec(function (err, schema) {
       if (err) throw (err);
@@ -98,7 +107,12 @@ exports.findSchema = function (req, callback) {
         }, null);
       }
       if (req.query.depth == null) {
-        schema = common.customObjectFilter(schema, ['supportedBy']);
+        schema.supportedBy = schema.supportedBy.map(function (item) {
+          if (item.type == 'Federation')
+            return settings.baseURL + settings.federations + '/' + item.id;
+          else if (item.type == 'Entity')
+            return settings.baseURL + settings.entity + '/' + item.id;
+        });
       } else if (req.query.depth == 'supportedBy') {
 
       } else {
@@ -181,7 +195,7 @@ exports.updateSchema = function (req, callback) {
   }
 };
 
-exports.joinSchema = function (req, callback) {
+exports.joinSchemaWithFederation = function (req, callback) {
   if (!mongoose.Types.ObjectId.isValid(req.params.fid)) {
     return callback({
       error: ['Invalid Federation Id'],
@@ -204,12 +218,15 @@ exports.joinSchema = function (req, callback) {
         return Promise.reject({error: 'Schema doesn\'t exist', code: 404});
       }
 
-      if (oSchema.supportedBy.indexOf(req.params.fid) > -1) {
-        return Promise.reject({
-          error: ['Federation already exist'],
-          code: 400
-        });
-      }
+      oSchema.supportedBy.forEach(function (item) {
+        if (item.id == req.params.fid) {
+          return Promise.reject({
+            error: ['Federation already exist'],
+            code: 400
+          });
+        }
+      });
+
       schema = oSchema;
       return federationModel.findById(req.params.fid);
     })
@@ -221,18 +238,89 @@ exports.joinSchema = function (req, callback) {
         });
       }
       federation = oFederation;
-      if (federation.schemas.indexOf(req.params.sid) > -1) {
+      if (federation.supports.indexOf(req.params.sid) > -1) {
         return Promise.reject({
           error: ['Schema already exist'],
           code: 400
         });
       }
 
-      federation.schemas.push(req.params.sid);
+      federation.supports.push(req.params.sid);
       return federation.save();
     })
     .then(function (oFederation) {
-      schema.supportedBy.push(req.params.fid);
+      schema.supportedBy.push({
+        id: req.params.fid,
+        type: 'Federation'
+      });
+      return schema.save();
+    })
+    .then(function (oSchema) {
+      return callback(null, oSchema);
+    })
+    .catch(function (err) {
+      return callback({error: err, code: 404}, null);
+    });
+};
+
+exports.joinSchemaWithEntity = function (req, callback) {
+  if (!mongoose.Types.ObjectId.isValid(req.params.eid)) {
+    return callback({
+      error: ['Invalid Entity Id'],
+      code: 400
+    }, null);
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(req.params.sid)) {
+    return callback({
+      error: ['Invalid Schema Id'],
+      code: 400
+    }, null);
+  }
+
+  var schema = null;
+  var entity = null;
+  schemaModel.findById(req.params.sid)
+    .then(function (oSchema) {
+      if (!oSchema) {
+        return Promise.reject({error: 'Schema doesn\'t exist', code: 404});
+      }
+
+      oSchema.supportedBy.forEach(function (item) {
+        if (item.id == req.params.eid) {
+          return Promise.reject({
+            error: ['Entity already exist'],
+            code: 400
+          });
+        }
+      });
+
+      schema = oSchema;
+      return entityModel.findById(req.params.eid);
+    })
+    .then(function (oEntity) {
+      if (!oEntity) {
+        return Promise.reject({
+          error: ['Entity doesn\'t exist'],
+          code: 404
+        });
+      }
+      entity = oEntity;
+      if (entity.supports.indexOf(req.params.sid) > -1) {
+        return Promise.reject({
+          error: ['Schema already exist'],
+          code: 400
+        });
+      }
+
+      entity.supports.push(req.params.sid);
+      return entity.save();
+    })
+    .then(function (oEntity) {
+      schema.supportedBy.push({
+        id: req.params.eid,
+        type: 'Entity'
+      });
       return schema.save();
     })
     .then(function (oSchema) {

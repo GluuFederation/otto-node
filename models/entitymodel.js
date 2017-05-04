@@ -31,7 +31,11 @@ const entitySchema = mongoose.Schema({
   metadata: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Metadata'
-  }
+  },
+  supports: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Schema'
+  }]
 }, {
   timestamps: true
 });

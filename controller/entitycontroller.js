@@ -32,7 +32,8 @@ exports.getAllEntityWithDepth = function (req, callback) {
     depth = [
       {path: 'metadata', select: '-_id -__v -updatedAt -createdAt'},
       {path: 'federatedBy', select: '-_id -__v -updatedAt -createdAt'},
-      {path: 'registeredBy', select: '-_id -__v -updatedAt -createdAt'}
+      {path: 'registeredBy', select: '-_id -__v -updatedAt -createdAt'},
+      {path: 'supports', select: '-_id -__v -updatedAt -createdAt'}
     ];
   }
 
@@ -56,7 +57,7 @@ exports.getAllEntityWithDepth = function (req, callback) {
           item.metadata = !!item.metadata ? item.metadata['@id'] : '';
         });
 
-        return common.customCollectionFilter(entities, ['federatedBy']);
+        return common.customCollectionFilter(entities, ['federatedBy', 'supports']);
       } else if (req.query.depth == 'entities.federatedBy') {
         entities.forEach(function (item) {
           item.metadata = !!item.metadata ? item.metadata['@id'] : '';
@@ -64,7 +65,7 @@ exports.getAllEntityWithDepth = function (req, callback) {
 
         return Promise.resolve(entities);
       } else if (req.query.depth == 'entities.metadata') {
-        return common.customCollectionFilter(entities, ['federatedBy']);
+        return common.customCollectionFilter(entities, ['federatedBy', 'supports']);
       }
     })
     .then(function (entities) {
@@ -108,6 +109,7 @@ exports.findEntity = function (req, callback) {
   entityModel.findById(req.params.id).select('-_id -__v -updatedAt -createdAt')
     .populate({path: 'metadata', select: '-_id -__v -updatedAt -createdAt'})
     .populate({path: 'federatedBy', select: '-_id -__v -updatedAt -createdAt'})
+    .populate({path: 'supports', select: '-_id -__v'})
     .populate({path: 'registeredBy', select: {'@id': 1, name: 1, _id: 0}})
     .lean()
     .exec(function (err, entity) {
@@ -122,9 +124,9 @@ exports.findEntity = function (req, callback) {
       entity.registeredBy = entity.registeredBy['@id'];
       if (req.query.depth == null) {
         entity.metadata = !!entity.metadata ? entity.metadata['@id'] : '';
-        entity = common.customObjectFilter(entity, ['federatedBy']);
+        entity = common.customObjectFilter(entity, ['federatedBy', 'supports']);
       } else if (req.query.depth == 'metadata') {
-        entity = common.customObjectFilter(entity, ['federatedBy']);
+        entity = common.customObjectFilter(entity, ['federatedBy', 'supports']);
       } else if (req.query.depth == 'federatedBy') {
         entity.metadata = !!entity.metadata ? entity.metadata['@id'] : '';
       } else if (req.query.depth == 'metadata,federatedBy') {

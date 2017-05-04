@@ -20,6 +20,10 @@ const federationSchema = mongoose.Schema({
   url: {
     type: String
   },
+  supports: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Schema'
+  }],
   registeredBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'RegistrationAuthority'
@@ -61,28 +65,11 @@ const federationSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Badge'
   }],
-  schemas: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Schema'
+  requirement: [{
+    type: mongoose.Schema.Types.Mixed
   }]
 }, {
   timestamps: true
-});
-
-federationSchema.plugin(deepPopulate, {
-  whitelist: [
-    'entities',
-    'organization',
-    'entities.organization',
-    'participants'
-  ], populate: {
-    'entities.organization': {
-      select: 'name @id -_id'
-    },
-    'entities': {
-      select: '-_id -__v'
-    }
-  }
 });
 
 federationSchema.pre('save', preSave);

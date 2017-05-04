@@ -226,7 +226,44 @@ router.put(schemaURL + '/:id', function (req, res) {
  */
 router.post(schemaURL + '/:sid/federation/:fid', function (req, res) {
   try {
-    schemaController.joinSchema(req, function (err, callback) {
+    schemaController.joinSchemaWithFederation(req, function (err, callback) {
+      if (err) {
+        res.status(err.code).json({
+          'Error(s)': err.error
+        });
+      }
+      res.status(200).json();
+    });
+  } catch (e) {
+    res.status(500).json();
+  }
+});
+
+/**
+ * @swagger
+ * path: /otto/schema/{sid}/entity/{eid}
+ * operations:
+ *   -  httpMethod: post
+ *      summary: Join schema (Existing entity)
+ *      notes: The entity to which this schema is affiliated
+ *      nickname: JoinEntity
+ *      consumes:
+ *        - text/html
+ *      parameters:
+ *        - name: sid
+ *          description: Your Schema Id
+ *          paramType: path
+ *          required: true
+ *          dataType: string
+ *        - name: eid
+ *          description: Your Entity Id
+ *          paramType: path
+ *          required: true
+ *          dataType: string
+ */
+router.post(schemaURL + '/:sid/entity/:eid', function (req, res) {
+  try {
+    schemaController.joinSchemaWithEntity(req, function (err, callback) {
       if (err) {
         res.status(err.code).json({
           'Error(s)': err.error
