@@ -35,7 +35,8 @@ exports.getAllFederationWithDepth = function (req, callback) {
       {path: 'sponsor', select: '-_id -__v -updatedAt -createdAt'},
       {path: 'federates', select: '-_id -__v -updatedAt -createdAt'},
       {path: 'member', select: '-_id -__v -updatedAt -createdAt'},
-      {path: 'registeredBy', select: '-_id -__v -updatedAt -createdAt'}
+      {path: 'registeredBy', select: '-_id -__v -updatedAt -createdAt'},
+      {path: 'supports', select: '-_id -__v -updatedAt -createdAt'}
     ];
   }
 
@@ -55,13 +56,13 @@ exports.getAllFederationWithDepth = function (req, callback) {
         });
         return Promise.resolve(federations);
       } else if (req.query.depth == 'federations') {
-        return common.customCollectionFilter(federations, ['member', 'federates', 'sponsor']);
+        return common.customCollectionFilter(federations, ['member', 'federates', 'sponsor', 'supports']);
       } else if (req.query.depth == 'federations.federates') {
-        return common.customCollectionFilter(federations, ['member', 'sponsor']);
+        return common.customCollectionFilter(federations, ['member', 'sponsor', 'supports']);
       } else if (req.query.depth == 'federations.member') {
-        return common.customCollectionFilter(federations, ['sponsor', 'federates']);
+        return common.customCollectionFilter(federations, ['sponsor', 'federates', 'supports']);
       } else if (req.query.depth == 'federations.sponsor') {
-        return common.customCollectionFilter(federations, ['federates', 'member']);
+        return common.customCollectionFilter(federations, ['federates', 'member', 'supports']);
       }
     })
     .then(function (federationss) {
