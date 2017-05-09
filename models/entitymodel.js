@@ -32,6 +32,9 @@ const entitySchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Metadata'
   },
+  category: {
+    type: String
+  },
   supports: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Schema'

@@ -64,9 +64,6 @@ const federationSchema = mongoose.Schema({
   badgeSupported: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Badge'
-  }],
-  requirement: [{
-    type: mongoose.Schema.Types.Mixed
   }]
 }, {
   timestamps: true
