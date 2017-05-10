@@ -1,5 +1,6 @@
 // File : routes/schema.js -->
 var express = require('express');
+var fs = require('fs');
 var router = express.Router();
 
 var schemaController = require('../controller/schemacontroller');
@@ -13,6 +14,20 @@ var schemaURL = settings.schema;
  * resourcePath: /Schema
  * description: Open Trust Taxonomy for Federation Operators
  */
+
+router.get(schemaURL + '/categories', function (req, res) {
+  try {
+    var arr = [];
+    fs.readdir('./public/schema_category/', function (err, files) {
+      files.forEach(function (file) {
+        arr.push(settings.baseURL + '/schema_category/' + file)
+      });
+      return res.status(200).json(arr);
+    });
+  } catch (e) {
+    res.status(500).json();
+  }
+});
 
 /**
  * @swagger
@@ -275,5 +290,17 @@ router.post(schemaURL + '/:sid/entity/:eid', function (req, res) {
     res.status(500).json();
   }
 });
+
+/**
+ * @swagger
+ * path: /otto/schema/categories
+ * operations:
+ *   -  httpMethod: GET
+ *      summary: Get all available category
+ *      notes: Returns Schema
+ *      nickname: GetSchema
+ *
+ *
+ */
 
 module.exports = router;

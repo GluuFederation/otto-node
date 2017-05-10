@@ -1,0 +1,29 @@
+{
+  "@context": {
+    "otto": "https://docs.kantarainitiative.org/otto/openid-vocab-1.0",
+    "openid": "https://docs.kantarainitiative.org/otto/openid-1.0",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "schema": "http://schema.org",
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@graph": [
+    {
+      "@id": "openid:acr",
+      "@type": "rdf:Property",
+      "domainIncludes": [
+        {
+          "@id": "openid:OpenIDProvider"
+        },
+        {
+          "@id": "openid:OpenIDRelyingParty"
+        },
+        {
+          "@id": "otto:Schema"
+        }
+      ],
+      "rangeIncludes": {
+        "@id": "openid:Acr"
+      }
+    }
+  ]
+}
