@@ -240,4 +240,60 @@ router.post(entityURL + '/:eid/federation/:fid', function (req, res) {
   }
 });
 
+/**
+ * @swagger
+ * path: /otto/entity/{eid}/operatedBy/{type}/{id}
+ * operations:
+ *   -  httpMethod: post
+ *      summary: Join entity (Existing federation)
+ *      notes: The federation to which this entity is affiliated
+ *      nickname: JoinFederation
+ *      consumes:
+ *        - text/html
+ *      parameters:
+ *        - name: eid
+ *          description: Your Entity Id
+ *          paramType: path
+ *          required: true
+ *          dataType: string
+ *        - name: type
+ *          description: Your type - federation or entity
+ *          paramType: path
+ *          required: true
+ *          dataType: string
+ *          enum:
+ *             - "available"
+ *             - "pending"
+ *             - "sold"
+ *        - name: id
+ *          description: Your type Id
+ *          paramType: path
+ *          required: true
+ *          dataType: string
+ */
+router.post(entityURL + '/:eid/operatedBy/:type/:id', function (req, res) {
+  try {
+    if (req.params.type == "federation") {
+      entityController.setFederationAsOperator(req, response);
+    } else if (req.params.type == "participant") {
+      entityController.setParticipantAsOperator(req, response);
+    } else {
+      res.status(err.code).json({
+        'Error(s)': 'Invalid type'
+      });
+    }
+
+    function response(err, callback) {
+      if (err) {
+        res.status(err.code).json({
+          'Error(s)': err.error
+        });
+      }
+      res.status(200).json();
+    }
+  } catch (e) {
+    res.status(500).json();
+  }
+});
+
 module.exports = router;

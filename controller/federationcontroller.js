@@ -36,7 +36,8 @@ exports.getAllFederationWithDepth = function (req, callback) {
       {path: 'federates', select: '-_id -__v -updatedAt -createdAt'},
       {path: 'member', select: '-_id -__v -updatedAt -createdAt'},
       {path: 'registeredBy', select: '-_id -__v -updatedAt -createdAt'},
-      {path: 'supports', select: '-_id -__v -updatedAt -createdAt'}
+      {path: 'supports', select: '-_id -__v -updatedAt -createdAt'},
+      {path: 'metadata', select: '-_id -__v -updatedAt -createdAt'}
     ];
   }
 
@@ -56,13 +57,13 @@ exports.getAllFederationWithDepth = function (req, callback) {
         });
         return Promise.resolve(federations);
       } else if (req.query.depth == 'federations') {
-        return common.customCollectionFilter(federations, ['member', 'federates', 'sponsor', 'supports']);
+        return common.customCollectionFilter(federations, ['member', 'federates', 'sponsor', 'supports', 'metadata']);
       } else if (req.query.depth == 'federations.federates') {
-        return common.customCollectionFilter(federations, ['member', 'sponsor', 'supports']);
+        return common.customCollectionFilter(federations, ['member', 'sponsor', 'supports', 'metadata']);
       } else if (req.query.depth == 'federations.member') {
-        return common.customCollectionFilter(federations, ['sponsor', 'federates', 'supports']);
+        return common.customCollectionFilter(federations, ['sponsor', 'federates', 'supports', 'metadata']);
       } else if (req.query.depth == 'federations.sponsor') {
-        return common.customCollectionFilter(federations, ['federates', 'member', 'supports']);
+        return common.customCollectionFilter(federations, ['federates', 'member', 'supports', 'metadata']);
       }
     })
     .then(function (federationss) {
@@ -153,6 +154,7 @@ exports.findFederation = function (req, callback) {
     .populate({path: 'sponsor', select: '-_id -__v'})
     .populate({path: 'badgeSupported', select: '-_id -__v'})
     .populate({path: 'supports', select: '-_id -__v'})
+    .populate({path: 'metadata', select: '-_id -__v'})
     .populate({path: 'registeredBy', select: {'@id': 1, name: 1, _id: 0}})
     .lean()
     .exec(function (err, federation) {
@@ -166,13 +168,13 @@ exports.findFederation = function (req, callback) {
       }
       federation.registeredBy = federation.registeredBy['@id'];
       if (req.query.depth == null) {
-        federation = common.customObjectFilter(federation, ['sponsor', 'member', 'federates', 'badgeSupported', 'supports']);
+        federation = common.customObjectFilter(federation, ['sponsor', 'member', 'federates', 'badgeSupported', 'supports', 'metadata']);
       } else if (req.query.depth == 'federates') {
-        federation = common.customObjectFilter(federation, ['sponsor', 'member', 'badgeSupported', 'supports']);
+        federation = common.customObjectFilter(federation, ['sponsor', 'member', 'badgeSupported', 'supports', 'metadata']);
       } else if (req.query.depth == 'member') {
-        federation = common.customObjectFilter(federation, ['sponsor', 'federates', 'badgeSupported', 'supports']);
+        federation = common.customObjectFilter(federation, ['sponsor', 'federates', 'badgeSupported', 'supports', 'metadata']);
       } else if (req.query.depth == 'sponsor') {
-        federation = common.customObjectFilter(federation, ['member', 'federates', 'badgeSupported', 'supports']);
+        federation = common.customObjectFilter(federation, ['member', 'federates', 'badgeSupported', 'supports', 'metadata']);
       } else if (req.query.depth == 'federates,member,sponsor') {
       } else {
         return callback({
@@ -446,6 +448,55 @@ exports.addSponsor = function (req, callback) {
 
       oFederation.sponsor.push(req.params.pid);
       return oFederation.save();
+    })
+    .then(function (oFederation) {
+      return callback(null, oFederation);
+    })
+    .catch(function (err) {
+      return callback({error: err, code: 404}, null);
+    });
+};
+
+exports.addMetadata = function (req, callback) {
+  if (!mongoose.Types.ObjectId.isValid(req.params.fid)) {
+    return callback({
+      error: ['Invalid Federation Id'],
+      code: 400
+    }, null);
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(req.params.mid)) {
+    return callback({
+      error: ['Invalid metadata Id'],
+      code: 400
+    }, null);
+  }
+
+  var federation = null;
+  federationModel.findById(req.params.fid)
+    .then(function (oFederation) {
+      if (!oFederation) {
+        return Promise.reject({error: 'Federation doesn\'t exist', code: 404});
+      }
+
+      if (oFederation.metadata.indexOf(req.params.mid) > -1) {
+        return Promise.reject({
+          error: ['Metadata already exist'],
+          code: 400
+        });
+      }
+      federation = oFederation;
+      return metadataModel.findById(req.params.mid);
+    })
+    .then(function (docs) {
+      if (!docs) {
+        return Promise.reject({
+          error: ['Metadata doesn\'t exist'],
+          code: 404
+        });
+      }
+      federation.metadata.push(req.params.mid);
+      return federation.save();
     })
     .then(function (oFederation) {
       return callback(null, oFederation);

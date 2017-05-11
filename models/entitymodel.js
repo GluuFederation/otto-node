@@ -14,6 +14,14 @@ const entitySchema = mongoose.Schema({
     type: String,
     required: true
   },
+  operatedBy: {
+    id: {
+      type: mongoose.Schema.Types.ObjectId
+    },
+    type: {
+      type: String
+    }
+  },
   url: {
     type: String
   },

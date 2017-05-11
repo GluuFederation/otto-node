@@ -20,6 +20,10 @@ const federationSchema = mongoose.Schema({
   url: {
     type: String
   },
+  metadata: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Metadata'
+  }],
   supports: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Schema'

@@ -500,4 +500,41 @@ router.post(federationURL + '/:fid/sponsor/:pid', function (req, res) {
   }
 });
 
+/**
+ * @swagger
+ * path: /otto/federations/{fid}/metadata/{mid}
+ * operations:
+ *   -  httpMethod: post
+ *      summary: Add metadata to the federation
+ *      notes: Add metadata to the federation
+ *      nickname: AddMetadata
+ *      consumes:
+ *        - text/html
+ *      parameters:
+ *        - name: fid
+ *          description: Your federations Id
+ *          paramType: path
+ *          required: true
+ *          dataType: string
+ *        - name: mid
+ *          description: Your Metadata Id
+ *          paramType: path
+ *          required: true
+ *          dataType: string
+ */
+router.post(settings.federations + '/:fid/metadata/:mid', function (req, res) {
+  try {
+    federationController.addMetadata(req, function (err, callback) {
+      if (err) {
+        res.status(err.code).json({
+          'Error(s)': err.error
+        });
+      }
+      res.status(200).json();
+    });
+  } catch (e) {
+    res.status(500).json();
+  }
+});
+
 module.exports = router;

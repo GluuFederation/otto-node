@@ -26,7 +26,7 @@ app.set('view engine', 'ejs');
 //Swagger Settings
 app.use(swagger.init(app, {
     apiVersion: '1.0',
-    swaggerVersion: '1.0.5',
+    swaggerVersion: '2.1.5',
     basePath: settings.baseURL,
     swaggerURL: '/swagger',
     swaggerJSON: '/api-docs.json',

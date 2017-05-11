@@ -4,6 +4,7 @@ var JSPath = require('jspath');
 
 var entityModel = require('../models/entitymodel');
 var federationModel = require('../models/federationmodel');
+var participantModel = require('../models/participantmodel');
 var settings = require('../settings');
 var common = require('../helpers/common');
 
@@ -55,16 +56,31 @@ exports.getAllEntityWithDepth = function (req, callback) {
       } else if (req.query.depth == 'entities') {
         entities.forEach(function (item) {
           item.metadata = !!item.metadata ? item.metadata['@id'] : '';
+
+          if (!!item.operatedBy && item.operatedBy.type == 'federation')
+            item.operatedBy = settings.baseURL + settings.federations + '/' + item.operatedBy.id;
+          else if (!!item.operatedBy && item.operatedBy.type == 'participant')
+            item.operatedBy = settings.baseURL + settings.participant + '/' + item.operatedBy.id;
         });
 
         return common.customCollectionFilter(entities, ['federatedBy', 'supports']);
       } else if (req.query.depth == 'entities.federatedBy') {
         entities.forEach(function (item) {
           item.metadata = !!item.metadata ? item.metadata['@id'] : '';
+          if (!!item.operatedBy && item.operatedBy.type == 'federation')
+            item.operatedBy = settings.baseURL + settings.federations + '/' + item.operatedBy.id;
+          else if (!!item.operatedBy && item.operatedBy.type == 'participant')
+            item.operatedBy = settings.baseURL + settings.participant + '/' + item.operatedBy.id;
         });
 
         return Promise.resolve(entities);
-      } else if (req.query.depth == 'entities.metadata') {
+      } else if (req.query.depth == 'entites.metadata') {
+        entities.forEach(function (item) {
+          if (!!item.operatedBy && item.operatedBy.type == 'federation')
+            item.operatedBy = settings.baseURL + settings.federations + '/' + item.operatedBy.id;
+          else if (!!item.operatedBy && item.operatedBy.type == 'participant')
+            item.operatedBy = settings.baseURL + settings.participant + '/' + item.operatedBy.id;
+        });
         return common.customCollectionFilter(entities, ['federatedBy', 'supports']);
       }
     })
@@ -122,6 +138,11 @@ exports.findEntity = function (req, callback) {
         }, null);
       }
       entity.registeredBy = entity.registeredBy['@id'];
+      if (!!entity.operatedBy && entity.operatedBy.type == 'federation')
+        entity.operatedBy = settings.baseURL + settings.federations + '/' + entity.operatedBy.id;
+      else if (!!entity.operatedBy && entity.operatedBy.type == 'participant')
+        entity.operatedBy = settings.baseURL + settings.participant + '/' + entity.operatedBy.id;
+
       if (req.query.depth == null) {
         entity.metadata = !!entity.metadata ? entity.metadata['@id'] : '';
         entity = common.customObjectFilter(entity, ['federatedBy', 'supports']);
@@ -249,6 +270,109 @@ exports.joinEntity = function (req, callback) {
         });
       }
       entity.federatedBy.push(req.params.fid);
+      return entity.save();
+    })
+    .then(function (oEntity) {
+      return callback(null, oEntity);
+    })
+    .catch(function (err) {
+      return callback({error: err, code: 404}, null);
+    });
+};
+
+exports.setFederationAsOperator = function (req, callback) {
+  if (!mongoose.Types.ObjectId.isValid(req.params.eid)) {
+    return callback({
+      error: ['Invalid Entity Id'],
+      code: 400
+    }, null);
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return callback({
+      error: ['Invalid Id'],
+      code: 400
+    }, null);
+  }
+
+  var entity = null;
+  entityModel.findById(req.params.eid)
+    .then(function (oEntity) {
+      if (!oEntity) {
+        return Promise.reject({error: 'Entity doesn\'t exist', code: 404});
+      }
+
+      entity = oEntity;
+      return federationModel.findById(req.params.id);
+    })
+    .then(function (oFederation) {
+      if (!oFederation) {
+        return Promise.reject({
+          error: ['Federation doesn\'t exist'],
+          code: 404
+        });
+      }
+
+      entity.operatedBy = {
+        id: req.params.id,
+        type: 'federation'
+      };
+      return entity.save();
+    })
+    .then(function (oEntity) {
+      return callback(null, oEntity);
+    })
+    .catch(function (err) {
+      return callback({error: err, code: 404}, null);
+    });
+};
+
+exports.setParticipantAsOperator = function (req, callback) {
+  if (!mongoose.Types.ObjectId.isValid(req.params.eid)) {
+    return callback({
+      error: ['Invalid Entity Id'],
+      code: 400
+    }, null);
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return callback({
+      error: ['Invalid Id'],
+      code: 400
+    }, null);
+  }
+
+  var entity = null;
+  entityModel.findById(req.params.eid)
+    .then(function (oEntity) {
+      if (!oEntity) {
+        return Promise.reject({error: 'Entity doesn\'t exist', code: 404});
+      }
+
+      oEntity.operatedBy.forEach(function (item) {
+        if (item.id == req.params.id) {
+          return Promise.reject({
+            error: ['Federation already exist'],
+            code: 400
+          });
+        }
+      });
+
+      entity = oEntity;
+      return participantModel.findById(req.params.id);
+    })
+    .then(function (oParticipant) {
+      if (!oParticipant) {
+        return Promise.reject({
+          error: ['Participant doesn\'t exist'],
+          code: 404
+        });
+      }
+
+      entity.operatedBy.push({
+        id: req.params.id,
+        type: 'participant'
+      });
       return entity.save();
     })
     .then(function (oEntity) {
