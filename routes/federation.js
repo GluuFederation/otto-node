@@ -65,22 +65,12 @@ router.post(settings.federations, function (req, res) {
  *          required: true
  *          dataType: string
  *        - name: depth
- *          description: depth[federates, member, sponsor]
+ *          description: depth[federates, member, sponsor, all]
  *          paramType: query
  *          required: false
  *          dataType: string
  *        - name: filter
  *          description: jspath filter syntax
- *          paramType: query
- *          required: false
- *          dataType: string
- *        - name: sign
- *          description: Pass true to return the sign data
- *          paramType: query
- *          required: false
- *          dataType: string
- *        - name: alg
- *          description: Algorithm used for signing [RS256,RS384,RS512]
  *          paramType: query
  *          required: false
  *          dataType: string

@@ -28,16 +28,27 @@ exports.getAllParticipantWithDepth = function (req, callback) {
 
   if (!!req.query.depth) {
     depth = [
-      {path: 'memberOf', select: '-_id -__v -updatedAt -createdAt'},
-      {path: 'operates', select: '-_id -__v -updatedAt -createdAt'},
-      {path: 'registeredBy', select: '-_id -__v -updatedAt -createdAt'}
+      'memberOf',
+      'memberOf.registeredBy',
+      'memberOf.sponsor',
+      'memberOf.federates',
+      'memberOf.member',
+      'memberOf.badgeSupported',
+      'memberOf.supports',
+      'memberOf.metadata',
+      'operates',
+      'operates.registeredBy',
+      'operates.federatedBy',
+      'operates.supports',
+      'registeredBy',
+      'badgeSupported'
     ];
   }
 
   participantModel.find({}).select('-_id -__v -updatedAt -createdAt')
     .skip((!!pageLength && !!pageNo ? pageNo * pageLength : 0))
     .limit((!!pageLength ? pageLength : 0))
-    .populate(depth)
+    .deepPopulate(depth)
     .lean()
     .then(function (participants) {
       participants.forEach(function (item) {
@@ -54,7 +65,7 @@ exports.getAllParticipantWithDepth = function (req, callback) {
           item.operates = !!item.operates ? item.operates['@id'] : '';
         });
 
-        return common.customCollectionFilter(participants, ['memberOf']);
+        return common.customCollectionFilter(participants, ['memberOf', 'badgeSupported']);
       } else if (req.query.depth == 'participants.memberOf') {
         participants.forEach(function (item) {
           item.operates = !!item.operates ? item.operates['@id'] : '';
@@ -62,7 +73,7 @@ exports.getAllParticipantWithDepth = function (req, callback) {
 
         return Promise.resolve(participants);
       } else if (req.query.depth == 'participants.operates') {
-        return common.customCollectionFilter(participants, ['memberOf']);
+        return common.customCollectionFilter(participants, ['memberOf', 'badgeSupported']);
       }
 
     })
@@ -105,17 +116,29 @@ exports.findParticipant = function (req, callback) {
   }
 
   participantModel.findById(req.params.id).select('-_id -__v -updatedAt -createdAt')
-    .populate({path: 'memberOf', select: '-_id -__v -updatedAt -createdAt'})
-    .populate({path: 'badgeSupported', select: '-_id -__v'})
-    .populate({path: 'operates', select: '-_id -__v -updatedAt -createdAt'})
-    .populate({path: 'registeredBy', select: {'@id': 1, name: 1, _id: 0}})
+    .deepPopulate([
+      'memberOf',
+      'memberOf.registeredBy',
+      'memberOf.sponsor',
+      'memberOf.federates',
+      'memberOf.member',
+      'memberOf.badgeSupported',
+      'memberOf.supports',
+      'memberOf.metadata',
+      'operates',
+      'operates.registeredBy',
+      'operates.federatedBy',
+      'operates.supports',
+      'registeredBy',
+      'badgeSupported'
+    ])
     .lean()
     .exec(function (err, participant) {
       if (err) throw (err);
 
       if (!participant) {
         return callback({
-          error: ['Federation doesn\'t exist'],
+          error: ['Participant doesn\'t exist'],
           code: 404
         }, null);
       }
@@ -127,7 +150,9 @@ exports.findParticipant = function (req, callback) {
         participant = common.customObjectFilter(participant, ['memberOf', 'badgeSupported']);
       } else if (req.query.depth == 'memberOf') {
         participant.operates = !!participant.operates ? participant.operates['@id'] : '';
-      } else if (req.query.depth == 'memberOf,operates') {
+        participant = common.customObjectFilter(participant, ['badgeSupported']);
+      } else if (req.query.depth == 'all') {
+        participant = common.customObjectFilter(participant, ['badgeSupported']);
       } else {
         return callback({
           error: ['unknown value for depth parameter'],

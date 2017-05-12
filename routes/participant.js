@@ -60,7 +60,7 @@ router.post(participantURL, function (req, res) {
  *          required: true
  *          dataType: string
  *        - name: depth
- *          description: depth[memberOf, operates]
+ *          description: depth[memberOf, operates, all]
  *          paramType: query
  *          required: false
  *          dataType: string

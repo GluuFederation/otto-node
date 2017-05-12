@@ -63,7 +63,7 @@ router.post(entityURL, function (req, res) {
  *          required: true
  *          dataType: string
  *        - name: depth
- *          description: depth[metadata, federatedBy]
+ *          description: depth[metadata, federatedBy, all]
  *          paramType: query
  *          required: false
  *          dataType: string
@@ -245,7 +245,7 @@ router.post(entityURL + '/:eid/federation/:fid', function (req, res) {
  * path: /otto/entity/{eid}/operatedBy/{type}/{id}
  * operations:
  *   -  httpMethod: post
- *      summary: Join entity (Existing federation)
+ *      summary: Join entity (Existing federation or entity)
  *      notes: The federation to which this entity is affiliated
  *      nickname: JoinFederation
  *      consumes:

@@ -1,6 +1,6 @@
 var mongoose = require('mongoose');
-var settings = require("../settings");
 var deepPopulate = require('mongoose-deep-populate')(mongoose);
+var settings = require('../settings');
 
 const federationSchema = mongoose.Schema({
   '@context': {
@@ -71,6 +71,82 @@ const federationSchema = mongoose.Schema({
   }]
 }, {
   timestamps: true
+});
+
+federationSchema.plugin(deepPopulate, {
+  whitelist: [
+    'sponsor',
+    'sponsor.registeredBy',
+    'sponsor.memberOf',
+    'sponsor.operates',
+    'sponsor.badgeSupported',
+    'federates',
+    'federates.metadata',
+    'federates.registeredBy',
+    'federates.federatedBy',
+    'federates.supports',
+    'member',
+    'member.registeredBy',
+    'member.badgeSupported',
+    'member.memberOf',
+    'registeredBy',
+    'supports',
+    'metadata',
+    'badgeSupported'
+  ],
+  populate: {
+    'sponsor' :{
+      select : '-_id -__v -updatedAt -createdAt'
+    },
+    'sponsor.registeredBy' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'sponsor.badgeSupported' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'sponsor.memberOf' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'sponsor.operates' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'federates' :{
+      select : '-_id -__v -updatedAt -createdAt'
+    },
+    'federates.metadata' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'federates.registeredBy' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'federates.federatedBy' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'federates.supports' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'member' :{
+      select : '-_id -__v -updatedAt -createdAt'
+    },
+    'member.registeredBy' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'member.badgeSupported' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'member.memberOf' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'supports' :{
+      select : '-_id -__v -updatedAt -createdAt -supportedBy'
+    },
+    'metadata' :{
+      select : '-_id -__v -updatedAt -createdAt'
+    },
+    'badgeSupported' :{
+      select : '-_id -__v -updatedAt -createdAt'
+    }
+  }
 });
 
 federationSchema.pre('save', preSave);

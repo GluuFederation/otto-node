@@ -1,4 +1,5 @@
 var mongoose = require('mongoose');
+var deepPopulate = require('mongoose-deep-populate')(mongoose);
 var settings = require("../settings");
 
 // define the schema for our participant
@@ -53,6 +54,68 @@ const participantSchema = mongoose.Schema({
   }]
 }, {
   timestamps: true
+});
+
+participantSchema.plugin(deepPopulate, {
+  whitelist: [
+    'memberOf',
+    'memberOf.registeredBy',
+    'memberOf.sponsor',
+    'memberOf.federates',
+    'memberOf.member',
+    'memberOf.badgeSupported',
+    'memberOf.supports',
+    'memberOf.metadata',
+    'operates',
+    'operates.registeredBy',
+    'operates.federatedBy',
+    'operates.supports',
+    'registeredBy',
+    'badgeSupported'
+  ], populate: {
+    'memberOf' :{
+      select : '-_id -__v -updatedAt -createdAt'
+    },
+    'memberOf.registeredBy' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'memberOf.sponsor' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'memberOf.federates' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'memberOf.member' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'memberOf.badgeSupported' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'memberOf.supports' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'memberOf.metadata' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'operates' :{
+      select : '-_id -__v -updatedAt -createdAt'
+    },
+    'operates.registeredBy' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'operates.federatedBy' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'operates.supports' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'registeredBy' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'badgeSupported' :{
+      select : '-_id -__v -updatedAt -createdAt'
+    }
+  }
 });
 
 participantSchema.pre('save', function (next, done) {

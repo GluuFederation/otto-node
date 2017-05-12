@@ -4,6 +4,7 @@ var mongoose = require('mongoose');
 var keypair = require('keypair');
 var pem2jwk = require('pem-jwk').pem2jwk;
 var Transaction = require('mongoose-transaction')(mongoose);
+
 var Ajv = require('ajv');
 
 var settings = require('../settings');
@@ -31,20 +32,32 @@ exports.getAllFederationWithDepth = function (req, callback) {
   var depth = '';
 
   if (!!req.query.depth) {
-    depth = [
-      {path: 'sponsor', select: '-_id -__v -updatedAt -createdAt'},
-      {path: 'federates', select: '-_id -__v -updatedAt -createdAt'},
-      {path: 'member', select: '-_id -__v -updatedAt -createdAt'},
-      {path: 'registeredBy', select: '-_id -__v -updatedAt -createdAt'},
-      {path: 'supports', select: '-_id -__v -updatedAt -createdAt'},
-      {path: 'metadata', select: '-_id -__v -updatedAt -createdAt'}
-    ];
+   depth = [
+     'sponsor',
+     'sponsor.registeredBy',
+     'sponsor.memberOf',
+     'sponsor.operates',
+     'sponsor.badgeSupported',
+     'federates',
+     'federates.metadata',
+     'federates.registeredBy',
+     'federates.federatedBy',
+     'federates.supports',
+     'member',
+     'member.registeredBy',
+     'member.badgeSupported',
+     'member.memberOf',
+     'badgeSupported',
+     'supports',
+     'metadata',
+     'registeredBy'
+   ];
   }
 
   federationModel.find({}).select('-_id -__v -updatedAt -createdAt')
     .skip((!!pageLength && !!pageNo ? pageNo * pageLength : 0))
     .limit((!!pageLength ? pageLength : 0))
-    .populate(depth)
+    .deepPopulate(depth)
     .lean()
     .then(function (federations) {
       federations.forEach(function (item) {
@@ -57,13 +70,13 @@ exports.getAllFederationWithDepth = function (req, callback) {
         });
         return Promise.resolve(federations);
       } else if (req.query.depth == 'federations') {
-        return common.customCollectionFilter(federations, ['member', 'federates', 'sponsor', 'supports', 'metadata']);
+        return common.customCollectionFilter(federations, ['member', 'federates', 'sponsor', 'supports', 'metadata', 'badgeSupported']);
       } else if (req.query.depth == 'federations.federates') {
-        return common.customCollectionFilter(federations, ['member', 'sponsor', 'supports', 'metadata']);
+        return common.customCollectionFilter(federations, ['member', 'sponsor', 'supports', 'metadata', 'badgeSupported']);
       } else if (req.query.depth == 'federations.member') {
-        return common.customCollectionFilter(federations, ['sponsor', 'federates', 'supports', 'metadata']);
+        return common.customCollectionFilter(federations, ['sponsor', 'federates', 'supports', 'metadata', 'badgeSupported']);
       } else if (req.query.depth == 'federations.sponsor') {
-        return common.customCollectionFilter(federations, ['federates', 'member', 'supports', 'metadata']);
+        return common.customCollectionFilter(federations, ['federates', 'member', 'supports', 'metadata', 'badgeSupported']);
       }
     })
     .then(function (federationss) {
@@ -146,16 +159,26 @@ exports.findFederation = function (req, callback) {
   }
 
   federationModel.findById(req.params.id).select('-_id -__v -updatedAt -createdAt')
-    .populate({
-      path: 'federates',
-      select: '-_id -__v'
-    })
-    .populate({path: 'member', select: '-_id -__v'})
-    .populate({path: 'sponsor', select: '-_id -__v'})
-    .populate({path: 'badgeSupported', select: '-_id -__v'})
-    .populate({path: 'supports', select: '-_id -__v'})
-    .populate({path: 'metadata', select: '-_id -__v'})
-    .populate({path: 'registeredBy', select: {'@id': 1, name: 1, _id: 0}})
+    .deepPopulate([
+      'sponsor',
+      'sponsor.registeredBy',
+      'sponsor.memberOf',
+      'sponsor.operates',
+      'sponsor.badgeSupported',
+      'federates',
+      'federates.metadata',
+      'federates.registeredBy',
+      'federates.federatedBy',
+      'federates.supports',
+      'member',
+      'member.registeredBy',
+      'member.badgeSupported',
+      'member.memberOf',
+      'badgeSupported',
+      'supports',
+      'metadata',
+      'registeredBy'
+    ])
     .lean()
     .exec(function (err, federation) {
       if (err) throw (err);
@@ -175,7 +198,8 @@ exports.findFederation = function (req, callback) {
         federation = common.customObjectFilter(federation, ['sponsor', 'federates', 'badgeSupported', 'supports', 'metadata']);
       } else if (req.query.depth == 'sponsor') {
         federation = common.customObjectFilter(federation, ['member', 'federates', 'badgeSupported', 'supports', 'metadata']);
-      } else if (req.query.depth == 'federates,member,sponsor') {
+      } else if (req.query.depth == 'all') {
+        federation = common.customObjectFilter(federation, ['badgeSupported']);
       } else {
         return callback({
           error: ['unknown value for depth parameter'],
@@ -187,8 +211,15 @@ exports.findFederation = function (req, callback) {
         callback(null, federation);
       else {
         // Apply jsPath filter here.
-        var filterData = JSPath.apply(req.query.filter, federation);
-        callback(null, filterData);
+        try {
+          var filterData = JSPath.apply(req.query.filter, federation);
+          callback(null, filterData);
+        } catch (e) {
+          return callback({
+            error: ['Invalid jspath'],
+            code: 400
+          }, null);
+        }
       }
     });
 };

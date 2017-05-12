@@ -51,16 +51,61 @@ const entitySchema = mongoose.Schema({
   timestamps: true
 });
 
+entitySchema.plugin(deepPopulate, {
+  whitelist: [
+    'registeredBy',
+    'federatedBy',
+    'federatedBy.registeredBy',
+    'federatedBy.sponsor',
+    'federatedBy.federates',
+    'federatedBy.member',
+    'federatedBy.badgeSupported',
+    'federatedBy.supports',
+    'federatedBy.metadata',
+    'metadata',
+    'supports'
+  ],
+  populate: {
+    'registeredBy' :{
+      select : '-_id -__v -updatedAt -createdAt'
+    },
+    'federatedBy' :{
+      select : '-_id -__v -updatedAt -createdAt'
+    },
+    'federatedBy.registeredBy' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'federatedBy.sponsor' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'federatedBy.federates' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'federatedBy.member' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'federatedBy.badgeSupported' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'federatedBy.supports' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'federatedBy.metadata' :{
+      select : {'@id': 1, _id: 0}
+    },
+    'metadata' :{
+      select : '-_id -__v -updatedAt -createdAt'
+    },
+    'supports' :{
+      select : '-_id -__v -updatedAt -createdAt -supportedBy'
+    }
+  }
+});
+
 entitySchema.pre('save', function (next, done) {
   this['@id'] = settings.baseURL + settings.entity + '/' + this._id;
   this['@context'] = settings.contextSchema + settings.contextEntity;
   next();
-});
-
-entitySchema.plugin(deepPopulate, {
-  whitelist: [
-    'organization'
-  ]
 });
 
 module.exports = mongoose.model('Entity', entitySchema);

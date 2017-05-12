@@ -31,17 +31,17 @@ exports.getAllEntityWithDepth = function (req, callback) {
 
   if (!!req.query.depth) {
     depth = [
-      {path: 'metadata', select: '-_id -__v -updatedAt -createdAt'},
-      {path: 'federatedBy', select: '-_id -__v -updatedAt -createdAt'},
-      {path: 'registeredBy', select: '-_id -__v -updatedAt -createdAt'},
-      {path: 'supports', select: '-_id -__v -updatedAt -createdAt'}
-    ];
+      'registeredBy',
+      'federatedBy',
+      'metadata',
+      'supports'
+    ]
   }
 
   entityModel.find({}).select('-_id -__v -updatedAt -createdAt')
     .skip((!!pageLength && !!pageNo ? pageNo * pageLength : 0))
     .limit((!!pageLength ? pageLength : 0))
-    .populate(depth)
+    .deepPopulate(depth)
     .lean()
     .then(function (entities) {
       entities.forEach(function (item) {
@@ -123,10 +123,19 @@ exports.findEntity = function (req, callback) {
   }
 
   entityModel.findById(req.params.id).select('-_id -__v -updatedAt -createdAt')
-    .populate({path: 'metadata', select: '-_id -__v -updatedAt -createdAt'})
-    .populate({path: 'federatedBy', select: '-_id -__v -updatedAt -createdAt'})
-    .populate({path: 'supports', select: '-_id -__v'})
-    .populate({path: 'registeredBy', select: {'@id': 1, name: 1, _id: 0}})
+    .deepPopulate([
+      'registeredBy',
+      'federatedBy',
+      'federatedBy.registeredBy',
+      'federatedBy.sponsor',
+      'federatedBy.federates',
+      'federatedBy.member',
+      'federatedBy.badgeSupported',
+      'federatedBy.supports',
+      'federatedBy.metadata',
+      'metadata',
+      'supports'
+    ])
     .lean()
     .exec(function (err, entity) {
       if (err) throw (err);
@@ -150,7 +159,7 @@ exports.findEntity = function (req, callback) {
         entity = common.customObjectFilter(entity, ['federatedBy', 'supports']);
       } else if (req.query.depth == 'federatedBy') {
         entity.metadata = !!entity.metadata ? entity.metadata['@id'] : '';
-      } else if (req.query.depth == 'metadata,federatedBy') {
+      } else if (req.query.depth == 'all') {
       } else {
         return callback({
           error: ['unknown value for depth parameter'],
