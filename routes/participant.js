@@ -119,6 +119,7 @@ router.get(participantURL, function (req, res) {
         res.status(err.code).json({'Error(s)': err.error});
       } else {
         res.status(200).json({
+          '@context': baseURL + settings.participant,
           participant: data
         });
       }

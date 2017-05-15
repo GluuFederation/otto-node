@@ -164,8 +164,15 @@ exports.findParticipant = function (req, callback) {
         callback(null, participant);
       else {
         // Apply jsPath filter here.
-        var filterData = JSPath.apply(req.query.filter, federation);
-        callback(null, filterData);
+        try {
+          var filterData = JSPath.apply(req.query.filter, participant);
+          callback(null, filterData);
+        } catch (e) {
+          return callback({
+            error: ['Invalid jspath'],
+            code: 400
+          }, null);
+        }
       }
     });
 

@@ -159,6 +159,7 @@ exports.findEntity = function (req, callback) {
         entity = common.customObjectFilter(entity, ['federatedBy', 'supports']);
       } else if (req.query.depth == 'federatedBy') {
         entity.metadata = !!entity.metadata ? entity.metadata['@id'] : '';
+        entity = common.customObjectFilter(entity, ['supports']);
       } else if (req.query.depth == 'all') {
       } else {
         return callback({
@@ -171,8 +172,15 @@ exports.findEntity = function (req, callback) {
         callback(null, entity);
       else {
         // Apply jsPath filter here.
-        var filterData = JSPath.apply(req.query.filter, entity);
-        callback(null, filterData);
+        try {
+          var filterData = JSPath.apply(req.query.filter, entity);
+          callback(null, filterData);
+        } catch (e) {
+          return callback({
+            error: ['Invalid jspath'],
+            code: 400
+          }, null);
+        }
       }
     });
 };

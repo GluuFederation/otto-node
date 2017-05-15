@@ -214,7 +214,7 @@ router.get(settings.federations, function (req, res) {
         });
       } else {
         res.status(200).json({
-          '@context': baseURL + '/otto/federation_list',
+          '@context': baseURL + settings.federations,
           federations: data
         });
       }
