@@ -1,9 +1,7 @@
-var JSPath = require('jspath');
 var Guid = require('guid');
 var mongoose = require('mongoose');
 var keypair = require('keypair');
 var pem2jwk = require('pem-jwk').pem2jwk;
-var Transaction = require('mongoose-transaction')(mongoose);
 
 var Ajv = require('ajv');
 
@@ -32,26 +30,26 @@ exports.getAllFederationWithDepth = function (req, callback) {
   var depth = '';
 
   if (!!req.query.depth) {
-   depth = [
-     'sponsor',
-     'sponsor.registeredBy',
-     'sponsor.memberOf',
-     'sponsor.operates',
-     'sponsor.badgeSupported',
-     'federates',
-     'federates.metadata',
-     'federates.registeredBy',
-     'federates.federatedBy',
-     'federates.supports',
-     'member',
-     'member.registeredBy',
-     'member.badgeSupported',
-     'member.memberOf',
-     'badgeSupported',
-     'supports',
-     'metadata',
-     'registeredBy'
-   ];
+    depth = [
+      'sponsor',
+      'sponsor.registeredBy',
+      'sponsor.memberOf',
+      'sponsor.operates',
+      'sponsor.badgeSupported',
+      'federates',
+      'federates.metadata',
+      'federates.registeredBy',
+      'federates.federatedBy',
+      'federates.supports',
+      'member',
+      'member.registeredBy',
+      'member.badgeSupported',
+      'member.memberOf',
+      'badgeSupported',
+      'supports',
+      'metadata',
+      'registeredBy'
+    ];
   }
 
   federationModel.find({}).select('-_id -__v -updatedAt -createdAt')
@@ -71,16 +69,12 @@ exports.getAllFederationWithDepth = function (req, callback) {
         return Promise.resolve(federations);
       } else if (req.query.depth == 'federations') {
         return common.customCollectionFilter(federations, ['member', 'federates', 'sponsor', 'supports', 'metadata', 'badgeSupported']);
-      } else if (req.query.depth == 'federations.federates') {
-        return common.customCollectionFilter(federations, ['member', 'sponsor', 'supports', 'metadata', 'badgeSupported']);
-      } else if (req.query.depth == 'federations.member') {
-        return common.customCollectionFilter(federations, ['sponsor', 'federates', 'supports', 'metadata', 'badgeSupported']);
-      } else if (req.query.depth == 'federations.sponsor') {
-        return common.customCollectionFilter(federations, ['federates', 'member', 'supports', 'metadata', 'badgeSupported']);
+      } else {
+        return callback({error: ['Invalid depth parameter'], code: 400}, null);
       }
     })
-    .then(function (federationss) {
-      return callback(null, federationss);
+    .then(function (federations) {
+      return callback(null, federations);
     })
     .catch(function (err) {
       return callback({error: err, code: 404}, null);
@@ -180,9 +174,8 @@ exports.findFederation = function (req, callback) {
       'registeredBy'
     ])
     .lean()
-    .exec(function (err, federation) {
-      if (err) throw (err);
-
+    .exec()
+    .then(function (federation) {
       if (!federation) {
         return callback({
           error: ['Federation doesn\'t exist'],
@@ -190,30 +183,23 @@ exports.findFederation = function (req, callback) {
         }, null);
       }
       federation.registeredBy = federation.registeredBy['@id'];
+      federation = common.customObjectFilter(federation, ['sponsor', 'member', 'federates', 'badgeSupported', 'supports', 'metadata']);
       if (req.query.depth == null) {
-        federation = common.customObjectFilter(federation, ['sponsor', 'member', 'federates', 'badgeSupported', 'supports', 'metadata']);
-      } else if (req.query.depth == 'federates') {
-        federation = common.customObjectFilter(federation, ['sponsor', 'member', 'badgeSupported', 'supports', 'metadata']);
-      } else if (req.query.depth == 'member') {
-        federation = common.customObjectFilter(federation, ['sponsor', 'federates', 'badgeSupported', 'supports', 'metadata']);
-      } else if (req.query.depth == 'sponsor') {
-        federation = common.customObjectFilter(federation, ['member', 'federates', 'badgeSupported', 'supports', 'metadata']);
-      } else if (req.query.depth == 'all') {
-        federation = common.customObjectFilter(federation, ['badgeSupported']);
+        return Promise.resolve(federation);
       } else {
-        return callback({
-          error: ['unknown value for depth parameter'],
-          code: 400
-        }, null);
+        return common.depth(federation, req.query.depth)
+          .then(function (depthFed) {
+            return Promise.resolve(depthFed);
+          });
       }
-
+    })
+    .then(function (federation) {
       if (req.query.filter == null)
         callback(null, federation);
       else {
-        // Apply jsPath filter here.
         try {
-          var filterData = JSPath.apply(req.query.filter, federation);
-          callback(null, filterData);
+          var data = common.jsPathFilter(req.query.filter, federation);
+          callback(null, data);
         } catch (e) {
           return callback({
             error: ['Invalid jspath'],
@@ -221,6 +207,12 @@ exports.findFederation = function (req, callback) {
           }, null);
         }
       }
+    })
+    .catch(function (err) {
+      return callback({
+        error: err,
+        code: 400
+      }, null);
     });
 };
 

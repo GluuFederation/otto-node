@@ -60,12 +60,12 @@ router.post(participantURL, function (req, res) {
  *          required: true
  *          dataType: string
  *        - name: depth
- *          description: depth[memberOf, operates, all]
+ *          description: depth
  *          paramType: query
  *          required: false
  *          dataType: string
  *        - name: filter
- *          description: jspath filter syntax
+ *          description: jspath filter syntax (Example- .name)
  *          paramType: query
  *          required: false
  *          dataType: string
@@ -96,7 +96,7 @@ router.get(participantURL + '/:id', function (req, res) {
  *      nickname: GetParticipant
  *      parameters:
  *        - name: depth
- *          description: depth[participants, participants.memberOf, participants.operates]
+ *          description: depth
  *          paramType: query
  *          required: false
  *          dataType: string

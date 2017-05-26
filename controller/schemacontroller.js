@@ -55,8 +55,8 @@ exports.getAllSchemaWithDepth = function (req, callback) {
           return schema;
         });
         return Promise.resolve(schemas);
-      } else if (req.query.depth == 'schema.supportedBy') {
-        return Promise.resolve(schemas);
+      } else {
+        return callback({error: ['Invalid depth parameter'], code: 400}, null);
       }
     })
     .then(function (schemas) {
@@ -97,38 +97,51 @@ exports.findSchema = function (req, callback) {
 
   schemaModel.findById(req.params.id).select('-_id -__v -updatedAt -createdAt')
     .lean()
-    .exec(function (err, schema) {
-      if (err) throw (err);
-
+    .exec()
+    .then(function (schema) {
       if (!schema) {
         return callback({
           error: ['Schema doesn\'t exist'],
           code: 404
         }, null);
       }
+
+      schema.supportedBy = schema.supportedBy.map(function (item) {
+        if (item.type == 'Federation')
+          return settings.baseURL + settings.federations + '/' + item.id;
+        else if (item.type == 'Entity')
+          return settings.baseURL + settings.entity + '/' + item.id;
+      });
+
       if (req.query.depth == null) {
-        schema.supportedBy = schema.supportedBy.map(function (item) {
-          if (item.type == 'Federation')
-            return settings.baseURL + settings.federations + '/' + item.id;
-          else if (item.type == 'Entity')
-            return settings.baseURL + settings.entity + '/' + item.id;
-        });
-      } else if (req.query.depth == 'supportedBy') {
-
+        return Promise.resolve(schema);
       } else {
-        return callback({
-          error: ['unknown value for depth parameter'],
-          code: 400
-        }, null);
+        return common.depth(schema, req.query.depth)
+          .then(function (depthSchema) {
+            return Promise.resolve(depthSchema);
+          });
       }
-
+    })
+    .then(function (schema) {
       if (req.query.filter == null)
         callback(null, schema);
       else {
-        // Apply jsPath filter here.
-        var filterData = JSPath.apply(req.query.filter, schema);
-        callback(null, filterData);
+        try {
+          var data = common.jsPathFilter(req.query.filter, schema);
+          callback(null, data);
+        } catch (e) {
+          return callback({
+            error: ['Invalid jspath'],
+            code: 400
+          }, null);
+        }
       }
+    })
+    .catch(function (err) {
+      return callback({
+        error: err,
+        code: 400
+      }, null);
     });
 };
 

@@ -77,8 +77,13 @@ router.post(schemaURL, function (req, res) {
  *          description: Your Schema Id
  *          required: true
  *          dataType: string
+ *        - name: depth
+ *          description: depth
+ *          paramType: query
+ *          required: false
+ *          dataType: string
  *        - name: filter
- *          description: jspath filter syntax
+ *          description: jspath filter syntax (Example- .name)
  *          paramType: query
  *          required: false
  *          dataType: string
@@ -108,7 +113,7 @@ router.get(schemaURL + '/:id', function (req, res) {
  *      nickname: GetSchema
  *      parameters:
  *       - name: depth
- *         description: depth[schema]
+ *         description: depth
  *         paramType: query
  *         required: false
  *         dataType: string

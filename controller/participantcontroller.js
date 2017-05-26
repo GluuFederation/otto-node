@@ -60,22 +60,15 @@ exports.getAllParticipantWithDepth = function (req, callback) {
           return item['@id'];
         });
         return Promise.resolve(participants);
-      } else if (req.query.depth == 'participants') {
+      } else if (req.query.depth == 'participant') {
         participants.forEach(function (item) {
           item.operates = !!item.operates ? item.operates['@id'] : '';
         });
 
         return common.customCollectionFilter(participants, ['memberOf', 'badgeSupported']);
-      } else if (req.query.depth == 'participants.memberOf') {
-        participants.forEach(function (item) {
-          item.operates = !!item.operates ? item.operates['@id'] : '';
-        });
-
-        return Promise.resolve(participants);
-      } else if (req.query.depth == 'participants.operates') {
-        return common.customCollectionFilter(participants, ['memberOf', 'badgeSupported']);
+      } else {
+        return callback({error: ['Invalid depth parameter'], code: 400}, null);
       }
-
     })
     .then(function (participants) {
       return callback(null, participants);
@@ -133,9 +126,8 @@ exports.findParticipant = function (req, callback) {
       'badgeSupported'
     ])
     .lean()
-    .exec(function (err, participant) {
-      if (err) throw (err);
-
+    .exec()
+    .then(function (participant) {
       if (!participant) {
         return callback({
           error: ['Participant doesn\'t exist'],
@@ -143,30 +135,24 @@ exports.findParticipant = function (req, callback) {
         }, null);
       }
       participant.registeredBy = participant.registeredBy['@id'];
+      participant.operates = !!participant.operates ? participant.operates['@id'] : '';
+      participant = common.customObjectFilter(participant, ['memberOf', 'badgeSupported']);
       if (req.query.depth == null) {
-        participant.operates = !!participant.operates ? participant.operates['@id'] : '';
-        participant = common.customObjectFilter(participant, ['memberOf', 'badgeSupported']);
-      } else if (req.query.depth == 'operates') {
-        participant = common.customObjectFilter(participant, ['memberOf', 'badgeSupported']);
-      } else if (req.query.depth == 'memberOf') {
-        participant.operates = !!participant.operates ? participant.operates['@id'] : '';
-        participant = common.customObjectFilter(participant, ['badgeSupported']);
-      } else if (req.query.depth == 'all') {
-        participant = common.customObjectFilter(participant, ['badgeSupported']);
+        return Promise.resolve(participant);
       } else {
-        return callback({
-          error: ['unknown value for depth parameter'],
-          code: 400
-        }, null);
+        return common.depth(participant, req.query.depth)
+          .then(function (depthParticipant) {
+            return Promise.resolve(depthParticipant);
+          });
       }
-
+    })
+    .then(function (participant) {
       if (req.query.filter == null)
         callback(null, participant);
       else {
-        // Apply jsPath filter here.
         try {
-          var filterData = JSPath.apply(req.query.filter, participant);
-          callback(null, filterData);
+          var data = common.jsPathFilter(req.query.filter, participant);
+          callback(null, data);
         } catch (e) {
           return callback({
             error: ['Invalid jspath'],
@@ -174,8 +160,13 @@ exports.findParticipant = function (req, callback) {
           }, null);
         }
       }
+    })
+    .catch(function (err) {
+      return callback({
+        error: err,
+        code: 400
+      }, null);
     });
-
 };
 
 exports.deleteParticipant = function (req, callback) {

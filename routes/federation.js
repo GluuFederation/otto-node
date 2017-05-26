@@ -65,12 +65,12 @@ router.post(settings.federations, function (req, res) {
  *          required: true
  *          dataType: string
  *        - name: depth
- *          description: depth[federates, member, sponsor, all]
+ *          description: depth
  *          paramType: query
  *          required: false
  *          dataType: string
  *        - name: filter
- *          description: jspath filter syntax
+ *          description: jspath filter syntax (Example- .name)
  *          paramType: query
  *          required: false
  *          dataType: string
@@ -83,71 +83,7 @@ router.get(settings.federations + '/:id', function (req, res) {
         'Error(s)': err.error
       });
     } else {
-      if (req.query.sign != null && req.query.sign != undefined) {
-        if (req.query.sign == 'true') {
-          var alg = "";
-          if (req.query.alg == undefined) {
-            alg = 'RS512';
-          } else {
-            var str = req.query.alg;
-            if (algArr.indexOf(str.trim()) > -1) {
-              alg = str.trim();
-            } else {
-              res.status(400).json({
-                Error: ['Cannot sign federation data. Algorithm not suported']
-              });
-            }
-          }
-
-          if (data.hasOwnProperty("keys")) {
-            var keys = data.keys;
-
-            delete data.keys;
-            var i = 0
-            for (i = 0; i < keys.length; i++) {
-              if (alg == keys[i].alg) {
-                break;
-              }
-            }
-            console.log(i);
-            console.log(keys[i]);
-            try {
-              jws.createSign({
-                header: {
-                  alg: alg
-                },
-                privateKey: keys[i].privatekey,
-                payload: data,
-              }).on('done', function (signature) {
-                res.status(200).json({
-                  SignData: signature
-                });
-
-              });
-            } catch (e) {
-              res.status(500).json({
-                Error: ['Error occur while signing the data.']
-              });
-            }
-
-          } else {
-            res.status(400).json({
-              Error: ['Cannot sign federation data. Key not available']
-            });
-          }
-        } else {
-          res.status(400).json({
-            Error: ['Invalid value for the sign parameter.']
-          });
-        }
-
-      } else {
-        if (data.hasOwnProperty("keys"))
-          delete data.keys;
-
-        res.status(200).json(data)
-      }
-
+      res.status(200).json(data)
     }
   });
 });
@@ -189,7 +125,7 @@ router.get(settings.federations + '/:id/jwks', function (req, res) {
  *      nickname: GetFederations
  *      parameters:
  *        - name: depth
- *          description: depth[federations, federations.sponsor, federations.federates, federations.member]
+ *          description: depth
  *          paramType: query
  *          required: false
  *          dataType: string

@@ -34,6 +34,8 @@ exports.getAllMetadataWithDepth = function (req, callback) {
         return callback(null, metadata);
       } else if (req.query.depth == 'metadata') {
         return callback(null, metadata);
+      } else {
+        return callback({error: ['Invalid depth parameter'], code: 400}, null);
       }
     })
     .catch(function (err) {
@@ -70,30 +72,44 @@ exports.findMetadata = function (req, callback) {
     }, null);
   }
 
-  var query = metadataModel.findOne({
-    _id: req.params.id
-  })
+  metadataModel
+    .findOne({
+      _id: req.params.id
+    })
     .select('-_id -__v -updatedAt -createdAt')
-    .lean();
-
-  query.exec(function (err, docs) {
-    if (docs != null) {
-      if (err) throw (err);
-
-      if (req.query.filter == null) {
-        callback(null, docs);
+    .lean()
+    .exec()
+    .then(function (metadata) {
+      if (req.query.depth == null) {
+        return Promise.resolve(metadata);
       } else {
-        // Apply jsPath filter here.
-        var filterdata = JSPath.apply(req.query.filter, docs);
-        callback(null, filterdata);
+        return common.depth(metadata, req.query.depth)
+          .then(function (depthMeta) {
+            return Promise.resolve(depthMeta);
+          });
       }
-    } else {
-      callback({
-        error: ['Metadata not found'],
-        code: 404
+    })
+    .then(function (metadata) {
+      if (req.query.filter == null)
+        callback(null, metadata);
+      else {
+        try {
+          var data = common.jsPathFilter(req.query.filter, metadata);
+          callback(null, data);
+        } catch (e) {
+          return callback({
+            error: ['Invalid jspath'],
+            code: 400
+          }, null);
+        }
+      }
+    })
+    .catch(function (err) {
+      return callback({
+        error: err,
+        code: 400
       }, null);
-    }
-  });
+    });
 };
 
 exports.deleteMetadata = function (req, callback) {

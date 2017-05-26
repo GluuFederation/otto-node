@@ -63,12 +63,12 @@ router.post(entityURL, function (req, res) {
  *          required: true
  *          dataType: string
  *        - name: depth
- *          description: depth[metadata, federatedBy, all]
+ *          description: depth
  *          paramType: query
  *          required: false
  *          dataType: string
  *        - name: filter
- *          description: jspath filter syntax
+ *          description: jspath filter syntax (Example- .name)
  *          paramType: query
  *          required: false
  *          dataType: string
@@ -98,7 +98,7 @@ router.get(entityURL + '/:id', function (req, res) {
  *      nickname: GetEntity
  *      parameters:
  *       - name: depth
- *         description: depth[entities, entities.federatedBy, entities.metadata]
+ *         description: depth
  *         paramType: query
  *         required: false
  *         dataType: string

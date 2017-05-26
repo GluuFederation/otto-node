@@ -53,7 +53,7 @@ exports.getAllEntityWithDepth = function (req, callback) {
           return item['@id'];
         });
         return Promise.resolve(entities);
-      } else if (req.query.depth == 'entities') {
+      } else if (req.query.depth == 'entity') {
         entities.forEach(function (item) {
           item.metadata = !!item.metadata ? item.metadata['@id'] : '';
 
@@ -64,24 +64,8 @@ exports.getAllEntityWithDepth = function (req, callback) {
         });
 
         return common.customCollectionFilter(entities, ['federatedBy', 'supports']);
-      } else if (req.query.depth == 'entities.federatedBy') {
-        entities.forEach(function (item) {
-          item.metadata = !!item.metadata ? item.metadata['@id'] : '';
-          if (!!item.operatedBy && item.operatedBy.type == 'federation')
-            item.operatedBy = settings.baseURL + settings.federations + '/' + item.operatedBy.id;
-          else if (!!item.operatedBy && item.operatedBy.type == 'participant')
-            item.operatedBy = settings.baseURL + settings.participant + '/' + item.operatedBy.id;
-        });
-
-        return Promise.resolve(entities);
-      } else if (req.query.depth == 'entites.metadata') {
-        entities.forEach(function (item) {
-          if (!!item.operatedBy && item.operatedBy.type == 'federation')
-            item.operatedBy = settings.baseURL + settings.federations + '/' + item.operatedBy.id;
-          else if (!!item.operatedBy && item.operatedBy.type == 'participant')
-            item.operatedBy = settings.baseURL + settings.participant + '/' + item.operatedBy.id;
-        });
-        return common.customCollectionFilter(entities, ['federatedBy', 'supports']);
+      } else {
+        return callback({error: ['Invalid depth parameter'], code: 400}, null);
       }
     })
     .then(function (entities) {
@@ -137,9 +121,8 @@ exports.findEntity = function (req, callback) {
       'supports'
     ])
     .lean()
-    .exec(function (err, entity) {
-      if (err) throw (err);
-
+    .exec()
+    .then(function (entity) {
       if (!entity) {
         return callback({
           error: ['Entity doesn\'t exist'],
@@ -152,29 +135,25 @@ exports.findEntity = function (req, callback) {
       else if (!!entity.operatedBy && entity.operatedBy.type == 'participant')
         entity.operatedBy = settings.baseURL + settings.participant + '/' + entity.operatedBy.id;
 
-      if (req.query.depth == null) {
-        entity.metadata = !!entity.metadata ? entity.metadata['@id'] : '';
-        entity = common.customObjectFilter(entity, ['federatedBy', 'supports']);
-      } else if (req.query.depth == 'metadata') {
-        entity = common.customObjectFilter(entity, ['federatedBy', 'supports']);
-      } else if (req.query.depth == 'federatedBy') {
-        entity.metadata = !!entity.metadata ? entity.metadata['@id'] : '';
-        entity = common.customObjectFilter(entity, ['supports']);
-      } else if (req.query.depth == 'all') {
-      } else {
-        return callback({
-          error: ['unknown value for depth parameter'],
-          code: 400
-        }, null);
-      }
+      entity.metadata = !!entity.metadata ? entity.metadata['@id'] : '';
+      entity = common.customObjectFilter(entity, ['federatedBy', 'supports']);
 
+      if (req.query.depth == null) {
+        return Promise.resolve(entity);
+      } else {
+        return common.depth(entity, req.query.depth)
+          .then(function (depthEntity) {
+            return Promise.resolve(depthEntity);
+          });
+      }
+    })
+    .then(function (entity) {
       if (req.query.filter == null)
         callback(null, entity);
       else {
-        // Apply jsPath filter here.
         try {
-          var filterData = JSPath.apply(req.query.filter, entity);
-          callback(null, filterData);
+          var data = common.jsPathFilter(req.query.filter, entity);
+          callback(null, data);
         } catch (e) {
           return callback({
             error: ['Invalid jspath'],
@@ -182,6 +161,12 @@ exports.findEntity = function (req, callback) {
           }, null);
         }
       }
+    })
+    .catch(function (err) {
+      return callback({
+        error: err,
+        code: 400
+      }, null);
     });
 };
 

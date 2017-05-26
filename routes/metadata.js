@@ -62,6 +62,11 @@ router.post(metadataURL, function (req, res) {
  *          description: Your Metadata Id
  *          required: true
  *          dataType: string
+ *        - name: depth
+ *          description: depth
+ *          paramType: query
+ *          required: false
+ *          dataType: string
  *        - name: filter
  *          description: jspath filter syntax
  *          paramType: query
@@ -93,7 +98,7 @@ router.get(metadataURL + '/:id', function (req, res) {
  *      nickname: GetMetadata
  *      parameters:
  *       - name: depth
- *         description: depth[metadata]
+ *         description: depth
  *         paramType: query
  *         required: false
  *         dataType: string
