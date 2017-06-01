@@ -25,7 +25,9 @@ var FederationAJVSchema = {
 };
 
 exports.getAllFederationWithDepth = function (req, callback) {
-  var pageNo = +req.query.pageno;
+  var pageNo = (+req.query.pageno);
+  pageNo = pageNo > 0 ? pageNo-=1 : pageNo;
+
   var pageLength = +req.query.pagelength;
   var depth = '';
 
@@ -52,11 +54,22 @@ exports.getAllFederationWithDepth = function (req, callback) {
     ];
   }
 
-  federationModel.find({}).select('-_id -__v -updatedAt -createdAt')
-    .skip((!!pageLength && !!pageNo ? pageNo * pageLength : 0))
-    .limit((!!pageLength ? pageLength : 0))
-    .deepPopulate(depth)
+  var totalResults = 0;
+  federationModel
+    .find({})
     .lean()
+    .then(function (federations) {
+      totalResults = federations.length;
+      if (totalResults/pageLength < pageNo) {
+        return Promise.reject(['Invalid page no']);
+      }
+
+      return federationModel.find({}).select('-_id -__v -updatedAt -createdAt')
+        .skip((!!pageLength && !!pageNo ? pageNo * pageLength : 0))
+        .limit((!!pageLength ? pageLength : 0))
+        .deepPopulate(depth)
+        .lean();
+    })
     .then(function (federations) {
       federations.forEach(function (item) {
         item.registeredBy = !!item.registeredBy ? item.registeredBy['@id'] : '';
@@ -74,7 +87,7 @@ exports.getAllFederationWithDepth = function (req, callback) {
       }
     })
     .then(function (federations) {
-      return callback(null, federations);
+      return callback(null, {federations: federations, totalResults: totalResults, itemsPerPage:(!!pageLength ? pageLength : 0), startIndex: (!!pageNo?pageNo+1:1)});
     })
     .catch(function (err) {
       return callback({error: err, code: 404}, null);

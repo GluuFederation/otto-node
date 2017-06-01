@@ -11,7 +11,7 @@ router.get(registrationAuthorityURL + '/:id', function (req, res) {
   try {
     requirementController.findRequirement(req, function (err, data) {
       if (err) {
-        res.status(err.code).json({'Error(s)': err.error});
+        res.status(err.code).json({error: err.error});
       } else {
         res.status(200).json(data);
       }

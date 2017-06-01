@@ -19,21 +19,35 @@ var metadataAJVSchema = {
 };
 
 exports.getAllMetadataWithDepth = function (req, callback) {
-  var pageNo = +req.query.pageno;
-  var pageLength = +req.query.pagelength;
+  var pageNo = (+req.query.pageno);
+  pageNo = pageNo > 0 ? pageNo-=1 : pageNo;
 
-  metadataModel.find({}).select('-_id -__v -updatedAt -createdAt')
-    .skip((!!pageLength && !!pageNo ? pageNo * pageLength : 0))
-    .limit((!!pageLength ? pageLength : 0))
+  var pageLength = +req.query.pagelength;
+  var depth = '';
+
+  var totalResults = 0;
+  metadataModel
+    .find({})
     .lean()
+    .then(function (metadata) {
+      totalResults = metadata.length;
+      if (totalResults / pageLength < pageNo) {
+        return Promise.reject(['Invalid page no']);
+      }
+
+      return metadataModel.find({}).select('-_id -__v -updatedAt -createdAt')
+        .skip((!!pageLength && !!pageNo ? pageNo * pageLength : 0))
+        .limit((!!pageLength ? pageLength : 0))
+        .lean();
+    })
     .then(function (metadata) {
       if (!req.query.depth) {
         metadata = metadata.map(function (item) {
           return item['@id'];
         });
-        return callback(null, metadata);
+        return callback(null, {metadata: metadata, totalResults: totalResults, itemsPerPage:(!!pageLength ? pageLength : 0), startIndex: (!!pageNo?pageNo+1:1)});
       } else if (req.query.depth == 'metadata') {
-        return callback(null, metadata);
+        return callback(null, {metadata: metadata, totalResults: totalResults, itemsPerPage:(!!pageLength ? pageLength : 0), startIndex: (!!pageNo?pageNo+1:1)});
       } else {
         return callback({error: ['Invalid depth parameter'], code: 400}, null);
       }

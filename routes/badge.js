@@ -36,7 +36,7 @@ router.post(badgeURL, function (req, res) {
     badgeController.addBadge(req, function (err, data) {
       console.log(err);
       if (err) {
-        res.status(err.code).json({'Error(s)': err.error});
+        res.status(err.code).json({error: err.error});
       } else {
         res.status(201).json({
           '@id': baseURL + badgeURL + '/' + data
@@ -78,7 +78,7 @@ router.get(badgeURL + '/:id', function (req, res) {
   try {
     badgeController.findBadge(req, function (err, data) {
       if (err) {
-        res.status(err.code).json({'Error(s)': err.error});
+        res.status(err.code).json({error: err.error});
       } else {
         res.status(200).json(data);
       }
@@ -119,7 +119,7 @@ router.get(badgeURL, function (req, res) {
   try {
     badgeController.getAllBadgeWithDepth(req, function (err, data) {
       if (err) {
-        res.status(err.code).json({'Error(s)': err.error});
+        res.status(err.code).json({error: err.error});
       } else {
         res.status(200).json({
           badge: data
@@ -152,7 +152,7 @@ router.delete(badgeURL + '/:id', function (req, res) {
   try {
     badgeController.deleteBadge(req, function (err) {
       if (err) {
-        res.status(err.code).json({'Error(s)': err.error});
+        res.status(err.code).json({error: err.error});
       } else {
         res.status(200).json();
       }
@@ -192,7 +192,7 @@ router.put(badgeURL + '/:id', function (req, res) {
     badgeController.updateBadge(req, function (err, data) {
       console.log(err);
       if (err) {
-        res.status(err.code).json({'Error(s)': err.error});
+        res.status(err.code).json({error: err.error});
       } else {
         res.status(200).json();
       }
@@ -229,7 +229,7 @@ router.post(badgeURL + '/:bid/issuer/:pid', function (req, res) {
     badgeController.issueBadge(req, function (err, callback) {
       if (err) {
         res.status(err.code).json({
-          'Error(s)': err.error
+          error: err.error
         });
       }
       res.status(200).json();

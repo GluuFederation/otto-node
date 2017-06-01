@@ -25,7 +25,9 @@ var entityAJVSchema = {
 };
 
 exports.getAllEntityWithDepth = function (req, callback) {
-  var pageNo = +req.query.pageno;
+  var pageNo = (+req.query.pageno);
+  pageNo = pageNo > 0 ? pageNo-=1 : pageNo;
+
   var pageLength = +req.query.pagelength;
   var depth = '';
 
@@ -37,12 +39,22 @@ exports.getAllEntityWithDepth = function (req, callback) {
       'supports'
     ]
   }
-
-  entityModel.find({}).select('-_id -__v -updatedAt -createdAt')
-    .skip((!!pageLength && !!pageNo ? pageNo * pageLength : 0))
-    .limit((!!pageLength ? pageLength : 0))
-    .deepPopulate(depth)
+  var totalResults = 0;
+  entityModel
+    .find({})
     .lean()
+    .then(function (entities) {
+      totalResults = entities.length;
+      if (totalResults/pageLength < pageNo) {
+        return Promise.reject(['Invalid page no']);
+      }
+
+      return entityModel.find({}).select('-_id -__v -updatedAt -createdAt')
+        .skip((!!pageLength && !!pageNo ? pageNo * pageLength : 0))
+        .limit((!!pageLength ? pageLength : 0))
+        .deepPopulate(depth)
+        .lean();
+    })
     .then(function (entities) {
       entities.forEach(function (item) {
         item.registeredBy = !!item.registeredBy ? item.registeredBy['@id'] : '';
@@ -69,7 +81,7 @@ exports.getAllEntityWithDepth = function (req, callback) {
       }
     })
     .then(function (entities) {
-      return callback(null, entities);
+      return callback(null, {entity: entities, totalResults: totalResults, itemsPerPage:(!!pageLength ? pageLength : 0), startIndex: (!!pageNo?pageNo+1:1)});
     })
     .catch(function (err) {
       return callback({error: err, code: 404}, null);

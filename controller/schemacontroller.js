@@ -22,7 +22,9 @@ var schemaAJVSchema = {
 };
 
 exports.getAllSchemaWithDepth = function (req, callback) {
-  var pageNo = +req.query.pageno;
+  var pageNo = (+req.query.pageno);
+  pageNo = pageNo > 0 ? pageNo-=1 : pageNo;
+
   var pageLength = +req.query.pagelength;
   var depth = '';
 
@@ -32,12 +34,23 @@ exports.getAllSchemaWithDepth = function (req, callback) {
     ];
   }
 
-  schemaModel.find({}).select('-_id -__v -updatedAt -createdAt')
-    .populate({path: 'supportedBy', select: '-_id -__v -updatedAt -createdAt'})
-    .skip((!!pageLength && !!pageNo ? pageNo * pageLength : 0))
-    .limit((!!pageLength ? pageLength : 0))
-    .populate(depth)
+  var totalResults = 0;
+  schemaModel
+    .find({})
     .lean()
+    .then(function (schema) {
+      totalResults = schema.length;
+      if (totalResults / pageLength < pageNo) {
+        return Promise.reject(['Invalid page no']);
+      }
+
+      return schemaModel.find({}).select('-_id -__v -updatedAt -createdAt')
+        .populate({path: 'supportedBy', select: '-_id -__v -updatedAt -createdAt'})
+        .skip((!!pageLength && !!pageNo ? pageNo * pageLength : 0))
+        .limit((!!pageLength ? pageLength : 0))
+        .populate(depth)
+        .lean();
+    })
     .then(function (schemas) {
       if (!req.query.depth) {
         schemas = schemas.map(function (item) {
@@ -59,8 +72,8 @@ exports.getAllSchemaWithDepth = function (req, callback) {
         return callback({error: ['Invalid depth parameter'], code: 400}, null);
       }
     })
-    .then(function (schemas) {
-      return callback(null, schemas);
+    .then(function (schema) {
+      return callback(null, {schema: schema, totalResults: totalResults, itemsPerPage:(!!pageLength ? pageLength : 0), startIndex: (!!pageNo?pageNo+1:1)});
     })
     .catch(function (err) {
       return callback({error: err, code: 404}, null);

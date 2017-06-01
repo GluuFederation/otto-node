@@ -36,7 +36,7 @@ router.post(metadataURL, function (req, res) {
     metadataController.addMetadata(req, function (err, data) {
       console.log(err);
       if (err) {
-        res.status(err.code).json({'Error(s)': err.error});
+        res.status(err.code).json({error: err.error});
       } else {
         res.status(201).json({
           '@id': baseURL + metadataURL + '/' + data
@@ -78,7 +78,7 @@ router.get(metadataURL + '/:id', function (req, res) {
   try {
     metadataController.findMetadata(req, function (err, data) {
       if (err) {
-        res.status(err.code).json({'Error(s)': err.error});
+        res.status(err.code).json({error: err.error});
       } else {
         res.status(200).json(data);
       }
@@ -119,13 +119,9 @@ router.get(metadataURL, function (req, res) {
   try {
     metadataController.getAllMetadataWithDepth(req, function (err, data) {
       if (err) {
-
-        res.status(err.code).json({'Error(s)': err.error});
+        res.status(err.code).json({error: err.error});
       } else {
-        res.status(200).json({
-          '@context': baseURL + settings.metadata,
-          metadata: data
-        });
+        res.status(200).json(data);
       }
     });
   } catch (e) {
@@ -154,7 +150,7 @@ router.delete(metadataURL + '/:id', function (req, res) {
   try {
     metadataController.deleteMetadata(req, function (err) {
       if (err) {
-        res.status(err.code).json({'Error(s)': err.error});
+        res.status(err.code).json({error: err.error});
       } else {
         res.status(200).json();
       }
@@ -194,7 +190,7 @@ router.put(metadataURL + '/:id', function (req, res) {
     metadataController.updateMetadata(req, function (err, data) {
       console.log(err);
       if (err) {
-        res.status(err.code).json({'Error(s)': err.error});
+        res.status(err.code).json({error: err.error});
       } else {
         res.status(200).json();
       }

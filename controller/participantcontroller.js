@@ -22,7 +22,9 @@ var participantAJVSchema = {
 };
 
 exports.getAllParticipantWithDepth = function (req, callback) {
-  var pageNo = +req.query.pageno;
+  var pageNo = (+req.query.pageno);
+  pageNo = pageNo > 0 ? pageNo-=1 : pageNo;
+
   var pageLength = +req.query.pagelength;
   var depth = '';
 
@@ -45,11 +47,22 @@ exports.getAllParticipantWithDepth = function (req, callback) {
     ];
   }
 
-  participantModel.find({}).select('-_id -__v -updatedAt -createdAt')
-    .skip((!!pageLength && !!pageNo ? pageNo * pageLength : 0))
-    .limit((!!pageLength ? pageLength : 0))
-    .deepPopulate(depth)
+  var totalResults = 0;
+  participantModel
+    .find({})
     .lean()
+    .then(function (participants) {
+      totalResults = participants.length;
+      if (totalResults / pageLength < pageNo) {
+        return Promise.reject(['Invalid page no']);
+      }
+
+      return participantModel.find({}).select('-_id -__v -updatedAt -createdAt')
+        .skip((!!pageLength && !!pageNo ? pageNo * pageLength : 0))
+        .limit((!!pageLength ? pageLength : 0))
+        .deepPopulate(depth)
+        .lean()
+    })
     .then(function (participants) {
       participants.forEach(function (item) {
         item.registeredBy = !!item.registeredBy ? item.registeredBy['@id'] : '';
@@ -70,8 +83,8 @@ exports.getAllParticipantWithDepth = function (req, callback) {
         return callback({error: ['Invalid depth parameter'], code: 400}, null);
       }
     })
-    .then(function (participants) {
-      return callback(null, participants);
+    .then(function (participant) {
+      return callback(null, {participant: participant, totalResults: totalResults, itemsPerPage:(!!pageLength ? pageLength : 0), startIndex: (!!pageNo?pageNo+1:1)});
     })
     .catch(function (err) {
       return callback({error: err, code: 404}, null);

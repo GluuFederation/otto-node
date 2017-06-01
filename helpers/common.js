@@ -90,6 +90,9 @@ function fetchDepthForArray(list) {
           if (len == cnt) {
             resolve(arr);
           }
+        })
+        .catch(function (error) {
+          return reject(['Invalid depth parameter']);
         });
     });
   });
@@ -125,6 +128,9 @@ function fetchDepthForObject(Obj) {
           return reject(['Invalid depth parameter']);
         }
         resolve(response.body);
+      })
+      .catch(function (error) {
+        return reject(['Invalid depth parameter']);
       });
   });
 };

@@ -36,7 +36,7 @@ router.post(entityURL, function (req, res) {
     entityController.addEntity(req, function (err, data) {
       console.log(err);
       if (err) {
-        res.status(err.code).json({'Error(s)': err.error});
+        res.status(err.code).json({error: err.error});
       } else {
         res.status(201).json({
           '@id': baseURL + entityURL + '/' + data
@@ -78,7 +78,7 @@ router.get(entityURL + '/:id', function (req, res) {
   try {
     entityController.findEntity(req, function (err, data) {
       if (err) {
-        res.status(err.code).json({'Error(s)': err.error});
+        res.status(err.code).json({error: err.error});
       } else {
         res.status(200).json(data);
       }
@@ -119,13 +119,9 @@ router.get(entityURL, function (req, res) {
   try {
     entityController.getAllEntityWithDepth(req, function (err, data) {
       if (err) {
-
-        res.status(err.code).json({'Error(s)': err.error});
+        res.status(err.code).json({error: err.error});
       } else {
-        res.status(200).json({
-          '@context': baseURL + settings.entity,
-          entity: data
-        });
+        res.status(200).json(data);
       }
     });
   } catch (e) {
@@ -154,7 +150,7 @@ router.delete(entityURL + '/:id', function (req, res) {
   try {
     entityController.deleteEntity(req, function (err) {
       if (err) {
-        res.status(err.code).json({'Error(s)': err.error});
+        res.status(err.code).json({error: err.error});
       } else {
         res.status(200).json();
       }
@@ -194,7 +190,7 @@ router.put(entityURL + '/:id', function (req, res) {
     entityController.updateEntity(req, function (err, data) {
       console.log(err);
       if (err) {
-        res.status(err.code).json({'Error(s)': err.error});
+        res.status(err.code).json({error: err.error});
       } else {
         res.status(200).json();
       }
@@ -231,7 +227,7 @@ router.post(entityURL + '/:eid/federation/:fid', function (req, res) {
     entityController.joinEntity(req, function (err, callback) {
       if (err) {
         res.status(err.code).json({
-          'Error(s)': err.error
+          error: err.error
         });
       }
       res.status(200).json();
@@ -280,14 +276,14 @@ router.post(entityURL + '/:eid/operatedBy/:type/:id', function (req, res) {
       entityController.setParticipantAsOperator(req, response);
     } else {
       res.status(err.code).json({
-        'Error(s)': 'Invalid type'
+        error: 'Invalid type'
       });
     }
 
     function response(err, callback) {
       if (err) {
         res.status(err.code).json({
-          'Error(s)': err.error
+          error: err.error
         });
       }
       res.status(200).json();

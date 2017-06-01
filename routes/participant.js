@@ -33,7 +33,7 @@ router.post(participantURL, function (req, res) {
     participantController.addParticipant(req, function (err, data) {
       console.log(err);
       if (err) {
-        res.status(err.code).json({'Error(s)': err.error});
+        res.status(err.code).json({error: err.error});
       } else {
         res.status(200).json({
           '@id': baseURL + participantURL + '/' + data
@@ -74,7 +74,7 @@ router.get(participantURL + '/:id', function (req, res) {
   try {
     participantController.findParticipant(req, function (err, data) {
       if (err) {
-        res.status(err.code).json({'Error(s)': err.error});
+        res.status(err.code).json({error: err.error});
       } else {
         res.status(200).json(data);
       }
@@ -116,12 +116,9 @@ router.get(participantURL, function (req, res) {
   try {
     participantController.getAllParticipantWithDepth(req, function (err, data) {
       if (err) {
-        res.status(err.code).json({'Error(s)': err.error});
+        res.status(err.code).json({error: err.error});
       } else {
-        res.status(200).json({
-          '@context': baseURL + settings.participant,
-          participant: data
-        });
+        res.status(200).json(data);
       }
     });
   } catch (e) {
@@ -153,7 +150,7 @@ router.delete(participantURL + '/:id', function (req, res) {
   try {
     participantController.deleteParticipant(req, function (err) {
       if (err) {
-        res.status(err.code).json({'Error(s)': err.error});
+        res.status(err.code).json({error: err.error});
       } else {
         res.status(200).json();
       }
@@ -193,7 +190,7 @@ router.put(participantURL + "/:id", function (req, res) {
     participantController.updateParticipant(req, function (err, data) {
       console.log(err);
       if (err) {
-        res.status(err.code).json({'Error(s)': err.error});
+        res.status(err.code).json({error: err.error});
       } else {
 
         res.status(200).json();
@@ -231,7 +228,7 @@ router.post(participantURL + '/:pid/federation/:fid', function (req, res) {
   try {
     participantController.joinFederationParticipant(req, function (err, docs) {
       if (err)
-        res.status(err.code).json({'Error(s)': err.error});
+        res.status(err.code).json({error: err.error});
       res.status(200).json();
     });
   } catch (e) {
@@ -266,7 +263,7 @@ router.post(participantURL + '/:pid/entity/:eid', function (req, res) {
   try {
     participantController.joinEntityParticipant(req, function (err, docs) {
       if (err) {
-        res.status(err.code).json({'Error(s)': err.error});
+        res.status(err.code).json({error: err.error});
       }
       res.status(200).json();
     });

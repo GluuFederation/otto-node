@@ -51,7 +51,7 @@ router.post(schemaURL, function (req, res) {
     schemaController.addSchema(req, function (err, data) {
       console.log(err);
       if (err) {
-        res.status(err.code).json({'Error(s)': err.error});
+        res.status(err.code).json({error: err.error});
       } else {
         res.status(201).json({
           '@id': baseURL + schemaURL + '/' + data
@@ -93,7 +93,7 @@ router.get(schemaURL + '/:id', function (req, res) {
   try {
     schemaController.findSchema(req, function (err, data) {
       if (err) {
-        res.status(err.code).json({'Error(s)': err.error});
+        res.status(err.code).json({error: err.error});
       } else {
         res.status(200).json(data);
       }
@@ -134,12 +134,9 @@ router.get(schemaURL, function (req, res) {
   try {
     schemaController.getAllSchemaWithDepth(req, function (err, data) {
       if (err) {
-        res.status(err.code).json({'Error(s)': err.error});
+        res.status(err.code).json({error: err.error});
       } else {
-        res.status(200).json({
-          '@context': baseURL + settings.schema,
-          schema: data
-        });
+        res.status(200).json(data);
       }
     });
   } catch (e) {
@@ -168,7 +165,7 @@ router.delete(schemaURL + '/:id', function (req, res) {
   try {
     schemaController.deleteSchema(req, function (err) {
       if (err) {
-        res.status(err.code).json({'Error(s)': err.error});
+        res.status(err.code).json({error: err.error});
       } else {
         res.status(200).json();
       }
@@ -208,7 +205,7 @@ router.put(schemaURL + '/:id', function (req, res) {
     schemaController.updateSchema(req, function (err, data) {
       console.log(err);
       if (err) {
-        res.status(err.code).json({'Error(s)': err.error});
+        res.status(err.code).json({error: err.error});
       } else {
         res.status(200).json();
       }
@@ -245,7 +242,7 @@ router.post(schemaURL + '/:sid/federation/:fid', function (req, res) {
     schemaController.joinSchemaWithFederation(req, function (err, callback) {
       if (err) {
         res.status(err.code).json({
-          'Error(s)': err.error
+          error: err.error
         });
       }
       res.status(200).json();
@@ -282,7 +279,7 @@ router.post(schemaURL + '/:sid/entity/:eid', function (req, res) {
     schemaController.joinSchemaWithEntity(req, function (err, callback) {
       if (err) {
         res.status(err.code).json({
-          'Error(s)': err.error
+          error: err.error
         });
       }
       res.status(200).json();
