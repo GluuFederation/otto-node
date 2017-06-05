@@ -19,9 +19,12 @@ var entityAJVSchema = {
   properties: {
     name: {
       type: 'string'
+    },
+    registeredBy: {
+      type: 'string'
     }
   },
-  required: ['name']
+  required: ['name', 'registeredBy']
 };
 
 exports.getAllEntityWithDepth = function (req, callback) {
@@ -46,7 +49,7 @@ exports.getAllEntityWithDepth = function (req, callback) {
     .then(function (entities) {
       totalResults = entities.length;
       if (totalResults/pageLength < pageNo) {
-        return Promise.reject(['Invalid page no']);
+        return Promise.reject({error: ['Invalid page no'], code: 400});
       }
 
       return entityModel.find({}).select('-_id -__v -updatedAt -createdAt')
@@ -56,6 +59,10 @@ exports.getAllEntityWithDepth = function (req, callback) {
         .lean();
     })
     .then(function (entities) {
+      if (entities.length <= 0) {
+        return Promise.reject({error: ['No records found'], code: 404});
+      }
+
       entities.forEach(function (item) {
         item.registeredBy = !!item.registeredBy ? item.registeredBy['@id'] : '';
       });
@@ -77,14 +84,14 @@ exports.getAllEntityWithDepth = function (req, callback) {
 
         return common.customCollectionFilter(entities, ['federatedBy', 'supports']);
       } else {
-        return callback({error: ['Invalid depth parameter'], code: 400}, null);
+        return Promise.reject({error: ['Invalid depth parameter'], code: 400});
       }
     })
     .then(function (entities) {
       return callback(null, {entity: entities, totalResults: totalResults, itemsPerPage:(!!pageLength ? pageLength : 0), startIndex: (!!pageNo?pageNo+1:1)});
     })
     .catch(function (err) {
-      return callback({error: err, code: 404}, null);
+      return callback(err, null);
     });
 };
 
@@ -94,6 +101,9 @@ exports.addEntity = function (req, callback) {
     var oEntity = new entityModel(req.body);
     oEntity.save(function (err, obj) {
       if (err) {
+        if (!!err.code && err.code == 11000) {
+          return callback({error: ['Entity with same name already exist'], code: 404}, null);
+        }
         return callback({error: err, code: 404}, null);
       }
       callback(null, obj._id);
@@ -136,10 +146,10 @@ exports.findEntity = function (req, callback) {
     .exec()
     .then(function (entity) {
       if (!entity) {
-        return callback({
+        return Promise.reject({
           error: ['Entity doesn\'t exist'],
           code: 404
-        }, null);
+        });
       }
       entity.registeredBy = entity.registeredBy['@id'];
       if (!!entity.operatedBy && entity.operatedBy.type == 'federation')
@@ -175,27 +185,25 @@ exports.findEntity = function (req, callback) {
       }
     })
     .catch(function (err) {
-      return callback({
-        error: err,
-        code: 400
-      }, null);
+      return callback(err, null);
     });
 };
 
 exports.deleteEntity = function (req, callback) {
-  if (!mongoose.Types.ObjectId.isValid(req.params.id))
-    callback({
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return callback({
       error: ['Invalid Entity Id'],
       code: 400
     }, null);
+  }
 
   entityModel.findById(req.params.id)
     .then(function (oEntity) {
       if (!oEntity) {
-        return callback({
+        return Promise.reject({
           error: ['Entity doesn\'t exist'],
           code: 404
-        }, null);
+        });
       }
 
       return entityModel.findOneAndRemove({_id: req.params.id});
@@ -209,21 +217,22 @@ exports.deleteEntity = function (req, callback) {
 };
 
 exports.updateEntity = function (req, callback) {
-  if (!mongoose.Types.ObjectId.isValid(req.params.id))
-    callback({
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return callback({
       error: ['Invalid Entity Id'],
       code: 400
     }, null);
+  }
 
-  var valid = ajv.validate(entityAJVSchema, req.body);
+  var valid = true; //ajv.validate(entityAJVSchema, req.body);
   if (valid) {
     entityModel.findById(req.params.id)
       .then(function (doc) {
         if (!doc) {
-          return callback({
+          return Promise.reject({
             error: ['Entity doesn\'t exist'],
             code: 404
-          }, null);
+          });
         }
         return entityModel.findOneAndUpdate({_id: req.params.id}, req.body);
       })
@@ -231,7 +240,7 @@ exports.updateEntity = function (req, callback) {
         return callback(null, oParticipant);
       })
       .catch((function (err) {
-        return callback({error: err, code: 404}, null);
+        return callback(err, null);
       }));
   } else {
     var errorMsg = Array();
@@ -264,7 +273,7 @@ exports.joinEntity = function (req, callback) {
   entityModel.findById(req.params.eid)
     .then(function (oEntity) {
       if (!oEntity) {
-        return Promise.reject({error: 'Entity doesn\'t exist', code: 404});
+        return Promise.reject({error: ['Entity doesn\'t exist'], code: 404});
       }
 
       if (oEntity.federatedBy.indexOf(req.params.fid) > -1) {
@@ -290,7 +299,7 @@ exports.joinEntity = function (req, callback) {
       return callback(null, oEntity);
     })
     .catch(function (err) {
-      return callback({error: err, code: 404}, null);
+      return callback(err, null);
     });
 };
 
@@ -313,7 +322,7 @@ exports.setFederationAsOperator = function (req, callback) {
   entityModel.findById(req.params.eid)
     .then(function (oEntity) {
       if (!oEntity) {
-        return Promise.reject({error: 'Entity doesn\'t exist', code: 404});
+        return Promise.reject({error: ['Entity doesn\'t exist'], code: 404});
       }
 
       entity = oEntity;
@@ -337,7 +346,7 @@ exports.setFederationAsOperator = function (req, callback) {
       return callback(null, oEntity);
     })
     .catch(function (err) {
-      return callback({error: err, code: 404}, null);
+      return callback(err, null);
     });
 };
 
@@ -360,7 +369,7 @@ exports.setParticipantAsOperator = function (req, callback) {
   entityModel.findById(req.params.eid)
     .then(function (oEntity) {
       if (!oEntity) {
-        return Promise.reject({error: 'Entity doesn\'t exist', code: 404});
+        return Promise.reject({error: ['Entity doesn\'t exist'], code: 404});
       }
 
       oEntity.operatedBy.forEach(function (item) {
@@ -393,6 +402,6 @@ exports.setParticipantAsOperator = function (req, callback) {
       return callback(null, oEntity);
     })
     .catch(function (err) {
-      return callback({error: err, code: 404}, null);
+      return callback(err, null);
     });
 };

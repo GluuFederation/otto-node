@@ -19,9 +19,15 @@ var FederationAJVSchema = {
   properties: {
     name: {
       type: 'string'
+    },
+    registeredBy: {
+      type: 'string'
+    },
+    sponsor: {
+      type: 'string'
     }
   },
-  required: ['name']
+  required: ['name', 'registeredBy', 'sponsor']
 };
 
 exports.getAllFederationWithDepth = function (req, callback) {
@@ -61,7 +67,7 @@ exports.getAllFederationWithDepth = function (req, callback) {
     .then(function (federations) {
       totalResults = federations.length;
       if (totalResults/pageLength < pageNo) {
-        return Promise.reject(['Invalid page no']);
+        return Promise.reject({error: ['Invalid page no'], code: 400});
       }
 
       return federationModel.find({}).select('-_id -__v -updatedAt -createdAt')
@@ -71,6 +77,10 @@ exports.getAllFederationWithDepth = function (req, callback) {
         .lean();
     })
     .then(function (federations) {
+      if (federations.length <= 0) {
+        return Promise.reject({error: ['No records found'], code: 404});
+      }
+
       federations.forEach(function (item) {
         item.registeredBy = !!item.registeredBy ? item.registeredBy['@id'] : '';
       });
@@ -83,14 +93,14 @@ exports.getAllFederationWithDepth = function (req, callback) {
       } else if (req.query.depth == 'federations') {
         return common.customCollectionFilter(federations, ['member', 'federates', 'sponsor', 'supports', 'metadata', 'badgeSupported']);
       } else {
-        return callback({error: ['Invalid depth parameter'], code: 400}, null);
+        return Promise.reject({error: ['Invalid depth parameter'], code: 400});
       }
     })
     .then(function (federations) {
       return callback(null, {federations: federations, totalResults: totalResults, itemsPerPage:(!!pageLength ? pageLength : 0), startIndex: (!!pageNo?pageNo+1:1)});
     })
     .catch(function (err) {
-      return callback({error: err, code: 404}, null);
+      return callback(err, null);
     });
 };
 
@@ -101,8 +111,12 @@ exports.addFederation = function (req, callback) {
     var oFederation = new federationModel(req.body);
     oFederation.save(function (err, obj) {
       if (err) {
+        if (!!err.code && err.code == 11000) {
+          return callback({error: ['Federation with same name already exist'], code: 400}, null);
+        }
         return callback({error: err, code: 404}, null);
       }
+
       // createKeyPairAndAddtoFederation(ObjfederationModel._id, 'RS256', function (err, data) {
       //   console.log("Err :" + err);
       //   console.log("Data :" + data);
@@ -190,10 +204,10 @@ exports.findFederation = function (req, callback) {
     .exec()
     .then(function (federation) {
       if (!federation) {
-        return callback({
+        return Promise.reject({
           error: ['Federation doesn\'t exist'],
           code: 404
-        }, null);
+        });
       }
       federation.registeredBy = federation.registeredBy['@id'];
       federation = common.customObjectFilter(federation, ['sponsor', 'member', 'federates', 'badgeSupported', 'supports', 'metadata']);
@@ -222,10 +236,7 @@ exports.findFederation = function (req, callback) {
       }
     })
     .catch(function (err) {
-      return callback({
-        error: err,
-        code: 400
-      }, null);
+      return callback(err, null);
     });
 };
 
@@ -259,7 +270,7 @@ exports.getJWKsForFederation = function (req, callback) {
 
 exports.deleteFederation = function (req, callback) {
   if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-    return Promise.reject({
+    return callback({
       error: ['Invalid Federation Id'],
       code: 400
     });
@@ -280,7 +291,7 @@ exports.deleteFederation = function (req, callback) {
       return callback(null, oFederation);
     })
     .catch(function (err) {
-      return callback({error: err, code: 404}, null);
+      return callback(err, null);
     });
 };
 
@@ -291,7 +302,7 @@ exports.updateFederation = function (req, callback) {
       code: 400
     }, null);
 
-  var valid = ajv.validate(FederationAJVSchema, req.body);
+  var valid = true; //ajv.validate(FederationAJVSchema, req.body);
   if (valid) {
     federationModel.findById(req.params.id)
       .then(function (doc) {
@@ -307,7 +318,7 @@ exports.updateFederation = function (req, callback) {
         return callback(null, oFederation);
       })
       .catch((function (err) {
-        return callback({error: err, code: 404}, null);
+        return callback(err, null);
       }));
   } else {
     var errorMsg = Array();
@@ -339,7 +350,7 @@ exports.joinFederation = function (req, callback) {
   federationModel.findById(req.params.fid)
     .then(function (oFederation) {
       if (!oFederation) {
-        return Promise.reject({error: 'Federation doesn\'t exist', code: 404});
+        return Promise.reject({error: ['Federation doesn\'t exist'], code: 404});
       }
 
       if (oFederation.federates.indexOf(req.params.eid) > -1) {
@@ -365,7 +376,7 @@ exports.joinFederation = function (req, callback) {
       return callback(null, oFederation);
     })
     .catch(function (err) {
-      return callback({error: err, code: 404}, null);
+      return callback(err, null);
     });
 };
 
@@ -406,7 +417,7 @@ exports.leaveFederation = function (req, callback) {
       return callback(null, oFederation);
     })
     .catch(function (err) {
-      return callback({error: err, code: 404}, null);
+      return callback(err, null);
     });
 };
 
@@ -447,7 +458,7 @@ exports.addParticipant = function (req, callback) {
       return callback(null, oFederation);
     })
     .catch(function (err) {
-      return callback({error: err, code: 404}, null);
+      return callback(err, null);
     });
 };
 
@@ -489,7 +500,7 @@ exports.addSponsor = function (req, callback) {
       return callback(null, oFederation);
     })
     .catch(function (err) {
-      return callback({error: err, code: 404}, null);
+      return callback(err, null);
     });
 };
 
@@ -512,7 +523,7 @@ exports.addMetadata = function (req, callback) {
   federationModel.findById(req.params.fid)
     .then(function (oFederation) {
       if (!oFederation) {
-        return Promise.reject({error: 'Federation doesn\'t exist', code: 404});
+        return Promise.reject({error: ['Federation doesn\'t exist'], code: 404});
       }
 
       if (oFederation.metadata.indexOf(req.params.mid) > -1) {
@@ -538,6 +549,6 @@ exports.addMetadata = function (req, callback) {
       return callback(null, oFederation);
     })
     .catch(function (err) {
-      return callback({error: err, code: 404}, null);
+      return callback(err, null);
     });
 };

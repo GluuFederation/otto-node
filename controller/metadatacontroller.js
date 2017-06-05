@@ -11,16 +11,16 @@ var ajv = Ajv({
 
 var metadataAJVSchema = {
   properties: {
-    metadataFormat: {
+    category: {
       type: 'string'
     }
   },
-  required: ['metadataFormat']
+  required: ['category']
 };
 
 exports.getAllMetadataWithDepth = function (req, callback) {
   var pageNo = (+req.query.pageno);
-  pageNo = pageNo > 0 ? pageNo-=1 : pageNo;
+  pageNo = pageNo > 0 ? pageNo -= 1 : pageNo;
 
   var pageLength = +req.query.pagelength;
   var depth = '';
@@ -32,7 +32,7 @@ exports.getAllMetadataWithDepth = function (req, callback) {
     .then(function (metadata) {
       totalResults = metadata.length;
       if (totalResults / pageLength < pageNo) {
-        return Promise.reject(['Invalid page no']);
+        return Promise.reject({error: ['Invalid page no'], code: 400});
       }
 
       return metadataModel.find({}).select('-_id -__v -updatedAt -createdAt')
@@ -41,19 +41,33 @@ exports.getAllMetadataWithDepth = function (req, callback) {
         .lean();
     })
     .then(function (metadata) {
+      if (metadata.length <= 0) {
+        return Promise.reject({error: ['No records found'], code: 404});
+      }
+
       if (!req.query.depth) {
         metadata = metadata.map(function (item) {
           return item['@id'];
         });
-        return callback(null, {metadata: metadata, totalResults: totalResults, itemsPerPage:(!!pageLength ? pageLength : 0), startIndex: (!!pageNo?pageNo+1:1)});
+        return callback(null, {
+          metadata: metadata,
+          totalResults: totalResults,
+          itemsPerPage: (!!pageLength ? pageLength : 0),
+          startIndex: (!!pageNo ? pageNo + 1 : 1)
+        });
       } else if (req.query.depth == 'metadata') {
-        return callback(null, {metadata: metadata, totalResults: totalResults, itemsPerPage:(!!pageLength ? pageLength : 0), startIndex: (!!pageNo?pageNo+1:1)});
+        return callback(null, {
+          metadata: metadata,
+          totalResults: totalResults,
+          itemsPerPage: (!!pageLength ? pageLength : 0),
+          startIndex: (!!pageNo ? pageNo + 1 : 1)
+        });
       } else {
         return callback({error: ['Invalid depth parameter'], code: 400}, null);
       }
     })
     .catch(function (err) {
-      return callback({error: err, code: 404}, null);
+      return callback(err, null);
     });
 };
 
@@ -119,27 +133,25 @@ exports.findMetadata = function (req, callback) {
       }
     })
     .catch(function (err) {
-      return callback({
-        error: err,
-        code: 400
-      }, null);
+      return callback(err, null);
     });
 };
 
 exports.deleteMetadata = function (req, callback) {
-  if (!mongoose.Types.ObjectId.isValid(req.params.id))
-    callback({
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return callback({
       error: ['Invalid Metadata Id'],
       code: 400
     }, null);
+  }
 
   metadataModel.findById(req.params.id)
     .then(function (oMetadata) {
       if (!oMetadata) {
-        return callback({
+        return Promise.reject({
           error: ['Metadata doesn\'t exist'],
           code: 404
-        }, null);
+        });
       }
 
       return metadataModel.findOneAndRemove({_id: req.params.id});
@@ -153,21 +165,22 @@ exports.deleteMetadata = function (req, callback) {
 };
 
 exports.updateMetadata = function (req, callback) {
-  if (!mongoose.Types.ObjectId.isValid(req.params.id))
-    callback({
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return callback({
       error: ['Invalid Metadata Id'],
       code: 400
     }, null);
+  }
 
-  var valid = ajv.validate(metadataAJVSchema, req.body);
+  var valid = true; //ajv.validate(metadataAJVSchema, req.body);
   if (valid) {
     metadataModel.findById(req.params.id)
       .then(function (doc) {
         if (!doc) {
-          return callback({
+          return Promise.reject({
             error: ['Metadata doesn\'t exist'],
             code: 404
-          }, null);
+          });
         }
         return metadataModel.findOneAndUpdate({_id: req.params.id}, req.body);
       })

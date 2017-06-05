@@ -242,12 +242,12 @@ router.put(settings.federations + "/:id", function (req, res) {
  *      consumes:
  *        - text/html
  *      parameters:
- *        - name: federationid
+ *        - name: fid
  *          description: Your federations Id
  *          paramType: path
  *          required: true
  *          dataType: string
- *        - name: entityid
+ *        - name: eid
  *          description: Your Entity Id
  *          paramType: path
  *          required: true

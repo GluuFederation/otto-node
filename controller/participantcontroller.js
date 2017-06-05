@@ -16,9 +16,12 @@ var participantAJVSchema = {
   properties: {
     name: {
       type: 'string'
+    },
+    registeredBy: {
+      type: 'string'
     }
   },
-  required: ['name']
+  required: ['name', 'registeredBy']
 };
 
 exports.getAllParticipantWithDepth = function (req, callback) {
@@ -54,7 +57,7 @@ exports.getAllParticipantWithDepth = function (req, callback) {
     .then(function (participants) {
       totalResults = participants.length;
       if (totalResults / pageLength < pageNo) {
-        return Promise.reject(['Invalid page no']);
+        return Promise.reject({error: ['Invalid page no'], code: 400});
       }
 
       return participantModel.find({}).select('-_id -__v -updatedAt -createdAt')
@@ -64,6 +67,10 @@ exports.getAllParticipantWithDepth = function (req, callback) {
         .lean()
     })
     .then(function (participants) {
+      if (participants.length <= 0) {
+        return Promise.reject({error: ['No records found'], code: 404});
+      }
+
       participants.forEach(function (item) {
         item.registeredBy = !!item.registeredBy ? item.registeredBy['@id'] : '';
       });
@@ -80,14 +87,14 @@ exports.getAllParticipantWithDepth = function (req, callback) {
 
         return common.customCollectionFilter(participants, ['memberOf', 'badgeSupported']);
       } else {
-        return callback({error: ['Invalid depth parameter'], code: 400}, null);
+        return Promise.reject({error: ['Invalid depth parameter'], code: 400});
       }
     })
     .then(function (participant) {
       return callback(null, {participant: participant, totalResults: totalResults, itemsPerPage:(!!pageLength ? pageLength : 0), startIndex: (!!pageNo?pageNo+1:1)});
     })
     .catch(function (err) {
-      return callback({error: err, code: 404}, null);
+      return callback(err, null);
     });
 };
 
@@ -97,6 +104,9 @@ exports.addParticipant = function (req, callback) {
     var oParticipant = new participantModel(req.body);
     oParticipant.save(function (err, obj) {
       if (err) {
+        if (!!err.code && err.code == 11000) {
+          return callback({error: ['Participant with same name already exist'], code: 404}, null);
+        }
         return callback({error: err, code: 404}, null);
       }
       callback(null, obj._id);
@@ -142,10 +152,10 @@ exports.findParticipant = function (req, callback) {
     .exec()
     .then(function (participant) {
       if (!participant) {
-        return callback({
+        return Promise.reject({
           error: ['Participant doesn\'t exist'],
           code: 404
-        }, null);
+        });
       }
       participant.registeredBy = participant.registeredBy['@id'];
       participant.operates = !!participant.operates ? participant.operates['@id'] : '';
@@ -175,10 +185,7 @@ exports.findParticipant = function (req, callback) {
       }
     })
     .catch(function (err) {
-      return callback({
-        error: err,
-        code: 400
-      }, null);
+      return callback(err, null);
     });
 };
 
@@ -205,7 +212,7 @@ exports.deleteParticipant = function (req, callback) {
       return callback(null, oParticipant);
     })
     .catch(function (err) {
-      return callback({error: err, code: 404}, null);
+      return callback(err, null);
     });
 };
 
@@ -217,7 +224,7 @@ exports.updateParticipant = function (req, callback) {
     }, null);
   }
 
-  var valid = ajv.validate(participantAJVSchema, req.body);
+  var valid = true; //ajv.validate(participantAJVSchema, req.body);
   if (valid) {
     participantModel.findById(req.params.id)
       .then(function (doc) {
@@ -233,10 +240,7 @@ exports.updateParticipant = function (req, callback) {
         return callback(null, oParticipant);
       })
       .catch((function (err) {
-        callback({
-          error: err,
-          code: 400
-        }, null);
+        callback(err, null);
       }));
   } else {
     var errorMsg = Array();
@@ -275,10 +279,10 @@ exports.joinFederationParticipant = function (req, callback) {
       }
 
       if (oParticipant.memberOf.indexOf(req.params.fid) > -1)
-        return Promise.reject(callback({
+        return Promise.reject({
           error: ['Federation already exist'],
           code: 404
-        }, null));
+        });
 
       oParticipant.memberOf.push(req.params.fid);
       return oParticipant.save();
@@ -287,7 +291,7 @@ exports.joinFederationParticipant = function (req, callback) {
       return callback(null, oParticipant);
     })
     .catch(function (err) {
-      return callback({error: err, code: 404}, null);
+      return callback(err, null);
     });
 };
 
@@ -321,6 +325,6 @@ exports.joinEntityParticipant = function (req, callback) {
       return callback(null, oParticipant);
     })
     .catch(function (err) {
-      return callback({error: err, code: 404}, null);
+      return callback(err, null);
     });
 };

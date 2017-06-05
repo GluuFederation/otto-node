@@ -16,14 +16,20 @@ var schemaAJVSchema = {
   properties: {
     name: {
       type: 'string'
+    },
+    category: {
+      type: 'string'
+    },
+    required: {
+      type: 'boolean'
     }
   },
-  required: ['name']
+  required: ['name', 'category', 'required']
 };
 
 exports.getAllSchemaWithDepth = function (req, callback) {
   var pageNo = (+req.query.pageno);
-  pageNo = pageNo > 0 ? pageNo-=1 : pageNo;
+  pageNo = pageNo > 0 ? pageNo -= 1 : pageNo;
 
   var pageLength = +req.query.pagelength;
   var depth = '';
@@ -41,7 +47,7 @@ exports.getAllSchemaWithDepth = function (req, callback) {
     .then(function (schema) {
       totalResults = schema.length;
       if (totalResults / pageLength < pageNo) {
-        return Promise.reject(['Invalid page no']);
+        return Promise.reject({error: ['Invalid page no'], code: 400});
       }
 
       return schemaModel.find({}).select('-_id -__v -updatedAt -createdAt')
@@ -52,6 +58,10 @@ exports.getAllSchemaWithDepth = function (req, callback) {
         .lean();
     })
     .then(function (schemas) {
+      if (schemas.length <= 0) {
+        return Promise.reject({error: ['No records found'], code: 404});
+      }
+
       if (!req.query.depth) {
         schemas = schemas.map(function (item) {
           return item['@id'];
@@ -69,14 +79,19 @@ exports.getAllSchemaWithDepth = function (req, callback) {
         });
         return Promise.resolve(schemas);
       } else {
-        return callback({error: ['Invalid depth parameter'], code: 400}, null);
+        return Promise.reject({error: ['Invalid depth parameter'], code: 400});
       }
     })
     .then(function (schema) {
-      return callback(null, {schema: schema, totalResults: totalResults, itemsPerPage:(!!pageLength ? pageLength : 0), startIndex: (!!pageNo?pageNo+1:1)});
+      return callback(null, {
+        schema: schema,
+        totalResults: totalResults,
+        itemsPerPage: (!!pageLength ? pageLength : 0),
+        startIndex: (!!pageNo ? pageNo + 1 : 1)
+      });
     })
     .catch(function (err) {
-      return callback({error: err, code: 404}, null);
+      return callback(err, null);
     });
 };
 
@@ -113,10 +128,10 @@ exports.findSchema = function (req, callback) {
     .exec()
     .then(function (schema) {
       if (!schema) {
-        return callback({
+        return Promise.reject({
           error: ['Schema doesn\'t exist'],
           code: 404
-        }, null);
+        });
       }
 
       schema.supportedBy = schema.supportedBy.map(function (item) {
@@ -159,19 +174,20 @@ exports.findSchema = function (req, callback) {
 };
 
 exports.deleteSchema = function (req, callback) {
-  if (!mongoose.Types.ObjectId.isValid(req.params.id))
-    callback({
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return callback({
       error: ['Invalid Schema Id'],
       code: 400
     }, null);
+  }
 
   schemaModel.findById(req.params.id)
     .then(function (oSchema) {
       if (!oSchema) {
-        return callback({
+        return Promise.reject({
           error: ['Schema doesn\'t exist'],
           code: 404
-        }, null);
+        });
       }
 
       return schemaModel.findOneAndRemove({_id: req.params.id});
@@ -185,21 +201,22 @@ exports.deleteSchema = function (req, callback) {
 };
 
 exports.updateSchema = function (req, callback) {
-  if (!mongoose.Types.ObjectId.isValid(req.params.id))
-    callback({
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return callback({
       error: ['Invalid Schema Id'],
       code: 400
     }, null);
+  }
 
-  var valid = ajv.validate(schemaAJVSchema, req.body);
+  var valid = true; //ajv.validate(schemaAJVSchema, req.body);
   if (valid) {
     schemaModel.findById(req.params.id)
       .then(function (doc) {
         if (!doc) {
-          return callback({
+          return Promise.reject({
             error: ['Schema doesn\'t exist'],
             code: 404
-          }, null);
+          });
         }
         return schemaModel.findOneAndUpdate({_id: req.params.id}, req.body);
       })
@@ -241,7 +258,7 @@ exports.joinSchemaWithFederation = function (req, callback) {
   schemaModel.findById(req.params.sid)
     .then(function (oSchema) {
       if (!oSchema) {
-        return Promise.reject({error: 'Schema doesn\'t exist', code: 404});
+        return Promise.reject({error: ['Schema doesn\'t exist'], code: 404});
       }
 
       oSchema.supportedBy.forEach(function (item) {
@@ -285,7 +302,7 @@ exports.joinSchemaWithFederation = function (req, callback) {
       return callback(null, oSchema);
     })
     .catch(function (err) {
-      return callback({error: err, code: 404}, null);
+      return callback(err, null);
     });
 };
 
@@ -309,7 +326,7 @@ exports.joinSchemaWithEntity = function (req, callback) {
   schemaModel.findById(req.params.sid)
     .then(function (oSchema) {
       if (!oSchema) {
-        return Promise.reject({error: 'Schema doesn\'t exist', code: 404});
+        return Promise.reject({error: ['Schema doesn\'t exist'], code: 404});
       }
 
       oSchema.supportedBy.forEach(function (item) {
@@ -353,6 +370,6 @@ exports.joinSchemaWithEntity = function (req, callback) {
       return callback(null, oSchema);
     })
     .catch(function (err) {
-      return callback({error: err, code: 404}, null);
+      return callback(err, null);
     });
 };
