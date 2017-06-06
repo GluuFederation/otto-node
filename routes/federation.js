@@ -460,4 +460,44 @@ router.post(settings.federations + '/:fid/metadata/:mid', function (req, res) {
   }
 });
 
+/**
+ * @swagger
+ * path: /otto/federations/{id}
+ * operations:
+ *   -  httpMethod: PATCH
+ *      summary: Patch federation
+ *      notes: Returns Status
+ *      nickname: federations
+ *      consumes:
+ *        - text/html
+ *      parameters:
+ *        - name: id
+ *          description: Your federations Id
+ *          paramType: path
+ *          required: true
+ *          dataType: string
+ *        - name: body
+ *          description: Your federations Information
+ *          paramType: body
+ *          required: true
+ *          dataType: string
+ *
+ */
+router.patch(settings.federations + "/:id", function (req, res) {
+  try {
+    federationController.patchFederation(req, function (err, data) {
+      console.log(err);
+      if (err) {
+        res.status(err.code).json({
+          error: err.error
+        });
+      } else {
+        res.status(200).json();
+      }
+    });
+  } catch (e) {
+    res.status(500).json();
+  }
+});
+
 module.exports = router;
