@@ -2,13 +2,11 @@ var Guid = require('guid');
 var mongoose = require('mongoose');
 var keypair = require('keypair');
 var pem2jwk = require('pem-jwk').pem2jwk;
-
 var Ajv = require('ajv');
 
 var settings = require('../settings');
 var federationModel = require('../models/federationmodel');
 var entityModel = require('../models/entitymodel');
-var raModel = require('../models/ramodel');
 var metadataModel = require('../models/metadatamodel');
 var common = require('../helpers/common');
 
@@ -30,21 +28,9 @@ var FederationAJVSchema = {
   required: ['name', 'registeredBy', 'sponsor']
 };
 
-var FederationPatchAJVSchema = {
-  properties: {
-    op: {
-      type: 'string'
-    },
-    value: {
-      type: 'object'
-    }
-  },
-  required: ['op', 'value']
-};
-
 exports.getAllFederationWithDepth = function (req, callback) {
   var pageNo = (+req.query.pageno);
-  pageNo = pageNo > 0 ? pageNo-=1 : pageNo;
+  pageNo = pageNo > 0 ? pageNo -= 1 : pageNo;
 
   var pageLength = +req.query.pagelength;
   var depth = '';
@@ -78,7 +64,7 @@ exports.getAllFederationWithDepth = function (req, callback) {
     .lean()
     .then(function (federations) {
       totalResults = federations.length;
-      if (totalResults/pageLength < pageNo) {
+      if (totalResults / pageLength < pageNo) {
         return Promise.reject({error: ['Invalid page no'], code: 400});
       }
 
@@ -109,7 +95,12 @@ exports.getAllFederationWithDepth = function (req, callback) {
       }
     })
     .then(function (federations) {
-      return callback(null, {federations: federations, totalResults: totalResults, itemsPerPage:(!!pageLength ? pageLength : 0), startIndex: (!!pageNo?pageNo+1:1)});
+      return callback(null, {
+        federations: federations,
+        totalResults: totalResults,
+        itemsPerPage: (!!pageLength ? pageLength : 0),
+        startIndex: (!!pageNo ? pageNo + 1 : 1)
+      });
     })
     .catch(function (err) {
       return callback(err, null);
@@ -309,10 +300,10 @@ exports.deleteFederation = function (req, callback) {
 
 exports.updateFederation = function (req, callback) {
   if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-   return callback({
-     error: ['Invalid Federation Id'],
-     code: 400
-   }, null);
+    return callback({
+      error: ['Invalid Federation Id'],
+      code: 400
+    }, null);
   }
 
   var valid = true; //ajv.validate(FederationAJVSchema, req.body);
@@ -568,108 +559,40 @@ exports.addMetadata = function (req, callback) {
 
 exports.patchFederation = function (req, callback) {
   if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-   return callback({
-     error: ['Invalid Federation Id'],
-     code: 400
-   }, null);
-  }
-
-  var valid = ajv.validate(FederationPatchAJVSchema, req.body);
-  if (valid) {
-    if (req.body.op == 'add') {
-      patchAdd(req.params.id)
-        .then(function (oFederation) {
-          return callback(null, oFederation);
-        })
-        .catch((function (err) {
-          return callback(err, null);
-        }));
-    } else if(req.body.op == 'replace') {
-      patchReplace(req.params.id)
-        .then(function (oFederation) {
-          return callback(null, oFederation);
-        })
-        .catch((function (err) {
-          return callback(err, null);
-        }));
-    } else if(req.body.op == 'remove') {
-      if (!req.body.path) {
-        return callback({
-          error: ['Path parameter is required for remove patch'],
-          code: 400
-        }, null);
-      }
-    }
-  } else {
-    var errorMsg = Array();
-    ajv.errors.forEach(function (element) {
-      errorMsg.push(element.message);
-    });
-    callback({
-      error: errorMsg,
+    return callback({
+      error: ['Invalid Federation Id'],
       code: 400
     }, null);
   }
+
+  if (!req.body.op) {
+    return callback({
+      error: ['op property must required'],
+      code: 400
+    }, null);
+  }
+
+  return federationModel.findById(req.params.id)
+    .then(function (federation) {
+      if (!federation) {
+        return Promise.reject({
+          error: ['Federation doesn\'t exist'],
+          code: 404
+        });
+      }
+
+      if (req.body.op == 'add') {
+        return common.patchAdd(req.body, federation);
+      } else if (req.body.op == 'replace') {
+        return common.patchReplace(req.body, federation);
+      } else if (req.body.op == 'remove') {
+        return common.patchRemove(req.body, federation);
+      }
+    })
+    .then(function (oFederation) {
+      return callback(null, oFederation);
+    })
+    .catch((function (err) {
+      return callback(err, null);
+    }));
 };
-
-function patchAdd(id) {
-  return federationModel.findById(id)
-    .then(function (federation) {
-      if (!federation) {
-        return Promise.reject({
-          error: ['Federation doesn\'t exist'],
-          code: 404
-        });
-      }
-
-      Object.keys(req.body.value).forEach(function (key) {
-        if (Array.isArray(req.body.value[key])) {
-          var arr = req.body.value[key];
-          arr.forEach(function (item) {
-            federation[key].push(item);
-          });
-        } else {
-          federation[key] = req.body.value[key];
-        }
-      });
-
-      if (!!req.body.value.technicalContact) {
-        federation.technicalContact.push(req.body.value.technicalContact);
-      }
-      return federation.save();
-    })
-    .catch((function (err) {
-      return promise.reject(err);
-    }));
-}
-
-function patchReplace(id) {
-  return federationModel.findById(id)
-    .then(function (federation) {
-      if (!federation) {
-        return Promise.reject({
-          error: ['Federation doesn\'t exist'],
-          code: 404
-        });
-      }
-
-      Object.keys(req.body.value).forEach(function (key) {
-        if (Array.isArray(req.body.value[key])) {
-          var arr = req.body.value[key];
-          arr.forEach(function (item) {
-            federation[key] = item;
-          });
-        } else {
-          federation[key] = req.body.value[key];
-        }
-      });
-
-      if (!!req.body.value.technicalContact) {
-        federation.technicalContact.push(req.body.value.technicalContact);
-      }
-      return federation.save();
-    })
-    .catch((function (err) {
-      return promise.reject(err);
-    }));
-}

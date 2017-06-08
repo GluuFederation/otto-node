@@ -301,4 +301,44 @@ router.post(schemaURL + '/:sid/entity/:eid', function (req, res) {
  *
  */
 
+/**
+ * @swagger
+ * path: /otto/schema/{id}
+ * operations:
+ *   -  httpMethod: PATCH
+ *      summary: Patch schema
+ *      notes: Returns Status
+ *      nickname: schema
+ *      consumes:
+ *        - text/html
+ *      parameters:
+ *        - name: id
+ *          description: Your schema Id
+ *          paramType: path
+ *          required: true
+ *          dataType: string
+ *        - name: body
+ *          description: Your schema Information
+ *          paramType: body
+ *          required: true
+ *          dataType: string
+ *
+ */
+router.patch(settings.schema + "/:id", function (req, res) {
+  try {
+    schemaController.patchSchema(req, function (err, data) {
+      console.log(err);
+      if (err) {
+        res.status(err.code).json({
+          error: err.error
+        });
+      } else {
+        res.status(200).json();
+      }
+    });
+  } catch (e) {
+    res.status(500).json();
+  }
+});
+
 module.exports = router;

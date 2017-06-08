@@ -175,3 +175,86 @@ function isValidURL(str) {
     return true;
   }
 };
+
+exports.patchAdd = function(operation, obj) {
+  if (!operation.value) {
+    return Promise.reject({
+      error: ['Value property required'],
+      code: 404
+    });
+  }
+
+  if (!!operation.path) {
+    if (Array.isArray(obj[operation.path])) {
+      operation.value = Array.isArray(operation.value) ? operation.value : [operation.value];
+      operation.value.forEach(function (item) {
+        obj[operation.path].push(item);
+      });
+    } else {
+      obj[operation.path] = operation.value;
+    }
+  } else {
+    Object.keys(operation.value).forEach(function (key) {
+      if (Array.isArray(obj[key])) {
+        var arr = Array.isArray(operation.value[key]) ? operation.value[key] : [operation.value[key]];
+        arr.forEach(function (item) {
+          obj[key].push(item);
+        });
+      } else {
+        obj[key] = operation.value[key];
+      }
+    });
+  }
+  return obj.save();
+};
+
+exports.patchReplace = function(operation, obj) {
+  if (!operation.value) {
+    return Promise.reject({
+      error: ['Value property required'],
+      code: 404
+    });
+  }
+
+  if (!!operation.path) {
+    if (Array.isArray(obj[operation.path])) {
+      operation.value = Array.isArray(operation.value) ? operation.value : [operation.value];
+      obj[operation.path] = [];
+      operation.value.forEach(function (item) {
+        obj[operation.path].push(item);
+      });
+    } else {
+      obj[operation.path] = operation.value;
+    }
+  } else {
+    Object.keys(operation.value).forEach(function (key) {
+      if (Array.isArray(obj[key])) {
+        var arr = Array.isArray(operation.value[key]) ? operation.value[key] : [operation.value[key]];
+        obj[key] = [];
+        arr.forEach(function (item) {
+          obj[key].push(item);
+        });
+      } else {
+        obj[key] = operation.value[key];
+      }
+    });
+  }
+
+  return obj.save();
+};
+
+exports.patchRemove = function(operation, obj) {
+  if (!operation.path) {
+    return Promise.reject({
+      error: ['path property required'],
+      code: 404
+    });
+  }
+
+  if (Array.isArray(obj[operation.path])) {
+    obj[operation.path] = [];
+  } else {
+    obj[operation.path] = null;
+  }
+  return obj.save();
+};

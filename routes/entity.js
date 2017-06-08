@@ -293,4 +293,44 @@ router.post(entityURL + '/:eid/operatedBy/:type/:id', function (req, res) {
   }
 });
 
+/**
+ * @swagger
+ * path: /otto/entity/{id}
+ * operations:
+ *   -  httpMethod: PATCH
+ *      summary: Patch entity
+ *      notes: Returns Status
+ *      nickname: entity
+ *      consumes:
+ *        - text/html
+ *      parameters:
+ *        - name: id
+ *          description: Your entity Id
+ *          paramType: path
+ *          required: true
+ *          dataType: string
+ *        - name: body
+ *          description: Your entity Information
+ *          paramType: body
+ *          required: true
+ *          dataType: string
+ *
+ */
+router.patch(settings.entity + "/:id", function (req, res) {
+  try {
+    entityController.patchEntity(req, function (err, data) {
+      console.log(err);
+      if (err) {
+        res.status(err.code).json({
+          error: err.error
+        });
+      } else {
+        res.status(200).json();
+      }
+    });
+  } catch (e) {
+    res.status(500).json();
+  }
+});
+
 module.exports = router;

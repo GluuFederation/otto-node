@@ -201,3 +201,43 @@ exports.updateMetadata = function (req, callback) {
     }, null);
   }
 };
+
+exports.patchMetadata = function (req, callback) {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return callback({
+      error: ['Invalid Metadata Id'],
+      code: 400
+    }, null);
+  }
+
+  if (!req.body.op) {
+    return callback({
+      error: ['op property must required'],
+      code: 400
+    }, null);
+  }
+
+  return metadataModel.findById(req.params.id)
+    .then(function (metadata) {
+      if (!metadata) {
+        return Promise.reject({
+          error: ['Metadata doesn\'t exist'],
+          code: 404
+        });
+      }
+
+      if (req.body.op == 'add') {
+        return common.patchAdd(req.body, metadata);
+      } else if (req.body.op == 'replace') {
+        return common.patchReplace(req.body, metadata);
+      } else if (req.body.op == 'remove') {
+        return common.patchRemove(req.body, metadata);
+      }
+    })
+    .then(function (oMetadata) {
+      return callback(null, oMetadata);
+    })
+    .catch((function (err) {
+      return callback(err, null);
+    }));
+};

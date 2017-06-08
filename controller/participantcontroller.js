@@ -328,3 +328,42 @@ exports.joinEntityParticipant = function (req, callback) {
       return callback(err, null);
     });
 };
+
+exports.patchParticipant = function (req, callback) {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return callback({
+      error: ['Invalid Participant Id'],
+      code: 400
+    }, null);
+  }
+
+  if (!req.body.op) {
+    return callback({
+      error: ['op property must required'],
+      code: 400
+    }, null);
+  }
+  return participantModel.findById(req.params.id)
+    .then(function (participant) {
+      if (!participant) {
+        return Promise.reject({
+          error: ['Participant doesn\'t exist'],
+          code: 404
+        });
+      }
+
+      if (req.body.op == 'add') {
+        return common.patchAdd(req.body, participant);
+      } else if (req.body.op == 'replace') {
+        return common.patchReplace(req.body, participant);
+      } else if (req.body.op == 'remove') {
+        return common.patchRemove(req.body, participant);
+      }
+    })
+    .then(function (oParticipant) {
+      return callback(null, oParticipant);
+    })
+    .catch((function (err) {
+      return callback(err, null);
+    }));
+};

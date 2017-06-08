@@ -472,12 +472,12 @@ router.post(settings.federations + '/:fid/metadata/:mid', function (req, res) {
  *        - text/html
  *      parameters:
  *        - name: id
- *          description: Your federations Id
+ *          description: Your federation Id
  *          paramType: path
  *          required: true
  *          dataType: string
  *        - name: body
- *          description: Your federations Information
+ *          description: Your federation Information
  *          paramType: body
  *          required: true
  *          dataType: string
