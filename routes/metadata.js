@@ -200,44 +200,4 @@ router.put(metadataURL + '/:id', function (req, res) {
   }
 });
 
-/**
- * @swagger
- * path: /otto/metadata/{id}
- * operations:
- *   -  httpMethod: PATCH
- *      summary: Patch metadata
- *      notes: Returns Status
- *      nickname: metadata
- *      consumes:
- *        - text/html
- *      parameters:
- *        - name: id
- *          description: Your metadata Id
- *          paramType: path
- *          required: true
- *          dataType: string
- *        - name: body
- *          description: Your metadata Information
- *          paramType: body
- *          required: true
- *          dataType: string
- *
- */
-router.patch(settings.metadata + "/:id", function (req, res) {
-  try {
-    metadataController.patchMetadata(req, function (err, data) {
-      console.log(err);
-      if (err) {
-        res.status(err.code).json({
-          error: err.error
-        });
-      } else {
-        res.status(200).json();
-      }
-    });
-  } catch (e) {
-    res.status(500).json();
-  }
-});
-
 module.exports = router;

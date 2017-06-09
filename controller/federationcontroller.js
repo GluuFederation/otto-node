@@ -565,13 +565,6 @@ exports.patchFederation = function (req, callback) {
     }, null);
   }
 
-  if (!req.body.op) {
-    return callback({
-      error: ['op property must required'],
-      code: 400
-    }, null);
-  }
-
   return federationModel.findById(req.params.id)
     .then(function (federation) {
       if (!federation) {
@@ -581,13 +574,28 @@ exports.patchFederation = function (req, callback) {
         });
       }
 
-      if (req.body.op == 'add') {
-        return common.patchAdd(req.body, federation);
-      } else if (req.body.op == 'replace') {
-        return common.patchReplace(req.body, federation);
-      } else if (req.body.op == 'remove') {
-        return common.patchRemove(req.body, federation);
-      }
+      req.body = Array.isArray(req.body) ? req.body : [req.body];
+
+      req.body.forEach(function (operation) {
+        if (!operation.op) {
+          return Promise.reject({
+            error: ['op property must required'],
+            code: 400
+          }, null);
+        }
+
+        if (operation.op == 'add') {
+          federation = common.patchAdd(operation, federation);
+        } else if (operation.op == 'replace') {
+          federation = common.patchReplace(operation, federation);
+        } else if (operation.op == 'remove') {
+          federation = common.patchRemove(operation, federation);
+        }
+      });
+      return Promise.resolve(federation);
+    })
+    .then(function (oFederation) {
+      return oFederation.save();
     })
     .then(function (oFederation) {
       return callback(null, oFederation);

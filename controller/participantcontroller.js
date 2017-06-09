@@ -337,12 +337,6 @@ exports.patchParticipant = function (req, callback) {
     }, null);
   }
 
-  if (!req.body.op) {
-    return callback({
-      error: ['op property must required'],
-      code: 400
-    }, null);
-  }
   return participantModel.findById(req.params.id)
     .then(function (participant) {
       if (!participant) {
@@ -352,13 +346,28 @@ exports.patchParticipant = function (req, callback) {
         });
       }
 
-      if (req.body.op == 'add') {
-        return common.patchAdd(req.body, participant);
-      } else if (req.body.op == 'replace') {
-        return common.patchReplace(req.body, participant);
-      } else if (req.body.op == 'remove') {
-        return common.patchRemove(req.body, participant);
-      }
+      req.body = Array.isArray(req.body) ? req.body : [req.body];
+
+      req.body.forEach(function (operation) {
+        if (!operation.op) {
+          return Promise.reject({
+            error: ['op property must required'],
+            code: 400
+          }, null);
+        }
+
+        if (operation.op == 'add') {
+          participant = common.patchAdd(operation, participant);
+        } else if (operation.op == 'replace') {
+          participant = common.patchReplace(operation, participant);
+        } else if (operation.op == 'remove') {
+          participant = common.patchRemove(operation, participant);
+        }
+      });
+      return Promise.resolve(participant);
+    })
+    .then(function (oParticipant) {
+      return oParticipant.save();
     })
     .then(function (oParticipant) {
       return callback(null, oParticipant);

@@ -14,11 +14,16 @@ exports.generateUUID = function () {
 
 exports.jsPathFilter = function (filters, object) {
   var list = filters.split(",");
-  var data = {};
+  var data = [];
 
-  list.forEach(function (item) {
+  list.forEach(function (item, index) {
     var filterData = JSPath.apply(item, object);
-    data[item.substr(1, item.length)] = filterData;
+    //data[item.substr(1, item.length)] = filterData;
+    var newObj = {};
+    item = item.substr(1, item.length);
+    var path = item.substring(0, item.indexOf("{")) + item.substring(item.indexOf("}")+1, item.length);
+    assignKey(newObj, path.split("."), filterData);
+    data = newObj;
   });
 
   return data;
@@ -176,6 +181,30 @@ function isValidURL(str) {
   }
 };
 
+function setObject(obj, path, value) {
+  var schema = obj;  // a moving reference to internal objects within obj
+  var pList = path.split('.');
+  var len = pList.length;
+  for(var i = 0; i < len-1; i++) {
+    var elem = pList[i];
+    if( !schema[elem] ) schema[elem] = {}
+    schema = schema[elem];
+  }
+
+  schema[pList[len-1]] = value;
+}
+
+function assignKey(obj, keyPath, value) {
+  var lastKeyIndex = keyPath.length-1;
+  for (var i = 0; i < lastKeyIndex; ++ i) {
+    key = keyPath[i];
+    if (!(key in obj))
+      obj[key] = {}
+    obj = obj[key];
+  }
+  obj[keyPath[lastKeyIndex]] = value;
+}
+
 exports.patchAdd = function(operation, obj) {
   if (!operation.value) {
     return Promise.reject({
@@ -191,7 +220,8 @@ exports.patchAdd = function(operation, obj) {
         obj[operation.path].push(item);
       });
     } else {
-      obj[operation.path] = operation.value;
+      setObject(obj, operation.path, operation.value);
+      // obj[operation.path] = operation.value;
     }
   } else {
     Object.keys(operation.value).forEach(function (key) {
@@ -205,7 +235,7 @@ exports.patchAdd = function(operation, obj) {
       }
     });
   }
-  return obj.save();
+  return obj;
 };
 
 exports.patchReplace = function(operation, obj) {
@@ -224,7 +254,8 @@ exports.patchReplace = function(operation, obj) {
         obj[operation.path].push(item);
       });
     } else {
-      obj[operation.path] = operation.value;
+      setObject(obj, operation.path, operation.value);
+      //obj[operation.path] = operation.value;
     }
   } else {
     Object.keys(operation.value).forEach(function (key) {
@@ -240,7 +271,7 @@ exports.patchReplace = function(operation, obj) {
     });
   }
 
-  return obj.save();
+  return obj;
 };
 
 exports.patchRemove = function(operation, obj) {
@@ -256,5 +287,5 @@ exports.patchRemove = function(operation, obj) {
   } else {
     obj[operation.path] = null;
   }
-  return obj.save();
+  return obj;
 };
