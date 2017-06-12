@@ -50,6 +50,118 @@ exports.depth = function (obj, depth) {
   });
 };
 
+exports.customCollectionFilter = function customCollectionFilter(collection, fields) {
+  var len = collection.length;
+  var cnt = 0;
+  collection.map(function (item) {
+    cnt += 1;
+    fields.forEach(function (field) {
+      item[field] = item[field].map(function (mItem) {
+        return mItem['@id'];
+      });
+    });
+    return item;
+  });
+
+  if (len == cnt) {
+    return Promise.resolve(collection);
+  }
+};
+
+exports.customObjectFilter = function (object, fields) {
+  fields.forEach(function (field) {
+    object[field] = object[field].map(function (mItem) {
+      return mItem['@id'];
+    });
+  });
+  return object;
+};
+
+exports.patchAdd = function(operation, obj) {
+  if (!operation.value) {
+    return Promise.reject({
+      error: ['Value property required'],
+      code: 404
+    });
+  }
+
+  if (!!operation.path) {
+    if (Array.isArray(obj[operation.path])) {
+      operation.value = Array.isArray(operation.value) ? operation.value : [operation.value];
+      operation.value.forEach(function (item) {
+        obj[operation.path].push(item);
+      });
+    } else {
+      setObject(obj, operation.path, operation.value);
+      // obj[operation.path] = operation.value;
+    }
+  } else {
+    Object.keys(operation.value).forEach(function (key) {
+      if (Array.isArray(obj[key])) {
+        var arr = Array.isArray(operation.value[key]) ? operation.value[key] : [operation.value[key]];
+        arr.forEach(function (item) {
+          obj[key].push(item);
+        });
+      } else {
+        obj[key] = operation.value[key];
+      }
+    });
+  }
+  return obj;
+};
+
+exports.patchReplace = function(operation, obj) {
+  if (!operation.value) {
+    return Promise.reject({
+      error: ['Value property required'],
+      code: 404
+    });
+  }
+
+  if (!!operation.path) {
+    if (Array.isArray(obj[operation.path])) {
+      operation.value = Array.isArray(operation.value) ? operation.value : [operation.value];
+      obj[operation.path] = [];
+      operation.value.forEach(function (item) {
+        obj[operation.path].push(item);
+      });
+    } else {
+      setObject(obj, operation.path, operation.value);
+      //obj[operation.path] = operation.value;
+    }
+  } else {
+    Object.keys(operation.value).forEach(function (key) {
+      if (Array.isArray(obj[key])) {
+        var arr = Array.isArray(operation.value[key]) ? operation.value[key] : [operation.value[key]];
+        obj[key] = [];
+        arr.forEach(function (item) {
+          obj[key].push(item);
+        });
+      } else {
+        obj[key] = operation.value[key];
+      }
+    });
+  }
+
+  return obj;
+};
+
+exports.patchRemove = function(operation, obj) {
+  if (!operation.path) {
+    return Promise.reject({
+      error: ['path property required'],
+      code: 404
+    });
+  }
+
+  if (Array.isArray(obj[operation.path])) {
+    obj[operation.path] = [];
+  } else {
+    obj[operation.path] = null;
+  }
+  return obj;
+};
+
 function fetchDepth(obj) {
   if (Array.isArray(obj)) {
     return fetchDepthForArray(obj);
@@ -140,33 +252,6 @@ function fetchDepthForObject(Obj) {
   });
 };
 
-exports.customCollectionFilter = function customCollectionFilter(collection, fields) {
-  var len = collection.length;
-  var cnt = 0;
-  collection.map(function (item) {
-    cnt += 1;
-    fields.forEach(function (field) {
-      item[field] = item[field].map(function (mItem) {
-        return mItem['@id'];
-      });
-    });
-    return item;
-  });
-
-  if (len == cnt) {
-    return Promise.resolve(collection);
-  }
-};
-
-exports.customObjectFilter = function (object, fields) {
-  fields.forEach(function (field) {
-    object[field] = object[field].map(function (mItem) {
-      return mItem['@id'];
-    });
-  });
-  return object;
-};
-
 function isValidURL(str) {
   var pattern = new RegExp('^(https?:\\/\\/)?' + // protocol
     '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.?)+[a-z]{2,}|' + // domain name
@@ -190,7 +275,7 @@ function setObject(obj, path, value) {
     if( !schema[elem] ) schema[elem] = {}
     schema = schema[elem];
   }
-
+  
   schema[pList[len-1]] = value;
 }
 
@@ -204,88 +289,3 @@ function assignKey(obj, keyPath, value) {
   }
   obj[keyPath[lastKeyIndex]] = value;
 }
-
-exports.patchAdd = function(operation, obj) {
-  if (!operation.value) {
-    return Promise.reject({
-      error: ['Value property required'],
-      code: 404
-    });
-  }
-
-  if (!!operation.path) {
-    if (Array.isArray(obj[operation.path])) {
-      operation.value = Array.isArray(operation.value) ? operation.value : [operation.value];
-      operation.value.forEach(function (item) {
-        obj[operation.path].push(item);
-      });
-    } else {
-      setObject(obj, operation.path, operation.value);
-      // obj[operation.path] = operation.value;
-    }
-  } else {
-    Object.keys(operation.value).forEach(function (key) {
-      if (Array.isArray(obj[key])) {
-        var arr = Array.isArray(operation.value[key]) ? operation.value[key] : [operation.value[key]];
-        arr.forEach(function (item) {
-          obj[key].push(item);
-        });
-      } else {
-        obj[key] = operation.value[key];
-      }
-    });
-  }
-  return obj;
-};
-
-exports.patchReplace = function(operation, obj) {
-  if (!operation.value) {
-    return Promise.reject({
-      error: ['Value property required'],
-      code: 404
-    });
-  }
-
-  if (!!operation.path) {
-    if (Array.isArray(obj[operation.path])) {
-      operation.value = Array.isArray(operation.value) ? operation.value : [operation.value];
-      obj[operation.path] = [];
-      operation.value.forEach(function (item) {
-        obj[operation.path].push(item);
-      });
-    } else {
-      setObject(obj, operation.path, operation.value);
-      //obj[operation.path] = operation.value;
-    }
-  } else {
-    Object.keys(operation.value).forEach(function (key) {
-      if (Array.isArray(obj[key])) {
-        var arr = Array.isArray(operation.value[key]) ? operation.value[key] : [operation.value[key]];
-        obj[key] = [];
-        arr.forEach(function (item) {
-          obj[key].push(item);
-        });
-      } else {
-        obj[key] = operation.value[key];
-      }
-    });
-  }
-
-  return obj;
-};
-
-exports.patchRemove = function(operation, obj) {
-  if (!operation.path) {
-    return Promise.reject({
-      error: ['path property required'],
-      code: 404
-    });
-  }
-
-  if (Array.isArray(obj[operation.path])) {
-    obj[operation.path] = [];
-  } else {
-    obj[operation.path] = null;
-  }
-  return obj;
-};
