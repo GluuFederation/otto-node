@@ -21,7 +21,7 @@ exports.jsPathFilter = function (filters, object) {
     //data[item.substr(1, item.length)] = filterData;
     var newObj = {};
     item = item.substr(1, item.length);
-    var path = item.substring(0, item.indexOf("{")) + item.substring(item.indexOf("}")+1, item.length);
+    var path = item.substring(0, item.indexOf("{")) + item.substring(item.indexOf("}") + 1, item.length);
     assignKey(newObj, path.split("."), filterData);
     data = newObj;
   });
@@ -77,7 +77,7 @@ exports.customObjectFilter = function (object, fields) {
   return object;
 };
 
-exports.patchAdd = function(operation, obj) {
+exports.patchAdd = function (operation, obj) {
   if (!operation.value) {
     return Promise.reject({
       error: ['Value property required'],
@@ -86,16 +86,46 @@ exports.patchAdd = function(operation, obj) {
   }
 
   if (!!operation.path) {
-    if (Array.isArray(obj[operation.path])) {
-      operation.value = Array.isArray(operation.value) ? operation.value : [operation.value];
-      operation.value.forEach(function (item) {
-        obj[operation.path].push(item);
-      });
+    var basePath = getPath(operation.path).split(".");
+    var cond = false;
+    if (!!getValue(operation.path)) {
+      cond = true;
+    }
+    if (Array.isArray(obj[basePath[0]])) {
+      // Check path[1] for only update to sub attribute
+      if (!!basePath[1]) {
+        obj[basePath[0]].forEach(function (item, index) {
+          // condition for path parameter condition
+          if (cond) {
+            if (!!obj[basePath[0]][index][getAttr(operation.path)] && obj[basePath[0]][index][getAttr(operation.path)] == getValue(operation.path)) {
+              obj[basePath[0]][index][basePath[1]] = operation.value;
+            }
+          } else {
+            obj[basePath[0]][index][basePath[1]] = operation.value;
+          }
+        });
+
+        // Update
+        var arr = obj[basePath[0]];
+        obj[basePath[0]] = [];
+        arr.forEach(function (item) {
+          obj[basePath[0]].push(item);
+        });
+
+      } else {
+        // Direct update to base path
+        // Convert single value in multi value
+        operation.value = Array.isArray(operation.value) ? operation.value : [operation.value];
+        operation.value.forEach(function (item) {
+          obj[operation.path].push(item);
+        });
+      }
     } else {
       setObject(obj, operation.path, operation.value);
       // obj[operation.path] = operation.value;
     }
   } else {
+    // Without path to update direct as requested values
     Object.keys(operation.value).forEach(function (key) {
       if (Array.isArray(obj[key])) {
         var arr = Array.isArray(operation.value[key]) ? operation.value[key] : [operation.value[key]];
@@ -107,10 +137,10 @@ exports.patchAdd = function(operation, obj) {
       }
     });
   }
-  return obj;
+  return {error: null, obj: obj};
 };
 
-exports.patchReplace = function(operation, obj) {
+exports.patchReplace = function (operation, obj) {
   if (!operation.value) {
     return Promise.reject({
       error: ['Value property required'],
@@ -119,15 +149,43 @@ exports.patchReplace = function(operation, obj) {
   }
 
   if (!!operation.path) {
-    if (Array.isArray(obj[operation.path])) {
-      operation.value = Array.isArray(operation.value) ? operation.value : [operation.value];
-      obj[operation.path] = [];
-      operation.value.forEach(function (item) {
-        obj[operation.path].push(item);
-      });
+    var basePath = getPath(operation.path).split(".");
+    var cond = false;
+    if (!!getValue(operation.path)) {
+      cond = true;
+    }
+    if (Array.isArray(obj[basePath[0]])) {
+      // Check path[1] for only update to sub attribute
+      if (!!basePath[1]) {
+        obj[basePath[0]].forEach(function (item, index) {
+          // condition for path parameter condition
+          if (cond) {
+            if (!!obj[basePath[0]][index][getAttr(operation.path)] && obj[basePath[0]][index][getAttr(operation.path)] == getValue(operation.path)) {
+              obj[basePath[0]][index][basePath[1]] = operation.value;
+            }
+          } else {
+            obj[basePath[0]][index][basePath[1]] = operation.value;
+          }
+        });
+
+        // Update
+        var arr = obj[basePath[0]];
+        obj[basePath[0]] = [];
+        arr.forEach(function (item) {
+          obj[basePath[0]].push(item);
+        });
+
+      } else {
+        // Direct update to base path
+        // Convert single value in multi value
+        operation.value = Array.isArray(operation.value) ? operation.value : [operation.value];
+        operation.value.forEach(function (item) {
+          obj[operation.path].push(item);
+        });
+      }
     } else {
       setObject(obj, operation.path, operation.value);
-      //obj[operation.path] = operation.value;
+      // obj[operation.path] = operation.value;
     }
   } else {
     Object.keys(operation.value).forEach(function (key) {
@@ -146,7 +204,7 @@ exports.patchReplace = function(operation, obj) {
   return obj;
 };
 
-exports.patchRemove = function(operation, obj) {
+exports.patchRemove = function (operation, obj) {
   if (!operation.path) {
     return Promise.reject({
       error: ['path property required'],
@@ -270,22 +328,34 @@ function setObject(obj, path, value) {
   var schema = obj;  // a moving reference to internal objects within obj
   var pList = path.split('.');
   var len = pList.length;
-  for(var i = 0; i < len-1; i++) {
+  for (var i = 0; i < len - 1; i++) {
     var elem = pList[i];
-    if( !schema[elem] ) schema[elem] = {}
+    if (!schema[elem]) schema[elem] = {}
     schema = schema[elem];
   }
-  
-  schema[pList[len-1]] = value;
+
+  schema[pList[len - 1]] = value;
 }
 
 function assignKey(obj, keyPath, value) {
-  var lastKeyIndex = keyPath.length-1;
-  for (var i = 0; i < lastKeyIndex; ++ i) {
+  var lastKeyIndex = keyPath.length - 1;
+  for (var i = 0; i < lastKeyIndex; ++i) {
     key = keyPath[i];
     if (!(key in obj))
       obj[key] = {}
     obj = obj[key];
   }
   obj[keyPath[lastKeyIndex]] = value;
+}
+
+function getAttr(str) {
+  return str.substring(str.indexOf("[") + 1, str.indexOf(" "));
+}
+
+function getPath(str) {
+  return str.substring(0, str.indexOf("[")) + str.substring(str.indexOf("]") + 1, str.length);
+}
+
+function getValue(str) {
+  return str.substring(str.lastIndexOf(" ") + 1, str.indexOf("]"));
 }
