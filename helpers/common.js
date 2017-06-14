@@ -84,26 +84,53 @@ exports.patchAdd = function (operation, obj) {
       code: 404
     });
   }
-
-  if (!!operation.path) {
-    var basePath = getPath(operation.path).split(".");
-    var cond = false;
-    if (!!getValue(operation.path)) {
-      cond = true;
-    }
-    if (Array.isArray(obj[basePath[0]])) {
-      // Check path[1] for only update to sub attribute
-      if (!!basePath[1]) {
+  try {
+    if (!!operation.path) {
+      var basePath = getPath(operation.path).split(".");
+      var cond = false;
+      if (!!getValue(operation.path)) {
+        cond = true;
+      }
+      var isConditionMatch = false;
+      if (Array.isArray(obj[basePath[0]])) {
+        // Check path[1] for only update to sub attribute
         obj[basePath[0]].forEach(function (item, index) {
           // condition for path parameter condition
           if (cond) {
             if (!!obj[basePath[0]][index][getAttr(operation.path)] && obj[basePath[0]][index][getAttr(operation.path)] == getValue(operation.path)) {
-              obj[basePath[0]][index][basePath[1]] = operation.value;
+              if (!!basePath[1]) {
+                obj[basePath[0]][index][basePath[1]] = operation.value;
+              } else {
+                obj[basePath[0]][index] = operation.value;
+              }
+              isConditionMatch = true;
             }
           } else {
             obj[basePath[0]][index][basePath[1]] = operation.value;
           }
         });
+
+        if (cond && isConditionMatch == false) {
+          operation.value = Array.isArray(operation.value) ? operation.value : [operation.value];
+          operation.value.forEach(function (item) {
+            if (obj[basePath[0]].indexOf(item) == -1) {
+              obj[basePath[0]].push(item);
+            }
+          });
+
+          return obj;
+        }
+
+        if (cond == false && !basePath[1]) {
+          operation.value = Array.isArray(operation.value) ? operation.value : [operation.value];
+          operation.value.forEach(function (item) {
+            if (obj[basePath[0]].indexOf(item) == -1) {
+              obj[basePath[0]].push(item);
+            }
+          });
+
+          return obj;
+        }
 
         // Update
         var arr = obj[basePath[0]];
@@ -111,33 +138,33 @@ exports.patchAdd = function (operation, obj) {
         arr.forEach(function (item) {
           obj[basePath[0]].push(item);
         });
-
       } else {
-        // Direct update to base path
-        // Convert single value in multi value
-        operation.value = Array.isArray(operation.value) ? operation.value : [operation.value];
-        operation.value.forEach(function (item) {
-          obj[operation.path].push(item);
-        });
+        // obj.name = "abc"
+        setObject(obj, operation.path, operation.value);
+        // obj[operation.path] = operation.value;
       }
     } else {
-      setObject(obj, operation.path, operation.value);
-      // obj[operation.path] = operation.value;
+      // Without path to update direct as requested values
+      Object.keys(operation.value).forEach(function (key) {
+        if (Array.isArray(obj[key])) {
+          var arr = Array.isArray(operation.value[key]) ? operation.value[key] : [operation.value[key]];
+          arr.forEach(function (item) {
+            if (obj[key].indexOf(item) == -1) {
+              obj[key].push(item);
+            }
+          });
+        } else {
+          obj[key] = operation.value[key];
+        }
+      });
     }
-  } else {
-    // Without path to update direct as requested values
-    Object.keys(operation.value).forEach(function (key) {
-      if (Array.isArray(obj[key])) {
-        var arr = Array.isArray(operation.value[key]) ? operation.value[key] : [operation.value[key]];
-        arr.forEach(function (item) {
-          obj[key].push(item);
-        });
-      } else {
-        obj[key] = operation.value[key];
-      }
+    return obj;
+  } catch (e) {
+    return Promise.reject({
+      error: ['Invalid patch request'],
+      code: 404
     });
   }
-  return {error: null, obj: obj};
 };
 
 exports.patchReplace = function (operation, obj) {
@@ -148,60 +175,96 @@ exports.patchReplace = function (operation, obj) {
     });
   }
 
-  if (!!operation.path) {
-    var basePath = getPath(operation.path).split(".");
-    var cond = false;
-    if (!!getValue(operation.path)) {
-      cond = true;
-    }
-    if (Array.isArray(obj[basePath[0]])) {
-      // Check path[1] for only update to sub attribute
-      if (!!basePath[1]) {
-        obj[basePath[0]].forEach(function (item, index) {
-          // condition for path parameter condition
-          if (cond) {
-            if (!!obj[basePath[0]][index][getAttr(operation.path)] && obj[basePath[0]][index][getAttr(operation.path)] == getValue(operation.path)) {
+  try {
+    if (!!operation.path) {
+      var basePath = getPath(operation.path).split(".");
+      var cond = false;
+      if (!!getValue(operation.path)) {
+        cond = true;
+      }
+      var isConditionMatch = false;
+      if (Array.isArray(obj[basePath[0]])) {
+        // Check path[1] for only update to sub attribute
+        if (!!basePath[1]) {
+          obj[basePath[0]].forEach(function (item, index) {
+            // condition for path parameter condition
+            if (cond) {
+              if (!!obj[basePath[0]][index][getAttr(operation.path)] && obj[basePath[0]][index][getAttr(operation.path)] == getValue(operation.path)) {
+                obj[basePath[0]][index][basePath[1]] = operation.value;
+                isConditionMatch = true;
+              }
+            } else {
               obj[basePath[0]][index][basePath[1]] = operation.value;
             }
-          } else {
-            obj[basePath[0]][index][basePath[1]] = operation.value;
+          });
+
+          if (cond && isConditionMatch == false) {
+            obj[basePath[0]] = [];
+            operation.value = Array.isArray(operation.value) ? operation.value : [operation.value];
+            operation.value.forEach(function (item) {
+              if (obj[basePath[0]].indexOf(item) == -1) {
+                obj[basePath[0]].push(item);
+              }
+            });
+
+            return obj;
           }
-        });
 
-        // Update
-        var arr = obj[basePath[0]];
-        obj[basePath[0]] = [];
-        arr.forEach(function (item) {
-          obj[basePath[0]].push(item);
-        });
+          if (cond == false && !basePath[1]) {
+            operation.value = Array.isArray(operation.value) ? operation.value : [operation.value];
+            operation.value.forEach(function (item) {
+              if (obj[basePath[0]].indexOf(item) == -1) {
+                obj[basePath[0]].push(item);
+              }
+            });
 
+            return obj;
+          }
+
+          // Update
+          var arr = obj[basePath[0]];
+          obj[basePath[0]] = [];
+          arr.forEach(function (item) {
+            obj[basePath[0]].push(item);
+          });
+        } else {
+          // Direct update to base path
+          // Convert single value in multi value
+          obj[basePath[0]] = [];
+          operation.value = Array.isArray(operation.value) ? operation.value : [operation.value];
+          operation.value.forEach(function (item) {
+            if (obj[basePath[0]].indexOf(item) == -1) {
+              obj[basePath[0]].push(item);
+            }
+          });
+        }
       } else {
-        // Direct update to base path
-        // Convert single value in multi value
-        operation.value = Array.isArray(operation.value) ? operation.value : [operation.value];
-        operation.value.forEach(function (item) {
-          obj[operation.path].push(item);
-        });
+        setObject(obj, operation.path, operation.value);
+        // obj[operation.path] = operation.value;
       }
     } else {
-      setObject(obj, operation.path, operation.value);
-      // obj[operation.path] = operation.value;
+      Object.keys(operation.value).forEach(function (key) {
+        if (Array.isArray(obj[key])) {
+          var arr = Array.isArray(operation.value[key]) ? operation.value[key] : [operation.value[key]];
+          obj[key] = [];
+          arr.forEach(function (item) {
+            if (obj[key].indexOf(item) == -1) {
+              obj[key].push(item);
+            }
+          });
+        } else {
+          obj[key] = operation.value[key];
+        }
+      });
     }
-  } else {
-    Object.keys(operation.value).forEach(function (key) {
-      if (Array.isArray(obj[key])) {
-        var arr = Array.isArray(operation.value[key]) ? operation.value[key] : [operation.value[key]];
-        obj[key] = [];
-        arr.forEach(function (item) {
-          obj[key].push(item);
-        });
-      } else {
-        obj[key] = operation.value[key];
-      }
+
+    return obj;
+  } catch (e) {
+    return Promise.reject({
+      error: ['Invalid patch request'],
+      code: 404
     });
   }
-
-  return obj;
 };
 
 exports.patchRemove = function (operation, obj) {
@@ -212,12 +275,55 @@ exports.patchRemove = function (operation, obj) {
     });
   }
 
-  if (Array.isArray(obj[operation.path])) {
-    obj[operation.path] = [];
-  } else {
-    obj[operation.path] = null;
+  try {
+    if (!!operation.path) {
+      var basePath = getPath(operation.path).split(".");
+      var cond = false;
+      if (!!getValue(operation.path)) {
+        cond = true;
+      }
+      if (Array.isArray(obj[basePath[0]])) {
+        // Check path[1] for only update to sub attribute
+        obj[basePath[0]].forEach(function (item, index) {
+          // condition for path parameter condition
+          if (cond) {
+            if (!!obj[basePath[0]][index][getAttr(operation.path)] && obj[basePath[0]][index][getAttr(operation.path)] == getValue(operation.path)) {
+              if (!!basePath[1]) {
+                obj[basePath[0]][index][basePath[1]] = "";
+              } else {
+                obj[basePath[0]].splice(index);
+              }
+            }
+          } else {
+            if (!!basePath[1]) {
+              obj[basePath[0]][index][basePath[1]] = "";
+            } else {
+              obj[basePath[0]].splice(index);
+            }
+          }
+        });
+
+        // Update
+        var arr = obj[basePath[0]];
+        obj[basePath[0]] = [];
+        arr.forEach(function (item) {
+          obj[basePath[0]].push(item);
+        });
+      } else {
+        setObject(obj, operation.path, "");
+        // obj[operation.path] = operation.value;
+      }
+    } else {
+      obj[key] = [];
+    }
+
+    return obj;
+  } catch (e) {
+    return Promise.reject({
+      error: ['Invalid patch request'],
+      code: 404
+    });
   }
-  return obj;
 };
 
 function fetchDepth(obj) {
@@ -357,5 +463,5 @@ function getPath(str) {
 }
 
 function getValue(str) {
-  return str.substring(str.lastIndexOf(" ") + 1, str.indexOf("]"));
+  return str.substring(str.indexOf("\"") + str.indexOf("'") + 2, str.lastIndexOf("\"") + str.lastIndexOf("'") + 1);
 }

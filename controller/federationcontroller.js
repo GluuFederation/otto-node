@@ -592,7 +592,7 @@ exports.patchFederation = function (req, callback) {
           federation = common.patchRemove(operation, federation);
         }
       });
-      return Promise.resolve(federation.obj);
+      return Promise.resolve(federation);
     })
     .then(function (oFederation) {
       return oFederation.save();
