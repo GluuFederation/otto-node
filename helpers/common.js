@@ -110,7 +110,7 @@ exports.patchAdd = function (operation, obj) {
           }
         });
 
-        if (cond && isConditionMatch == false) {
+        if (cond && isConditionMatch == false && !basePath[1]) {
           operation.value = Array.isArray(operation.value) ? operation.value : [operation.value];
           operation.value.forEach(function (item) {
             if (obj[basePath[0]].indexOf(item) == -1) {
@@ -190,7 +190,11 @@ exports.patchReplace = function (operation, obj) {
             // condition for path parameter condition
             if (cond) {
               if (!!obj[basePath[0]][index][getAttr(operation.path)] && obj[basePath[0]][index][getAttr(operation.path)] == getValue(operation.path)) {
-                obj[basePath[0]][index][basePath[1]] = operation.value;
+                if (!!basePath[1]) {
+                  obj[basePath[0]][index][basePath[1]] = operation.value;
+                } else {
+                  obj[basePath[0]][index] = operation.value;
+                }
                 isConditionMatch = true;
               }
             } else {
@@ -198,7 +202,7 @@ exports.patchReplace = function (operation, obj) {
             }
           });
 
-          if (cond && isConditionMatch == false) {
+          if (cond && isConditionMatch == false && !basePath[1]) {
             obj[basePath[0]] = [];
             operation.value = Array.isArray(operation.value) ? operation.value : [operation.value];
             operation.value.forEach(function (item) {
@@ -276,6 +280,15 @@ exports.patchRemove = function (operation, obj) {
   }
 
   try {
+    if (operation.path.indexOf("/") == 0) {
+      var refPath = operation.path.split("/");
+      if (!!obj[refPath[1]] && !!refPath[2] && obj[refPath[1]].indexOf(refPath[2]) > -1) {
+        obj[refPath[1]].splice(obj[refPath[1]].indexOf(refPath[2]), 1);
+      }
+
+      return obj;
+    }
+
     if (!!operation.path) {
       var basePath = getPath(operation.path).split(".");
       var cond = false;
