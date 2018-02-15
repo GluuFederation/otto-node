@@ -6,7 +6,9 @@ otto-node is implemented in node.js with swagger framework for apis which provid
 
 ### Prerequisites
 Node >= 6.9.x
+
 NPM >= 3.10.x
+
 Mongo DB >= 3.4.10
 
 ### Installation
