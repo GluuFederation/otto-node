@@ -4,6 +4,16 @@
 
 otto-node is implemented in node.js with swagger framework for apis which provides tools for designing and building Swagger-compliant APIs entirely in Node.js.
 
+### Prerequisites
+Node >= 6.9.x
+NPM >= 3.10.x
+Mongo DB >= 3.4.10
+
+### Installation
+```
+# npm install
+```
+
 ### Configure the site
 
 Currently this application is working on the port 5053, in case of changing the port you need to change at two places as following:
@@ -11,6 +21,7 @@ Currently this application is working on the port 5053, in case of changing the 
 1) app.js var port = "5053";
 2) /public/swagger/index.html discoveryUrl: "http://localhost:5053/api-docs.json"
 ```
+
 ### swagger
 ```
 you can access all the apis details and testing environment with your {host}/swagger.
